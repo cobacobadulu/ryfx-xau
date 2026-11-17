@@ -1,1 +1,353 @@
+<main class="calculator-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">RISK MANAGEMENT TOOLS</span>
+            <h1>Lot & Risk Calculator</h1>
+            <p>
+                Calculate your XAUUSD position size, manage trading risk,
+                and plan your potential profit and loss.
+            </p>
+        </div>
+
+        <span class="market-symbol">XAUUSD</span>
+    </section>
+
+
+    <!-- CALCULATOR OVERVIEW -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">CALCULATOR OVERVIEW</span>
+                <h2>Position Planning</h2>
+            </div>
+        </div>
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>ACCOUNT BALANCE</span>
+                <strong id="calculatorBalanceDisplay">$0.00</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>RISK AMOUNT</span>
+                <strong id="calculatorRiskDisplay">$0.00</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>RECOMMENDED LOT</span>
+                <strong id="calculatorLotDisplay">0.00</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>REWARD AMOUNT</span>
+                <strong id="calculatorRewardDisplay">$0.00</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- MAIN CALCULATOR -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">POSITION SIZE ENGINE</span>
+                <h2>Risk Calculator</h2>
+            </div>
+
+            <span class="market-symbol">GOLD / USD</span>
+        </div>
+
+
+        <div class="calculator-layout">
+
+            <!-- INPUT PANEL -->
+            <div class="calculator-panel">
+
+                <h3>Trade Parameters</h3>
+
+                <form id="riskCalculatorForm">
+
+                    <div class="form-group">
+                        <label for="calculatorBalance">
+                            ACCOUNT BALANCE (USD)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="calculatorBalance"
+                            min="0.01"
+                            step="any"
+                            placeholder="Example: 1000"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="calculatorRisk">
+                            RISK PER TRADE (%)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="calculatorRisk"
+                            min="0.01"
+                            max="100"
+                            step="any"
+                            value="1"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="calculatorDirection">
+                            TRADE DIRECTION
+                        </label>
+
+                        <select id="calculatorDirection">
+                            <option value="BUY">BUY</option>
+                            <option value="SELL">SELL</option>
+                        </select>
+                    </div>
+
+
+                    <div class="calculator-divider"></div>
+
+
+                    <h3>Price Parameters</h3>
+
+                    <div class="form-group">
+                        <label for="calculatorEntry">
+                            ENTRY PRICE
+                        </label>
+
+                        <input
+                            type="number"
+                            id="calculatorEntry"
+                            min="0.01"
+                            step="any"
+                            placeholder="Example: 2650.00"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="calculatorStopLoss">
+                            STOP LOSS PRICE
+                        </label>
+
+                        <input
+                            type="number"
+                            id="calculatorStopLoss"
+                            min="0.01"
+                            step="any"
+                            placeholder="Example: 2645.00"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="calculatorTakeProfit">
+                            TAKE PROFIT PRICE
+                        </label>
+
+                        <input
+                            type="number"
+                            id="calculatorTakeProfit"
+                            min="0.01"
+                            step="any"
+                            placeholder="Example: 2660.00"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="calculatorContractSize">
+                            CONTRACT SIZE (OUNCES / LOT)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="calculatorContractSize"
+                            min="0.01"
+                            step="any"
+                            value="100"
+                            required
+                        >
+
+                        <small>
+                            Default assumption: 1 standard lot = 100 ounces.
+                            Confirm this with your broker.
+                        </small>
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="primary-button calculator-submit"
+                        id="calculateRiskButton"
+                    >
+                        Calculate Position Size →
+                    </button>
+
+                    <button
+                        type="reset"
+                        class="secondary-button calculator-reset"
+                        id="resetCalculator"
+                    >
+                        Reset Calculator
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- RESULT PANEL -->
+            <div class="calculator-panel calculator-results">
+
+                <span class="section-label">CALCULATION RESULTS</span>
+
+                <h3>Trade Risk Analysis</h3>
+
+                <div class="calculator-result-highlight">
+
+                    <span>RECOMMENDED POSITION SIZE</span>
+
+                    <strong id="calculatedLotSize">0.00 LOT</strong>
+
+                    <small id="calculatedLotDescription">
+                        Enter your trade parameters to calculate.
+                    </small>
+
+                </div>
+
+
+                <div class="calculator-result-list">
+
+                    <div class="calculator-result-item">
+                        <span>Account Balance</span>
+                        <strong id="resultBalance">$0.00</strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Risk Percentage</span>
+                        <strong id="resultRiskPercent">0%</strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Risk Amount</span>
+                        <strong id="resultRiskAmount">$0.00</strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Stop Loss Distance</span>
+                        <strong id="resultStopDistance">$0.00</strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Potential Reward</span>
+                        <strong id="resultReward">$0.00</strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Risk / Reward Ratio</span>
+                        <strong id="resultRiskReward">1:0</strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Potential Loss</span>
+                        <strong class="loss-value" id="resultPotentialLoss">
+                            -$0.00
+                        </strong>
+                    </div>
+
+                    <div class="calculator-result-item">
+                        <span>Potential Profit</span>
+                        <strong class="profit-value" id="resultPotentialProfit">
+                            +$0.00
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="calculator-status" id="calculatorStatus">
+                    Waiting for calculation...
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RISK MANAGEMENT GUIDE -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">TRADING EDUCATION</span>
+                <h2>Risk Management Guide</h2>
+            </div>
+        </div>
+
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>CONSERVATIVE RISK</span>
+                <strong>0.5% – 1%</strong>
+                <p>Lower exposure per trade.</p>
+            </article>
+
+            <article class="statistics-card">
+                <span>MODERATE RISK</span>
+                <strong>1% – 2%</strong>
+                <p>Balanced risk exposure.</p>
+            </article>
+
+            <article class="statistics-card">
+                <span>RISK / REWARD</span>
+                <strong>1:2</strong>
+                <p>Target reward twice the risk.</p>
+            </article>
+
+            <article class="statistics-card">
+                <span>DISCIPLINE</span>
+                <strong>Consistency</strong>
+                <p>Always define risk before entering.</p>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+
+        <strong>Risk Calculator Disclaimer</strong>
+
+        <p>
+            Calculations are estimates based on the contract size entered.
+            Actual trading results may differ due to broker specifications,
+            spread, commission, slippage, swap, and execution conditions.
+            Always verify contract specifications with your broker.
+        </p>
+
+    </div>
+
+</main>
