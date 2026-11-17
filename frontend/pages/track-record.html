@@ -1,1 +1,258 @@
+<main class="track-record-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">PERFORMANCE INTELLIGENCE</span>
+            <h1>Trading Track Record</h1>
+            <p>
+                Monitor historical XAUUSD signal performance,
+                trading accuracy and risk-to-reward statistics.
+            </p>
+        </div>
+
+        <span class="market-symbol">XAUUSD</span>
+    </section>
+
+
+    <!-- PERFORMANCE OVERVIEW -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PERFORMANCE OVERVIEW</span>
+                <h2>Trading Statistics</h2>
+            </div>
+        </div>
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>TOTAL SIGNALS</span>
+                <strong id="trackTotalSignals">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>WIN RATE</span>
+                <strong id="trackWinRate">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>TAKE PROFIT HIT</span>
+                <strong id="trackTPHit">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>STOP LOSS HIT</span>
+                <strong id="trackSLHit">--</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- ADDITIONAL METRICS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">TRADING METRICS</span>
+                <h2>Performance Metrics</h2>
+            </div>
+        </div>
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>AVERAGE RISK / REWARD</span>
+                <strong id="trackAverageRR">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>WINNING STREAK</span>
+                <strong id="trackWinningStreak">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>LOSING STREAK</span>
+                <strong id="trackLosingStreak">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>PROFIT FACTOR</span>
+                <strong id="trackProfitFactor">--</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- PERFORMANCE CHART -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PERFORMANCE HISTORY</span>
+                <h2>Trading Performance</h2>
+            </div>
+
+            <select id="trackChartPeriod" aria-label="Performance chart period">
+                <option value="7d">Last 7 Days</option>
+                <option value="30d" selected>Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+                <option value="all">All Time</option>
+            </select>
+        </div>
+
+        <div class="performance-chart-card">
+
+            <div class="performance-chart-header">
+                <div>
+                    <span class="card-label">CUMULATIVE PERFORMANCE</span>
+                    <h3 id="trackPerformanceSummary">Awaiting records</h3>
+                </div>
+            </div>
+
+            <div
+                id="trackPerformanceChart"
+                class="performance-chart-container"
+                aria-label="Trading performance chart"
+            >
+                <div class="empty-state">
+                    <h3>No Performance Data</h3>
+                    <p>
+                        Performance chart will appear after
+                        historical signal data is available.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FILTERS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">HISTORICAL DATA</span>
+                <h2>Trading Records</h2>
+            </div>
+        </div>
+
+        <div class="record-filters">
+
+            <div class="form-group">
+                <label for="trackDirectionFilter">DIRECTION</label>
+
+                <select id="trackDirectionFilter">
+                    <option value="all">All Directions</option>
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="trackStatusFilter">STATUS</label>
+
+                <select id="trackStatusFilter">
+                    <option value="all">All Statuses</option>
+                    <option value="HIT_TP">Take Profit Hit</option>
+                    <option value="HIT_SL">Stop Loss Hit</option>
+                    <option value="CLOSED">Closed</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="trackStartDate">START DATE</label>
+                <input type="date" id="trackStartDate">
+            </div>
+
+            <div class="form-group">
+                <label for="trackEndDate">END DATE</label>
+                <input type="date" id="trackEndDate">
+            </div>
+
+            <button
+                type="button"
+                id="applyTrackFilters"
+                class="primary-button"
+            >
+                Apply Filters
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- RECORD TABLE -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">SIGNAL ARCHIVE</span>
+                <h2>Completed Signals</h2>
+            </div>
+
+            <button
+                type="button"
+                id="refreshTrackRecord"
+                class="secondary-button"
+            >
+                ↻ Refresh
+            </button>
+        </div>
+
+        <div class="record-table-wrapper">
+
+            <table class="record-table">
+
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>PAIR</th>
+                        <th>DIRECTION</th>
+                        <th>ENTRY</th>
+                        <th>STOP LOSS</th>
+                        <th>TAKE PROFIT</th>
+                        <th>R:R</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+
+                <tbody id="trackRecordTableBody">
+
+                    <tr>
+                        <td colspan="8" class="table-empty-state">
+                            No historical trading records available.
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+
+        <strong>Performance Transparency</strong>
+
+        <p>
+            Historical trading performance does not guarantee
+            future results. All statistics must be calculated
+            from verified and recorded trading signals.
+        </p>
+
+    </div>
+
+</main>
