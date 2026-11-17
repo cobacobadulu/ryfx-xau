@@ -1,1 +1,492 @@
+<main class="settings-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">PLATFORM CONFIGURATION</span>
+            <h1>Settings</h1>
+            <p>
+                Manage your ryFX XAU workspace, preferences,
+                AI configuration, and trading environment.
+            </p>
+        </div>
+
+        <span class="market-symbol">SYSTEM SETTINGS</span>
+    </section>
+
+
+    <!-- GENERAL PREFERENCES -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PERSONALIZATION</span>
+                <h2>General Preferences</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>Platform Name</strong>
+                    <p>Your trading intelligence workspace.</p>
+                </div>
+
+                <span class="settings-value">ryFX XAU</span>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Default Trading Symbol</strong>
+                    <p>Choose the primary market instrument.</p>
+                </div>
+
+                <select id="defaultTradingSymbol">
+                    <option value="XAUUSD" selected>XAUUSD</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Default Timeframe</strong>
+                    <p>Choose your preferred chart timeframe.</p>
+                </div>
+
+                <select id="defaultTimeframe">
+                    <option value="5">M5</option>
+                    <option value="15" selected>M15</option>
+                    <option value="30">M30</option>
+                    <option value="60">H1</option>
+                    <option value="240">H4</option>
+                    <option value="D">D1</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Timezone</strong>
+                    <p>Timezone used for market timestamps.</p>
+                </div>
+
+                <select id="platformTimezone">
+                    <option value="Asia/Jakarta" selected>
+                        Jakarta (UTC+7)
+                    </option>
+                    <option value="Asia/Makassar">
+                        Makassar (UTC+8)
+                    </option>
+                    <option value="Asia/Jayapura">
+                        Jayapura (UTC+9)
+                    </option>
+                    <option value="UTC">UTC</option>
+                </select>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- APPEARANCE -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">USER INTERFACE</span>
+                <h2>Appearance & Theme</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>Color Theme</strong>
+                    <p>Choose the visual appearance of the platform.</p>
+                </div>
+
+                <select id="themePreference">
+                    <option value="dark" selected>Dark Premium</option>
+                    <option value="light">Light</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Compact Interface</strong>
+                    <p>Use a more compact dashboard layout.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="compactInterface">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Animations</strong>
+                    <p>Enable interface animations and transitions.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="enableAnimations" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- MARKET PREFERENCES -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">MARKET CONFIGURATION</span>
+                <h2>Market Preferences</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>Market Price Updates</strong>
+                    <p>Enable automatic market data refresh.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="autoMarketRefresh" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Price Update Interval</strong>
+                    <p>Preferred interval for refreshing market data.</p>
+                </div>
+
+                <select id="marketRefreshInterval">
+                    <option value="5">5 seconds</option>
+                    <option value="15" selected>15 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">60 seconds</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Chart Candles</strong>
+                    <p>Choose the default chart display style.</p>
+                </div>
+
+                <select id="chartType">
+                    <option value="candlestick" selected>
+                        Candlestick
+                    </option>
+                    <option value="line">Line</option>
+                    <option value="area">Area</option>
+                </select>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- AI CONFIGURATION -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">ARTIFICIAL INTELLIGENCE</span>
+                <h2>AI Configuration</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>AI Market Analysis</strong>
+                    <p>Enable AI-powered XAUUSD market analysis.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="enableAIAnalysis" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>AI Chart Scanner</strong>
+                    <p>Enable chart screenshot analysis.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="enableAIScanner" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Analysis Detail</strong>
+                    <p>Choose the depth of AI-generated analysis.</p>
+                </div>
+
+                <select id="aiAnalysisDetail">
+                    <option value="basic">Basic</option>
+                    <option value="standard" selected>Standard</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Analysis Language</strong>
+                    <p>Preferred language for AI explanations.</p>
+                </div>
+
+                <select id="aiLanguage">
+                    <option value="en">English</option>
+                    <option value="id" selected>Bahasa Indonesia</option>
+                </select>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- NOTIFICATIONS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">ALERT MANAGEMENT</span>
+                <h2>Notification Settings</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>Trading Signal Alerts</strong>
+                    <p>Receive notifications when new signals appear.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="signalNotifications" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Market Movement Alerts</strong>
+                    <p>Receive alerts for significant gold price movements.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="marketNotifications" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>AI Analysis Notifications</strong>
+                    <p>Receive notifications when AI analysis is ready.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="aiNotifications" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RISK MANAGEMENT -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">CAPITAL PROTECTION</span>
+                <h2>Risk Management Defaults</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>Default Risk Per Trade</strong>
+                    <p>Preferred risk percentage for each trade.</p>
+                </div>
+
+                <select id="defaultRisk">
+                    <option value="0.5">0.5%</option>
+                    <option value="1" selected>1%</option>
+                    <option value="1.5">1.5%</option>
+                    <option value="2">2%</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Default Risk / Reward</strong>
+                    <p>Preferred minimum reward-to-risk target.</p>
+                </div>
+
+                <select id="defaultRiskReward">
+                    <option value="1">1:1</option>
+                    <option value="1.5">1:1.5</option>
+                    <option value="2" selected>1:2</option>
+                    <option value="3">1:3</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Risk Warning</strong>
+                    <p>Display a warning when trade risk exceeds your preference.</p>
+                </div>
+
+                <label class="settings-toggle">
+                    <input type="checkbox" id="riskWarning" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- SYSTEM INFORMATION -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PLATFORM STATUS</span>
+                <h2>System Information</h2>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+
+            <div class="settings-item">
+                <div>
+                    <strong>Platform</strong>
+                    <p>Application name.</p>
+                </div>
+
+                <span class="settings-value">ryFX XAU</span>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Version</strong>
+                    <p>Current application version.</p>
+                </div>
+
+                <span class="settings-value">1.0.0</span>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Market Instrument</strong>
+                    <p>Supported trading instrument.</p>
+                </div>
+
+                <span class="settings-value">XAUUSD</span>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>Backend Status</strong>
+                    <p>Connection status with the application server.</p>
+                </div>
+
+                <span class="status-badge" id="backendConnectionStatus">
+                    Checking...
+                </span>
+            </div>
+
+            <div class="settings-item">
+                <div>
+                    <strong>AI Engine Status</strong>
+                    <p>Availability of the AI analysis service.</p>
+                </div>
+
+                <span class="status-badge" id="aiEngineStatus">
+                    Checking...
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- SAVE SETTINGS -->
+    <section class="settings-save-section">
+
+        <div>
+            <strong>Save Your Preferences</strong>
+            <p>
+                Apply your configuration to the ryFX XAU workspace.
+            </p>
+        </div>
+
+        <div class="settings-save-actions">
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="resetSettings"
+            >
+                Reset Defaults
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                id="saveSettings"
+            >
+                Save Settings
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+
+        <strong>Configuration Notice</strong>
+
+        <p>
+            Settings are currently interface placeholders.
+            Preferences will become persistent after JavaScript
+            and backend integration are completed.
+            API credentials must be managed securely on the backend,
+            never stored in frontend settings.
+        </p>
+
+    </div>
+
+</main>
