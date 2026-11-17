@@ -1,1 +1,251 @@
+<main class="signals-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">AI TRADING INTELLIGENCE</span>
+            <h1>Trading Signals</h1>
+            <p>
+                Monitor AI-generated XAUUSD trading opportunities,
+                trade levels and signal performance.
+            </p>
+        </div>
+
+        <span class="ai-badge">✦ AI POWERED</span>
+    </section>
+
+
+    <!-- SIGNAL OVERVIEW -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">SIGNAL OVERVIEW</span>
+                <h2>Market Opportunities</h2>
+            </div>
+
+            <span class="market-symbol">XAUUSD</span>
+        </div>
+
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>ACTIVE SIGNALS</span>
+                <strong id="activeSignalCount">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>BUY SIGNALS</span>
+                <strong id="buySignalCount">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>SELL SIGNALS</span>
+                <strong id="sellSignalCount">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>WAIT SIGNALS</span>
+                <strong id="waitSignalCount">--</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- ACTIVE SIGNALS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-label">LIVE OPPORTUNITIES</span>
+                <h2>Active Trading Signals</h2>
+            </div>
+
+            <button
+                type="button"
+                id="refreshSignals"
+                class="secondary-button"
+            >
+                ↻ Refresh
+            </button>
+
+        </div>
+
+
+        <div class="signals-container" id="signalsList">
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">⌁</div>
+
+                <h3>No Active Signals</h3>
+
+                <p>
+                    XAUUSD trading signals will appear here
+                    when the signal engine is connected.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- SIGNAL DETAILS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">TRADE MANAGEMENT</span>
+                <h2>Signal Information</h2>
+            </div>
+        </div>
+
+
+        <div class="signal-information-card">
+
+            <div class="signal-information-header">
+                <div>
+                    <span class="card-label">SELECTED SIGNAL</span>
+                    <h3 id="selectedSignalTitle">No Signal Selected</h3>
+                </div>
+
+                <span id="selectedSignalDirection" class="signal-badge">
+                    --
+                </span>
+            </div>
+
+
+            <div class="trading-levels-grid">
+
+                <article class="market-card">
+                    <span class="card-label">ENTRY PRICE</span>
+                    <h3 id="signalEntry">--</h3>
+                </article>
+
+                <article class="market-card">
+                    <span class="card-label">STOP LOSS</span>
+                    <h3 id="signalStopLoss">--</h3>
+                </article>
+
+                <article class="market-card">
+                    <span class="card-label">TAKE PROFIT 1</span>
+                    <h3 id="signalTP1">--</h3>
+                </article>
+
+                <article class="market-card">
+                    <span class="card-label">TAKE PROFIT 2</span>
+                    <h3 id="signalTP2">--</h3>
+                </article>
+
+                <article class="market-card">
+                    <span class="card-label">TAKE PROFIT 3</span>
+                    <h3 id="signalTP3">--</h3>
+                </article>
+
+                <article class="market-card">
+                    <span class="card-label">RISK / REWARD</span>
+                    <h3 id="signalRiskReward">--</h3>
+                </article>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- SIGNAL PERFORMANCE -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PERFORMANCE TRACKING</span>
+                <h2>Signal Performance</h2>
+            </div>
+        </div>
+
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>TOTAL SIGNALS</span>
+                <strong id="totalSignalCount">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>TAKE PROFIT HIT</span>
+                <strong id="signalTPHitCount">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>STOP LOSS HIT</span>
+                <strong id="signalSLHitCount">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>WIN RATE</span>
+                <strong id="signalWinRate">--</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- SIGNAL HISTORY -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-label">HISTORICAL RECORDS</span>
+                <h2>Signal History</h2>
+            </div>
+
+            <a href="#track-record" class="text-link">
+                View Track Record →
+            </a>
+
+        </div>
+
+
+        <div class="signal-history-container" id="signalHistory">
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">◷</div>
+
+                <h3>No Signal History</h3>
+
+                <p>
+                    Completed XAUUSD trading signals
+                    will be recorded here.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+
+        <strong>Trading Risk Disclaimer</strong>
+
+        <p>
+            Trading signals are informational tools and do not
+            guarantee profits. Always verify entry levels,
+            calculate position size and apply proper risk management.
+        </p>
+
+    </div>
+
+</main>
