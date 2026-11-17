@@ -1,1 +1,191 @@
+<main class="live-market-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">REAL-TIME MARKET DATA</span>
+            <h1>Live Gold Market</h1>
+            <p>Monitor XAUUSD price movements and market conditions.</p>
+        </div>
+
+        <div class="market-live-indicator">
+            <span class="status-indicator"></span>
+            <span>LIVE MARKET</span>
+        </div>
+    </section>
+
+
+    <!-- PRICE OVERVIEW -->
+    <section class="live-price-card">
+
+        <div class="live-price-header">
+            <div>
+                <span class="card-label">XAUUSD SPOT</span>
+                <h2>Gold / US Dollar</h2>
+            </div>
+
+            <span class="market-symbol">XAUUSD</span>
+        </div>
+
+        <div class="live-price-content">
+            <div>
+                <span class="card-label">CURRENT PRICE</span>
+                <h1 id="liveGoldPrice">--</h1>
+                <div class="price-change">
+                    <span id="liveGoldChange">--</span>
+                    <span id="liveGoldChangePercent">--</span>
+                </div>
+            </div>
+
+            <div class="price-update-info">
+                <span>LAST UPDATED</span>
+                <strong id="liveLastUpdate">Waiting for data...</strong>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- MARKET STATISTICS -->
+    <section class="live-statistics-grid">
+
+        <article class="market-card">
+            <span class="card-label">DAILY HIGH</span>
+            <h3 id="liveDailyHigh">--</h3>
+        </article>
+
+        <article class="market-card">
+            <span class="card-label">DAILY LOW</span>
+            <h3 id="liveDailyLow">--</h3>
+        </article>
+
+        <article class="market-card">
+            <span class="card-label">OPEN PRICE</span>
+            <h3 id="liveOpenPrice">--</h3>
+        </article>
+
+        <article class="market-card">
+            <span class="card-label">DAILY CHANGE</span>
+            <h3 id="liveMarketChange">--</h3>
+        </article>
+
+    </section>
+
+
+    <!-- CHART SECTION -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PRICE ACTION</span>
+                <h2>XAUUSD Chart</h2>
+            </div>
+
+            <button
+                type="button"
+                id="chartFullscreen"
+                class="secondary-button"
+            >
+                ⛶ FULLSCREEN
+            </button>
+        </div>
+
+
+        <div class="chart-panel" id="liveChartPanel">
+
+            <!-- TIMEFRAME SELECTOR -->
+            <div class="chart-toolbar">
+
+                <div class="timeframe-selector">
+
+                    <button class="timeframe-btn" data-timeframe="5">M5</button>
+
+                    <button class="timeframe-btn active" data-timeframe="15">M15</button>
+
+                    <button class="timeframe-btn" data-timeframe="30">M30</button>
+
+                    <button class="timeframe-btn" data-timeframe="60">H1</button>
+
+                    <button class="timeframe-btn" data-timeframe="240">H4</button>
+
+                    <button class="timeframe-btn" data-timeframe="D">D1</button>
+
+                </div>
+
+                <span class="chart-symbol">XAUUSD · GOLD</span>
+
+            </div>
+
+
+            <!-- CHART CONTAINER -->
+            <div
+                id="xauusdChart"
+                class="live-chart-container"
+                aria-label="XAUUSD candlestick chart"
+            >
+                <div class="chart-loading">
+                    Loading XAUUSD chart...
+                </div>
+            </div>
+
+
+            <!-- CHART FOOTER -->
+            <div class="chart-footer">
+
+                <span>CHART SOURCE</span>
+
+                <span id="chartDataStatus">
+                    Waiting for market data
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- MARKET ANALYSIS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">MARKET INTELLIGENCE</span>
+                <h2>Market Conditions</h2>
+            </div>
+        </div>
+
+
+        <div class="market-condition-grid">
+
+            <article class="market-card">
+                <span class="card-label">MARKET TREND</span>
+                <h3 id="liveMarketTrend">Awaiting data</h3>
+            </article>
+
+            <article class="market-card">
+                <span class="card-label">PRICE STRUCTURE</span>
+                <h3 id="liveMarketStructure">--</h3>
+            </article>
+
+            <article class="market-card">
+                <span class="card-label">MARKET VOLATILITY</span>
+                <h3 id="liveMarketVolatility">--</h3>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+        <strong>Market Data Notice</strong>
+        <p>
+            Market prices and chart information depend on the connected
+            market data provider. Data may be delayed depending on the
+            provider and subscription.
+        </p>
+    </div>
+
+</main>
