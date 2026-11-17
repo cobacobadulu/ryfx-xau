@@ -1,1 +1,339 @@
+/* =========================================
+   ryFX XAU — UI COMPONENTS
+========================================= */
 
+/* CARDS */
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: 0.25s ease;
+}
+
+.card:hover {
+    border-color: rgba(75, 157, 255, 0.2);
+}
+
+/* CARD ICON */
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: rgba(75, 157, 255, 0.12);
+    color: var(--blue);
+    font-size: 18px;
+}
+
+/* MARKET STATUS */
+
+.market-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    background: rgba(34, 201, 151, 0.1);
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.market-status.closed {
+    background: rgba(240, 91, 104, 0.1);
+    color: var(--red);
+}
+
+/* TRADING SIGNAL */
+
+.signal-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.signal-direction {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 85px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.signal-buy {
+    background: rgba(34, 201, 151, 0.13);
+    color: var(--green);
+    border: 1px solid rgba(34, 201, 151, 0.2);
+}
+
+.signal-sell {
+    background: rgba(240, 91, 104, 0.13);
+    color: var(--red);
+    border: 1px solid rgba(240, 91, 104, 0.2);
+}
+
+.signal-wait {
+    background: rgba(216, 179, 107, 0.13);
+    color: var(--gold);
+    border: 1px solid rgba(216, 179, 107, 0.2);
+}
+
+/* SIGNAL DETAILS */
+
+.signal-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.signal-detail {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 12px;
+}
+
+.signal-detail span {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    margin-bottom: 5px;
+}
+
+.signal-detail strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* TABLE */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.data-table th {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-align: left;
+    padding: 13px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+    color: var(--text);
+    font-size: 12px;
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* PROGRESS BAR */
+
+.progress {
+    width: 100%;
+    height: 7px;
+    overflow: hidden;
+    background: #26354A;
+    border-radius: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0;
+    background: var(--blue);
+    border-radius: inherit;
+    transition: width 0.4s ease;
+}
+
+.progress-bar.gold {
+    background: var(--gold);
+}
+
+.progress-bar.green {
+    background: var(--green);
+}
+
+/* TABS */
+
+.tabs {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab {
+    flex-shrink: 0;
+    padding: 11px 15px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+    color: var(--text);
+}
+
+.tab.active {
+    color: var(--blue);
+    border-bottom-color: var(--blue);
+}
+
+/* NOTIFICATION */
+
+.notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+}
+
+.notification-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(75, 157, 255, 0.12);
+    color: var(--blue);
+}
+
+.notification-content h4 {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.notification-content p {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* EMPTY STATE */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 45px 20px;
+}
+
+.empty-state-icon {
+    font-size: 32px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.empty-state h3 {
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.empty-state p {
+    color: var(--muted);
+    font-size: 11px;
+    max-width: 300px;
+}
+
+/* DIVIDER */
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 18px 0;
+}
+
+/* AVATAR */
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(75, 157, 255, 0.15);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* TOOLTIP */
+
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: #26354A;
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 20;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 600px) {
+    .card,
+    .signal-card {
+        padding: 15px;
+    }
+
+    .signal-details {
+        gap: 8px;
+    }
+
+    .signal-detail {
+        padding: 10px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 11px 9px;
+    }
+}
