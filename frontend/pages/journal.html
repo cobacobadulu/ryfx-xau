@@ -1,1 +1,350 @@
+<main class="journal-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">TRADING PERFORMANCE</span>
+            <h1>Trading Journal</h1>
+            <p>
+                Track your XAUUSD trades, document your decisions,
+                and evaluate your trading performance.
+            </p>
+        </div>
+
+        <span class="market-symbol">XAUUSD</span>
+    </section>
+
+
+    <!-- JOURNAL OVERVIEW -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">JOURNAL OVERVIEW</span>
+                <h2>Trading Statistics</h2>
+            </div>
+        </div>
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>TOTAL TRADES</span>
+                <strong id="journalTotalTrades">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>WINNING TRADES</span>
+                <strong id="journalWinningTrades">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>LOSING TRADES</span>
+                <strong id="journalLosingTrades">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>WIN RATE</span>
+                <strong id="journalWinRate">--</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- PROFIT AND LOSS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">FINANCIAL PERFORMANCE</span>
+                <h2>Profit & Loss</h2>
+            </div>
+        </div>
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>NET PROFIT / LOSS</span>
+                <strong id="journalNetProfit">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>AVERAGE PROFIT</span>
+                <strong id="journalAverageProfit">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>AVERAGE LOSS</span>
+                <strong id="journalAverageLoss">--</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>AVERAGE RISK / REWARD</span>
+                <strong id="journalAverageRR">--</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- ADD TRADE -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">TRADE MANAGEMENT</span>
+                <h2>Add Trading Record</h2>
+            </div>
+        </div>
+
+        <form id="journalTradeForm" class="journal-form">
+
+            <div class="journal-form-grid">
+
+                <div class="form-group">
+                    <label for="journalTradeDate">TRADE DATE</label>
+                    <input
+                        type="datetime-local"
+                        id="journalTradeDate"
+                        name="trade_date"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalDirection">DIRECTION</label>
+                    <select id="journalDirection" name="direction" required>
+                        <option value="BUY">BUY</option>
+                        <option value="SELL">SELL</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="journalEntry">ENTRY PRICE</label>
+                    <input
+                        type="number"
+                        id="journalEntry"
+                        name="entry_price"
+                        step="any"
+                        min="0"
+                        placeholder="Enter entry price"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalExit">EXIT PRICE</label>
+                    <input
+                        type="number"
+                        id="journalExit"
+                        name="exit_price"
+                        step="any"
+                        min="0"
+                        placeholder="Enter exit price"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalStopLoss">STOP LOSS</label>
+                    <input
+                        type="number"
+                        id="journalStopLoss"
+                        name="stop_loss"
+                        step="any"
+                        min="0"
+                        placeholder="Enter stop loss"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalTakeProfit">TAKE PROFIT</label>
+                    <input
+                        type="number"
+                        id="journalTakeProfit"
+                        name="take_profit"
+                        step="any"
+                        min="0"
+                        placeholder="Enter take profit"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalLotSize">LOT SIZE</label>
+                    <input
+                        type="number"
+                        id="journalLotSize"
+                        name="lot_size"
+                        step="any"
+                        min="0.01"
+                        placeholder="Example: 0.01"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalResult">TRADE RESULT</label>
+                    <select id="journalResult" name="result">
+                        <option value="OPEN">OPEN</option>
+                        <option value="WIN">WIN</option>
+                        <option value="LOSS">LOSS</option>
+                        <option value="BREAKEVEN">BREAKEVEN</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="journalProfitLoss">PROFIT / LOSS (USD)</label>
+                    <input
+                        type="number"
+                        id="journalProfitLoss"
+                        name="profit_loss"
+                        step="any"
+                        placeholder="Enter realized P/L"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="journalRiskReward">RISK / REWARD</label>
+                    <input
+                        type="text"
+                        id="journalRiskReward"
+                        name="risk_reward"
+                        placeholder="Example: 1:2"
+                    >
+                </div>
+
+            </div>
+
+
+            <!-- TRADING NOTES -->
+            <div class="form-group journal-notes-group">
+
+                <label for="journalNotes">TRADING NOTES</label>
+
+                <textarea
+                    id="journalNotes"
+                    name="notes"
+                    rows="5"
+                    placeholder="Describe your trading setup, market conditions, entry reason and lessons learned..."
+                ></textarea>
+
+            </div>
+
+
+            <div class="journal-form-actions">
+
+                <button
+                    type="reset"
+                    class="secondary-button"
+                >
+                    Clear Form
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                    id="saveJournalTrade"
+                >
+                    + Save Trading Record
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <!-- TRADE HISTORY -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">TRADING HISTORY</span>
+                <h2>My Trading Records</h2>
+            </div>
+
+            <button
+                type="button"
+                id="refreshJournal"
+                class="secondary-button"
+            >
+                ↻ Refresh
+            </button>
+        </div>
+
+
+        <div class="record-filters">
+
+            <div class="form-group">
+                <label for="journalDirectionFilter">DIRECTION</label>
+                <select id="journalDirectionFilter">
+                    <option value="all">All Directions</option>
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="journalResultFilter">RESULT</label>
+                <select id="journalResultFilter">
+                    <option value="all">All Results</option>
+                    <option value="OPEN">OPEN</option>
+                    <option value="WIN">WIN</option>
+                    <option value="LOSS">LOSS</option>
+                    <option value="BREAKEVEN">BREAKEVEN</option>
+                </select>
+            </div>
+
+        </div>
+
+
+        <div class="record-table-wrapper">
+
+            <table class="record-table">
+
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>PAIR</th>
+                        <th>DIRECTION</th>
+                        <th>ENTRY</th>
+                        <th>EXIT</th>
+                        <th>LOT</th>
+                        <th>RESULT</th>
+                        <th>PROFIT / LOSS</th>
+                    </tr>
+                </thead>
+
+                <tbody id="journalTableBody">
+
+                    <tr>
+                        <td colspan="8" class="table-empty-state">
+                            No trading records available.
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+
+        <strong>Trading Journal Notice</strong>
+
+        <p>
+            Record your trades accurately. Profit and loss statistics
+            should be calculated from verified trade results.
+            This journal is intended for personal performance evaluation.
+        </p>
+
+    </div>
+
+</main>
