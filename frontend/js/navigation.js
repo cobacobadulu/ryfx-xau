@@ -1,32 +1,57 @@
 /* =========================================
    ryFX XAU — NAVIGATION SYSTEM
+   SPA PAGE MANAGEMENT
 ========================================= */
 
 "use strict";
 
+
 /* PAGE CONFIGURATION */
 
 const RYFX_PAGES = {
+
     dashboard: "pages/dashboard.html",
+
     "live-market": "pages/live-market.html",
+
     "ai-analysis": "pages/ai-analysis.html",
+
     "ai-scanner": "pages/ai-scanner.html",
+
     signals: "pages/signals.html",
+
     "track-record": "pages/track-record.html",
+
     journal: "pages/journal.html",
+
     calculator: "pages/calculator.html",
+
     settings: "pages/settings.html"
+
 };
+
+
+/* NAVIGATION STATE */
+
+let navigationInitialized = false;
+
+let activeRequest = 0;
+
 
 /* NAVIGATION INITIALIZATION */
 
 function initializeNavigation() {
 
+    if (navigationInitialized) return;
+
     const app = document.getElementById("app");
 
     if (!app) return;
 
-    initializeMobileMenu();
+    navigationInitialized = true;
+
+
+    /* GLOBAL PAGE CLICK */
 
     document.addEventListener("click", event => {
 
@@ -34,35 +59,87 @@ function initializeNavigation() {
 
         if (!link) return;
 
-        event.preventDefault();
-
         const page = link.dataset.page;
+
+        if (!RYFX_PAGES[page]) return;
+
+        event.preventDefault();
 
         navigateTo(page);
 
     });
 
-    window.addEventListener("popstate", () => {
 
-        const page = location.hash.replace("#", "") || "dashboard";
+    /* MOBILE MENU CLICK */
 
-        loadPage(page, false);
+    document.addEventListener("click", event => {
+
+        const menuButton = event.target.closest(
+            ".mobile-menu-btn"
+        );
+
+        const overlay = event.target.closest(
+            ".sidebar-overlay"
+        );
+
+        if (menuButton) {
+
+            toggleMobileMenu();
+
+        }
+
+        if (overlay) {
+
+            closeMobileMenu();
+
+        }
 
     });
 
-    const initialPage = location.hash.replace("#", "") || "dashboard";
 
-    loadPage(initialPage, false);
+    /* BROWSER BACK / FORWARD */
+
+    window.addEventListener("popstate", () => {
+
+        const page =
+            location.hash.replace("#", "") || "dashboard";
+
+        loadPage(page);
+
+    });
+
+
+    /* INITIAL PAGE */
+
+    const initialPage =
+        location.hash.replace("#", "") || "dashboard";
+
+    loadPage(initialPage);
+
 }
+
 
 /* PAGE NAVIGATION */
 
 async function navigateTo(page) {
 
     if (!RYFX_PAGES[page]) {
-        console.error("Page not found:", page);
+
+        console.error("[Navigation] Page not found:", page);
+
         return;
+
     }
+
+    if (page === RYFX_STATE.currentPage &&
+        RYFX_STATE.pageLoaded) {
+
+        closeMobileMenu();
+
+        return;
+
+    }
+
 
     history.pushState(
         { page },
@@ -70,12 +147,15 @@ async function navigateTo(page) {
         `#${page}`
     );
 
-    await loadPage(page, true);
+
+    await loadPage(page);
+
 }
+
 
 /* LOAD PAGE */
 
-async function loadPage(page, updateTitle = true) {
+async function loadPage(page) {
 
     const app = document.getElementById("app");
 
@@ -84,9 +164,16 @@ async function loadPage(page, updateTitle = true) {
     const pagePath = RYFX_PAGES[page];
 
     if (!pagePath) {
-        console.error("Invalid page:", page);
+
+        console.error("[Navigation] Invalid page:", page);
+
         return;
+
     }
+
+
+    const requestId = ++activeRequest;
+
 
     try {
 
@@ -97,13 +184,24 @@ async function loadPage(page, updateTitle = true) {
             </div>
         `;
 
+
         const response = await fetch(pagePath);
 
+
         if (!response.ok) {
+
             throw new Error(`HTTP ${response.status}`);
+
         }
 
+
         const html = await response.text();
+
+
+        /* PREVENT OLD REQUEST OVERRIDE */
+
+        if (requestId !== activeRequest) return;
+
 
         const parser = new DOMParser();
 
@@ -112,51 +210,100 @@ async function loadPage(page, updateTitle = true) {
             "text/html"
         );
 
+
         const content =
             pageDocument.querySelector("[data-page-content]") ||
             pageDocument.querySelector("main") ||
             pageDocument.body;
 
+
+        if (!content) {
+
+            throw new Error("Page content not found.");
+
+        }
+
+
         app.innerHTML = content.innerHTML;
+
+
+        /* UPDATE APPLICATION STATE */
 
         RYFX_STATE.currentPage = page;
 
+        RYFX_STATE.pageLoaded = true;
+
+
+        /* UPDATE INTERFACE */
+
         updateActiveMenu(page);
 
-        if (updateTitle) {
-            setPageTitle(page);
-        }
+        setPageTitle(page);
+
+
+        /* SCROLL TO TOP */
 
         window.scrollTo({
             top: 0,
             behavior: "smooth"
         });
 
+
+        /* PAGE LOADED EVENT */
+
         document.dispatchEvent(
             new CustomEvent("ryfx:page-loaded", {
-                detail: { page }
+
+                detail: {
+                    page,
+                    content: app
+                }
+
             })
         );
 
+
+        /* CLOSE MOBILE MENU */
+
         closeMobileMenu();
+
+
+        console.log("[ryFX] Page loaded:", page);
+
 
     } catch (error) {
 
+        if (requestId !== activeRequest) return;
+
         console.error("[Navigation Error]", error);
+
 
         app.innerHTML = `
             <div class="empty-state">
+
                 <div class="empty-state-icon">⚠</div>
+
                 <h3>Unable to Load Page</h3>
-                <p>${page} could not be loaded. Please check the page file.</p>
-                <button class="btn btn-primary" data-page="dashboard">
+
+                <p>
+                    ${page} could not be loaded.
+                    Please check the page file or server connection.
+                </p>
+
+                <button
+                    class="btn btn-primary"
+                    data-page="dashboard"
+                >
                     Back to Dashboard
                 </button>
+
             </div>
         `;
 
     }
+
 }
+
 
 /* ACTIVE MENU */
 
@@ -173,51 +320,57 @@ function updateActiveMenu(page) {
 
 }
 
+
 /* MOBILE MENU */
 
-function initializeMobileMenu() {
-
-    const menuButton = document.querySelector(".mobile-menu-btn");
+function toggleMobileMenu() {
 
     const sidebar = document.querySelector(".sidebar");
 
     const overlay = document.querySelector(".sidebar-overlay");
 
-    if (!menuButton || !sidebar) return;
+    if (!sidebar) return;
 
-    menuButton.addEventListener("click", () => {
 
-        sidebar.classList.toggle("open");
-
-        if (overlay) {
-            overlay.classList.toggle("active");
-        }
-
-    });
+    const isOpen = sidebar.classList.toggle("open");
 
     if (overlay) {
 
-        overlay.addEventListener("click", closeMobileMenu);
+        overlay.classList.toggle("active", isOpen);
 
     }
 
 }
 
+
 /* CLOSE MOBILE MENU */
 
 function closeMobileMenu() {
 
-    document.querySelector(".sidebar")?.classList.remove("open");
+    const sidebar = document.querySelector(".sidebar");
 
-    document.querySelector(".sidebar-overlay")?.classList.remove("active");
+    const overlay = document.querySelector(".sidebar-overlay");
+
+
+    sidebar?.classList.remove("open");
+
+    overlay?.classList.remove("active");
 
 }
+
 
 /* EXPORT */
 
 window.RYFX_NAVIGATION = {
+
     navigateTo,
+
     loadPage,
+
     updateActiveMenu,
+
+    toggleMobileMenu,
+
     closeMobileMenu
+
 };
