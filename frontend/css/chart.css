@@ -1,1 +1,381 @@
+/* =========================================
+   ryFX XAU — CHART & LIVE MARKET
+========================================= */
 
+/* MARKET CONTAINER */
+
+.market-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+/* MARKET HEADER */
+
+.market-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.market-symbol {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.market-symbol-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(216, 179, 107, 0.12);
+    color: var(--gold);
+    border-radius: 11px;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.market-symbol h2 {
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.market-symbol p {
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 3px;
+}
+
+/* PRICE DISPLAY */
+
+.market-price {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 20px;
+}
+
+.current-price {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.2;
+}
+
+.price-change {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 6px;
+}
+
+.price-up {
+    color: var(--green);
+    background: rgba(34, 201, 151, 0.1);
+}
+
+.price-down {
+    color: var(--red);
+    background: rgba(240, 91, 104, 0.1);
+}
+
+/* MARKET DETAILS */
+
+.market-details {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 0 20px 20px;
+}
+
+.market-detail-item {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.market-detail-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    margin-bottom: 5px;
+}
+
+.market-detail-item strong {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* CHART TOOLBAR */
+
+.chart-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 18px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.timeframe-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow-x: auto;
+}
+
+.timeframe-btn {
+    flex-shrink: 0;
+    padding: 7px 11px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    transition: 0.2s ease;
+}
+
+.timeframe-btn:hover {
+    color: var(--text);
+    background: rgba(75, 157, 255, 0.08);
+}
+
+.timeframe-btn.active {
+    color: var(--blue);
+    background: rgba(75, 157, 255, 0.13);
+}
+
+/* CHART ACTIONS */
+
+.chart-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #17253A;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.chart-action-btn:hover {
+    color: var(--blue);
+    border-color: var(--blue);
+}
+
+/* CHART AREA */
+
+.chart-area {
+    position: relative;
+    width: 100%;
+    min-height: 380px;
+    background: #0B1422;
+    overflow: hidden;
+}
+
+.chart-canvas {
+    display: block;
+    width: 100%;
+    height: 380px;
+}
+
+/* CHART PLACEHOLDER */
+
+.chart-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.chart-placeholder-icon {
+    font-size: 30px;
+    color: var(--gold);
+}
+
+/* CHART FOOTER */
+
+.chart-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 18px;
+    border-top: 1px solid var(--border);
+}
+
+.chart-footer span {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+/* SUPPLY AND DEMAND */
+
+.zone-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.zone-item {
+    padding: 14px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border);
+}
+
+.zone-item.demand {
+    border-left: 3px solid var(--green);
+}
+
+.zone-item.supply {
+    border-left: 3px solid var(--red);
+}
+
+.zone-item h4 {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.zone-item p {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* CHART LEGEND */
+
+.chart-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 13px 18px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--blue);
+}
+
+.legend-dot.gold {
+    background: var(--gold);
+}
+
+.legend-dot.green {
+    background: var(--green);
+}
+
+.legend-dot.red {
+    background: var(--red);
+}
+
+/* FULLSCREEN */
+
+.market-container:fullscreen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    border-radius: 0;
+    overflow-y: auto;
+}
+
+.market-container:fullscreen .chart-area {
+    min-height: 65vh;
+}
+
+.market-container:fullscreen .chart-canvas {
+    height: 65vh;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+    .market-header {
+        padding: 15px;
+    }
+
+    .current-price {
+        font-size: 25px;
+    }
+
+    .market-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 0 15px 15px;
+    }
+
+    .chart-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chart-actions {
+        align-self: flex-end;
+    }
+
+    .chart-area {
+        min-height: 300px;
+    }
+
+    .chart-canvas {
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .market-price {
+        padding: 16px;
+    }
+
+    .current-price {
+        font-size: 23px;
+    }
+
+    .market-symbol h2 {
+        font-size: 13px;
+    }
+
+    .market-detail-item {
+        padding: 10px;
+    }
+
+    .chart-area {
+        min-height: 260px;
+    }
+
+    .chart-canvas {
+        height: 260px;
+    }
+}
