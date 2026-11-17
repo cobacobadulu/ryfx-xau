@@ -1,1 +1,278 @@
+<main class="dashboard-page" data-page-content>
 
+    <!-- WELCOME SECTION -->
+    <section class="welcome-section">
+
+        <div class="welcome-content">
+            <span class="section-label">
+                GOLD MARKET INTELLIGENCE
+            </span>
+
+            <h1>
+                Welcome to <span>ryFX XAU</span>
+            </h1>
+
+            <p>
+                Trade smarter with AI-powered gold market intelligence.
+                Analyze the market, discover opportunities, and manage risk.
+            </p>
+        </div>
+
+        <div class="market-status">
+            <span class="status-indicator"></span>
+            <span id="marketStatus">Checking market...</span>
+        </div>
+
+    </section>
+
+
+    <!-- MARKET OVERVIEW -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">MARKET OVERVIEW</span>
+                <h2>Gold Market</h2>
+            </div>
+
+            <span class="market-symbol">XAUUSD</span>
+        </div>
+
+
+        <!-- MARKET CARDS -->
+        <div class="market-overview-grid">
+
+            <!-- GOLD PRICE -->
+            <article class="market-card main-price-card">
+
+                <div class="card-top">
+                    <span class="card-label">GOLD PRICE</span>
+                    <span class="card-icon">◆</span>
+                </div>
+
+                <h2 id="goldPrice">--</h2>
+
+                <div class="price-change">
+                    <span id="goldChange">--</span>
+                    <span id="goldChangePercent">--</span>
+                </div>
+
+                <span class="card-description">
+                    XAUUSD Spot Price
+                </span>
+
+            </article>
+
+
+            <!-- DAILY HIGH -->
+            <article class="market-card">
+
+                <div class="card-top">
+                    <span class="card-label">DAILY HIGH</span>
+                    <span class="card-icon">↗</span>
+                </div>
+
+                <h3 id="dailyHigh">--</h3>
+
+                <span class="card-description">
+                    Highest price today
+                </span>
+
+            </article>
+
+
+            <!-- DAILY LOW -->
+            <article class="market-card">
+
+                <div class="card-top">
+                    <span class="card-label">DAILY LOW</span>
+                    <span class="card-icon">↘</span>
+                </div>
+
+                <h3 id="dailyLow">--</h3>
+
+                <span class="card-description">
+                    Lowest price today
+                </span>
+
+            </article>
+
+
+            <!-- MARKET CHANGE -->
+            <article class="market-card">
+
+                <div class="card-top">
+                    <span class="card-label">MARKET CHANGE</span>
+                    <span class="card-icon">％</span>
+                </div>
+
+                <h3 id="marketChange">--</h3>
+
+                <span class="card-description">
+                    Daily price movement
+                </span>
+
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- MARKET INTELLIGENCE -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">ARTIFICIAL INTELLIGENCE</span>
+                <h2>AI Market Intelligence</h2>
+            </div>
+
+            <span class="ai-badge">AI POWERED</span>
+        </div>
+
+
+        <div class="intelligence-card">
+
+            <div class="intelligence-header">
+
+                <div class="intelligence-icon">
+                    ✦
+                </div>
+
+                <div>
+                    <h3>Gold Market Analysis</h3>
+                    <p>AI-powered XAUUSD market overview</p>
+                </div>
+
+            </div>
+
+
+            <div class="intelligence-content">
+
+                <div class="intelligence-item">
+                    <span class="intelligence-label">MARKET DIRECTION</span>
+                    <strong id="aiMarketDirection">Awaiting analysis</strong>
+                </div>
+
+                <div class="intelligence-item">
+                    <span class="intelligence-label">MARKET STRUCTURE</span>
+                    <strong id="aiMarketStructure">--</strong>
+                </div>
+
+                <div class="intelligence-item">
+                    <span class="intelligence-label">MARKET CONDITION</span>
+                    <strong id="aiMarketCondition">--</strong>
+                </div>
+
+            </div>
+
+
+            <div class="intelligence-footer">
+
+                <p id="aiMarketSummary">
+                    AI market intelligence will appear here
+                    once the analysis engine is connected.
+                </p>
+
+                <a href="#ai-analysis" class="primary-button">
+                    View AI Analysis ↗
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- TRADING SIGNALS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-label">TRADING OPPORTUNITIES</span>
+                <h2>Latest Trading Signals</h2>
+            </div>
+
+            <a href="#signals" class="text-link">
+                View All →
+            </a>
+
+        </div>
+
+
+        <div class="signals-container" id="dashboardSignals">
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">⌁</div>
+
+                <h3>No Trading Signals Yet</h3>
+
+                <p>
+                    Trading signals will appear here when
+                    the signal engine becomes available.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- MARKET STATISTICS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-label">MARKET INFORMATION</span>
+                <h2>Market Statistics</h2>
+            </div>
+
+        </div>
+
+
+        <div class="statistics-grid">
+
+            <article class="statistics-card">
+                <span>Trading Symbol</span>
+                <strong>XAUUSD</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>Asset Class</span>
+                <strong>Precious Metals</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>Market Type</span>
+                <strong>Spot Gold</strong>
+            </article>
+
+            <article class="statistics-card">
+                <span>Analysis Focus</span>
+                <strong>Gold Only</strong>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="dashboard-footer">
+
+        <div>
+            <strong>ryFX XAU</strong>
+            <p>AI-Powered Gold Trading Intelligence Platform</p>
+        </div>
+
+        <span>© 2026 ryFX XAU. All Rights Reserved.</span>
+
+    </footer>
+
+</main>
