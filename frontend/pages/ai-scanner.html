@@ -1,1 +1,363 @@
+<main class="ai-scanner-page" data-page-content>
 
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+        <div>
+            <span class="section-label">VISION INTELLIGENCE</span>
+            <h1>AI Chart Scanner</h1>
+            <p>
+                Upload your XAUUSD chart and let artificial intelligence
+                analyze market structure and trading opportunities.
+            </p>
+        </div>
+
+        <span class="ai-badge">✦ AI VISION</span>
+    </section>
+
+
+    <!-- UPLOAD SECTION -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">CHART INPUT</span>
+                <h2>Upload Trading Chart</h2>
+            </div>
+        </div>
+
+
+        <div class="scanner-upload-card">
+
+            <input
+                type="file"
+                id="chartImageInput"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+            >
+
+            <div
+                class="upload-dropzone"
+                id="chartUploadZone"
+                role="button"
+                tabindex="0"
+                aria-label="Upload XAUUSD chart image"
+            >
+
+                <div class="upload-icon">⇧</div>
+
+                <h3>Upload Your Chart Screenshot</h3>
+
+                <p>
+                    Drag and drop your image here or
+                    <span>browse files</span>
+                </p>
+
+                <small>
+                    PNG, JPG or WEBP · Maximum 10 MB
+                </small>
+
+            </div>
+
+
+            <!-- IMAGE PREVIEW -->
+            <div
+                class="chart-preview-container"
+                id="chartPreviewContainer"
+                hidden
+            >
+
+                <div class="preview-header">
+
+                    <div>
+                        <span class="card-label">UPLOADED CHART</span>
+                        <h3>Chart Preview</h3>
+                    </div>
+
+                    <button
+                        type="button"
+                        id="removeChartImage"
+                        class="secondary-button"
+                    >
+                        Remove Image ×
+                    </button>
+
+                </div>
+
+
+                <div class="chart-image-wrapper">
+                    <img
+                        id="chartImagePreview"
+                        src=""
+                        alt="Uploaded XAUUSD chart preview"
+                    >
+                </div>
+
+                <div class="preview-file-info">
+                    <span id="chartFileName">No file selected</span>
+                    <span id="chartFileSize">--</span>
+                </div>
+
+            </div>
+
+
+            <!-- ANALYSIS SETTINGS -->
+            <div class="scanner-settings">
+
+                <div class="form-group">
+
+                    <label for="scannerTimeframe">
+                        CHART TIMEFRAME
+                    </label>
+
+                    <select id="scannerTimeframe">
+                        <option value="M5">M5</option>
+                        <option value="M15" selected>M15</option>
+                        <option value="M30">M30</option>
+                        <option value="H1">H1</option>
+                        <option value="H4">H4</option>
+                        <option value="D1">D1</option>
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="scannerAnalysisType">
+                        ANALYSIS TYPE
+                    </label>
+
+                    <select id="scannerAnalysisType">
+
+                        <option value="full">
+                            Full Chart Analysis
+                        </option>
+
+                        <option value="structure">
+                            Market Structure
+                        </option>
+
+                        <option value="liquidity">
+                            Liquidity Analysis
+                        </option>
+
+                        <option value="supply-demand">
+                            Supply & Demand
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- ANALYZE BUTTON -->
+            <button
+                type="button"
+                id="analyzeChartButton"
+                class="primary-button scanner-analyze-button"
+                disabled
+            >
+                ✦ Analyze Chart with AI
+            </button>
+
+            <p class="upload-notice">
+                Upload an XAUUSD chart screenshot before starting
+                the AI vision analysis.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ANALYSIS STATUS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">VISION ENGINE</span>
+                <h2>Analysis Status</h2>
+            </div>
+        </div>
+
+
+        <div class="scanner-status-card">
+
+            <div class="scanner-status-icon">✦</div>
+
+            <div>
+                <h3 id="scannerStatus">Waiting for chart upload</h3>
+
+                <p id="scannerStatusDescription">
+                    Upload a chart screenshot to begin.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- AI ANALYSIS RESULTS -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">AI VISION RESULTS</span>
+                <h2>Chart Analysis</h2>
+            </div>
+
+            <span class="ai-badge">AI GENERATED</span>
+        </div>
+
+
+        <div class="scanner-results" id="scannerResults">
+
+            <!-- MARKET DIRECTION -->
+            <article class="scanner-result-card">
+
+                <span class="card-label">MARKET DIRECTION</span>
+
+                <h3 id="scannerDirection">--</h3>
+
+                <p id="scannerConfidence">
+                    Confidence: --
+                </p>
+
+            </article>
+
+
+            <!-- MARKET STRUCTURE -->
+            <article class="scanner-result-card">
+
+                <span class="card-label">MARKET STRUCTURE</span>
+
+                <h3 id="scannerStructure">--</h3>
+
+                <p id="scannerStructureDetails">
+                    Structure analysis will appear here.
+                </p>
+
+            </article>
+
+
+            <!-- LIQUIDITY -->
+            <article class="scanner-result-card">
+
+                <span class="card-label">LIQUIDITY ANALYSIS</span>
+
+                <h3 id="scannerLiquidity">--</h3>
+
+                <p id="scannerLiquidityDetails">
+                    Liquidity analysis will appear here.
+                </p>
+
+            </article>
+
+
+            <!-- BOS / CHOCH -->
+            <article class="scanner-result-card">
+
+                <span class="card-label">BOS / CHoCH</span>
+
+                <h3 id="scannerBOS">--</h3>
+
+                <p id="scannerBOSDetails">
+                    Market structure signals will appear here.
+                </p>
+
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- SUPPLY & DEMAND -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">PRICE ZONES</span>
+                <h2>Supply & Demand</h2>
+            </div>
+        </div>
+
+
+        <div class="zones-grid">
+
+            <article class="zone-card supply-zone">
+
+                <span class="card-label">SUPPLY ZONE</span>
+
+                <h3 id="scannerSupplyZone">--</h3>
+
+                <p id="scannerSupplyDetails">
+                    Potential selling area.
+                </p>
+
+            </article>
+
+
+            <article class="zone-card demand-zone">
+
+                <span class="card-label">DEMAND ZONE</span>
+
+                <h3 id="scannerDemandZone">--</h3>
+
+                <p id="scannerDemandDetails">
+                    Potential buying area.
+                </p>
+
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- AI TRADE INSIGHT -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">INTELLIGENT INSIGHTS</span>
+                <h2>AI Trading Insight</h2>
+            </div>
+        </div>
+
+
+        <div class="reasoning-card">
+
+            <div class="reasoning-icon">✦</div>
+
+            <div>
+                <h3>AI Chart Interpretation</h3>
+
+                <p id="scannerInsight">
+                    AI chart interpretation will appear here
+                    after the uploaded image has been analyzed.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISCLAIMER -->
+    <div class="market-disclaimer">
+
+        <strong>AI Vision Disclaimer</strong>
+
+        <p>
+            AI chart recognition may misinterpret visual information.
+            Always verify detected structures, price zones and trading
+            opportunities before making trading decisions.
+        </p>
+
+    </div>
+
+</main>
