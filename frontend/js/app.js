@@ -15,6 +15,7 @@ const RYFX_CONFIG = {
     theme: "dark"
 };
 
+
 /* APPLICATION STATE */
 
 const RYFX_STATE = {
@@ -22,10 +23,12 @@ const RYFX_STATE = {
     currentPage: "dashboard",
     currentTimeframe: RYFX_CONFIG.defaultTimeframe,
     marketConnected: false,
-    notifications: []
+    notifications: [],
+    pageLoaded: false
 };
 
-/* DOM SELECTOR */
+
+/* DOM SELECTORS */
 
 const $ = (selector, parent = document) => {
     return parent.querySelector(selector);
@@ -35,11 +38,10 @@ const $$ = (selector, parent = document) => {
     return [...parent.querySelectorAll(selector)];
 };
 
+
 /* APPLICATION INITIALIZATION */
 
-document.addEventListener("DOMContentLoaded", () => {
-    initializeApp();
-});
+document.addEventListener("DOMContentLoaded", initializeApp);
 
 function initializeApp() {
 
@@ -52,7 +54,6 @@ function initializeApp() {
     console.log("System initialized");
     console.log("=================================");
 
-    initializeClock();
     initializeNavigation();
     initializeNotifications();
 
@@ -68,11 +69,39 @@ function initializeApp() {
     );
 }
 
+
+/* PAGE INITIALIZATION */
+
+document.addEventListener("ryfx:page-loaded", event => {
+
+    const page = event.detail?.page;
+
+    if (!page) return;
+
+    RYFX_STATE.currentPage = page;
+    RYFX_STATE.pageLoaded = true;
+
+    setPageTitle(page);
+
+    initializeClock();
+
+    console.log("[ryFX] Page loaded:", page);
+
+});
+
+
 /* LIVE CLOCK */
+
+let clockInterval = null;
 
 function initializeClock() {
 
     const clock = $("#liveClock");
+
+    if (clockInterval) {
+        clearInterval(clockInterval);
+        clockInterval = null;
+    }
 
     if (!clock) return;
 
@@ -92,8 +121,9 @@ function initializeClock() {
 
     updateClock();
 
-    setInterval(updateClock, 1000);
+    clockInterval = setInterval(updateClock, 1000);
 }
+
 
 /* PAGE TITLE */
 
@@ -105,6 +135,7 @@ function setPageTitle(pageName) {
 
     document.title = `${page} | ${RYFX_CONFIG.name}`;
 }
+
 
 /* LOADING STATE */
 
@@ -120,6 +151,7 @@ function showLoading(element, message = "Loading...") {
     `;
 }
 
+
 function hideLoading(element) {
 
     if (!element) return;
@@ -130,6 +162,7 @@ function hideLoading(element) {
         loading.remove();
     }
 }
+
 
 /* EMPTY STATE */
 
@@ -146,11 +179,16 @@ function showEmptyState(element, message) {
     `;
 }
 
+
 /* NUMBER FORMATTER */
 
 function formatPrice(value, decimals = 2) {
 
-    if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+    if (
+        value === null ||
+        value === undefined ||
+        !Number.isFinite(Number(value))
+    ) {
         return "--";
     }
 
@@ -159,6 +197,22 @@ function formatPrice(value, decimals = 2) {
         maximumFractionDigits: decimals
     });
 }
+
+
+/* CURRENCY FORMATTER */
+
+function formatCurrency(value, currency = "USD") {
+
+    if (!Number.isFinite(Number(value))) {
+        return "--";
+    }
+
+    return Number(value).toLocaleString("en-US", {
+        style: "currency",
+        currency
+    });
+}
+
 
 /* ERROR HANDLER */
 
@@ -171,17 +225,35 @@ window.addEventListener("error", event => {
 
 });
 
+
+window.addEventListener("unhandledrejection", event => {
+
+    console.error(
+        "[ryFX XAU Promise Error]",
+        event.reason
+    );
+
+});
+
+
 /* APPLICATION EXPORTS */
 
 window.RYFX_CONFIG = RYFX_CONFIG;
+
 window.RYFX_STATE = RYFX_STATE;
 
 window.RYFX = {
+
     $,
     $$,
+
     setPageTitle,
+
     showLoading,
     hideLoading,
     showEmptyState,
-    formatPrice
+
+    formatPrice,
+    formatCurrency
+
 };
