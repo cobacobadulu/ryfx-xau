@@ -10,6 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 
+# ============================================
+# ROUTE IMPORTS
+# ============================================
+
+from routes import market
+from routes import analysis
+from routes import signals
+from routes import history
+
 
 # ============================================
 # APPLICATION LIFECYCLE
@@ -25,6 +34,12 @@ async def lifespan(app: FastAPI):
     print(f"Application: {settings.APP_NAME}")
     print(f"Version: {settings.APP_VERSION}")
     print(f"Environment: {settings.ENVIRONMENT}")
+
+    print("API ROUTERS:")
+    print("- Market API")
+    print("- AI Analysis API")
+    print("- Trading Signals API")
+    print("- Analysis History API")
 
     yield
 
@@ -62,10 +77,44 @@ app.add_middleware(
 
     allow_credentials=True,
 
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS"
+    ],
 
     allow_headers=["*"]
 
+)
+
+
+# ============================================
+# API ROUTER REGISTRATION
+# ============================================
+
+API_PREFIX = settings.API_PREFIX
+
+app.include_router(
+    market.router,
+    prefix=API_PREFIX
+)
+
+app.include_router(
+    analysis.router,
+    prefix=API_PREFIX
+)
+
+app.include_router(
+    signals.router,
+    prefix=API_PREFIX
+)
+
+app.include_router(
+    history.router,
+    prefix=API_PREFIX
 )
 
 
@@ -86,7 +135,9 @@ async def root():
 
         "message": "RYFX XAU Backend is running.",
 
-        "symbol": settings.MARKET_SYMBOL
+        "symbol": settings.MARKET_SYMBOL,
+
+        "documentation": "/docs"
 
     }
 
@@ -128,6 +179,8 @@ async def api_information():
 
         "description": settings.APP_DESCRIPTION,
 
+        "symbol": "XAUUSD",
+
         "available_endpoints": [
 
             "/",
@@ -136,17 +189,26 @@ async def api_information():
 
             "/api",
 
-            "/docs"
+            "/docs",
+
+            "/api/market/xauusd",
+
+            "/api/market/candles",
+
+            "/api/market/status",
+
+            "/api/analysis/xauusd",
+
+            "/api/analysis/status",
+
+            "/api/signals/",
+
+            "/api/signals/statistics",
+
+            "/api/history/",
+
+            "/api/history/statistics/summary"
 
         ]
 
     }
-
-
-# ============================================
-# FUTURE ROUTE INTEGRATION
-# ============================================
-
-# Market, AI Analysis, Signals, and History
-# routes will be registered here after
-# their implementations are completed.
