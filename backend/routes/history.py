@@ -67,21 +67,13 @@ def save_analysis(
     history_id = str(uuid4())
 
     record = {
-
         "id": history_id,
-
         "symbol": "XAUUSD",
-
         "timeframe": timeframe,
-
         "analysis_type": analysis_type,
-
         "market_data": market_data or {},
-
         "analysis": analysis,
-
         "created_at": current_timestamp()
-
     }
 
     ANALYSIS_HISTORY[history_id] = record
@@ -105,30 +97,70 @@ async def get_analysis_history(
 ):
 
     records = sorted(
-
         ANALYSIS_HISTORY.values(),
-
         key=lambda item: item["created_at"],
-
         reverse=True
-
     )
 
     records = records[:limit]
 
     return {
-
         "success": True,
-
         "symbol": "XAUUSD",
-
         "count": len(records),
-
         "data": [
             record.copy()
             for record in records
         ]
+    }
 
+
+# ============================================
+# HISTORY STATISTICS
+# ============================================
+
+@router.get("/statistics/summary")
+async def get_history_statistics():
+
+    records = list(
+        ANALYSIS_HISTORY.values()
+    )
+
+    directions = [
+        record.get("analysis", {}).get(
+            "direction",
+            "UNKNOWN"
+        )
+        for record in records
+    ]
+
+    return {
+        "success": True,
+        "total_analyses": len(records),
+        "buy_analyses": directions.count("BUY"),
+        "sell_analyses": directions.count("SELL"),
+        "wait_analyses": directions.count("WAIT"),
+        "symbol": "XAUUSD"
+    }
+
+
+# ============================================
+# DELETE ALL HISTORY
+# ============================================
+
+@router.delete("/")
+async def delete_all_history():
+
+    deleted_count = len(
+        ANALYSIS_HISTORY
+    )
+
+    ANALYSIS_HISTORY.clear()
+
+    return {
+        "success": True,
+        "message": "All analysis history deleted.",
+        "deleted_count": deleted_count
     }
 
 
@@ -148,19 +180,13 @@ async def get_history_detail(
     if record is None:
 
         raise HTTPException(
-
             status_code=404,
-
             detail="Analysis history not found."
-
         )
 
     return {
-
         "success": True,
-
         "data": record.copy()
-
     }
 
 
@@ -176,84 +202,14 @@ async def delete_history_item(
     if history_id not in ANALYSIS_HISTORY:
 
         raise HTTPException(
-
             status_code=404,
-
             detail="Analysis history not found."
-
         )
 
     del ANALYSIS_HISTORY[history_id]
 
     return {
-
         "success": True,
-
         "message": "Analysis history deleted.",
-
         "id": history_id
-
-    }
-
-
-# ============================================
-# DELETE ALL HISTORY
-# ============================================
-
-@router.delete("/")
-async def delete_all_history():
-
-    deleted_count = len(
-        ANALYSIS_HISTORY
-    )
-
-    ANALYSIS_HISTORY.clear()
-
-    return {
-
-        "success": True,
-
-        "message": "All analysis history deleted.",
-
-        "deleted_count": deleted_count
-
-    }
-
-
-# ============================================
-# HISTORY STATISTICS
-# ============================================
-
-@router.get("/statistics/summary")
-async def get_history_statistics():
-
-    records = list(
-        ANALYSIS_HISTORY.values()
-    )
-
-    directions = [
-
-        record.get("analysis", {}).get(
-            "direction",
-            "UNKNOWN"
-        )
-
-        for record in records
-
-    ]
-
-    return {
-
-        "success": True,
-
-        "total_analyses": len(records),
-
-        "buy_analyses": directions.count("BUY"),
-
-        "sell_analyses": directions.count("SELL"),
-
-        "wait_analyses": directions.count("WAIT"),
-
-        "symbol": "XAUUSD"
-
     }
