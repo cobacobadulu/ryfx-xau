@@ -1,6 +1,7 @@
 /* =========================================
    ryFX XAU — NAVIGATION SYSTEM
    SPA PAGE MANAGEMENT
+   APPLICATION SHELL COMPATIBLE
 ========================================= */
 
 "use strict";
@@ -44,9 +45,12 @@ function initializeNavigation() {
 
     if (navigationInitialized) return;
 
-    const app = document.getElementById("app");
+    const pageContent = document.getElementById("pageContent");
 
-    if (!app) return;
+    if (!pageContent) {
+        console.error("[Navigation] #pageContent not found.");
+        return;
+    }
 
     navigationInitialized = true;
 
@@ -70,7 +74,7 @@ function initializeNavigation() {
     });
 
 
-    /* MOBILE MENU CLICK */
+    /* MOBILE MENU */
 
     document.addEventListener("click", event => {
 
@@ -83,15 +87,11 @@ function initializeNavigation() {
         );
 
         if (menuButton) {
-
             toggleMobileMenu();
-
         }
 
         if (overlay) {
-
             closeMobileMenu();
-
         }
 
     });
@@ -124,29 +124,23 @@ function initializeNavigation() {
 async function navigateTo(page) {
 
     if (!RYFX_PAGES[page]) {
-
         console.error("[Navigation] Page not found:", page);
-
         return;
-
     }
 
-    if (page === RYFX_STATE.currentPage &&
-        RYFX_STATE.pageLoaded) {
-
+    if (
+        page === RYFX_STATE.currentPage &&
+        RYFX_STATE.pageLoaded
+    ) {
         closeMobileMenu();
-
         return;
-
     }
-
 
     history.pushState(
         { page },
         "",
         `#${page}`
     );
-
 
     await loadPage(page);
 
@@ -157,18 +151,16 @@ async function navigateTo(page) {
 
 async function loadPage(page) {
 
-    const app = document.getElementById("app");
+    const pageContent = document.getElementById("pageContent");
 
-    if (!app) return;
-
-    const pagePath = RYFX_PAGES[page];
-
-    if (!pagePath) {
-
-        console.error("[Navigation] Invalid page:", page);
-
+    if (!pageContent) {
+        console.error("[Navigation] #pageContent not found.");
         return;
+    }
 
+    if (!RYFX_PAGES[page]) {
+        console.error("[Navigation] Invalid page:", page);
+        return;
     }
 
 
@@ -177,7 +169,11 @@ async function loadPage(page) {
 
     try {
 
-        app.innerHTML = `
+        /* LOADING STATE */
+
+        pageContent.className = "page-content";
+
+        pageContent.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">◌</div>
                 <p>Loading ${page}...</p>
@@ -185,15 +181,13 @@ async function loadPage(page) {
         `;
 
 
-        const response = await fetch(pagePath);
+        /* FETCH PAGE */
 
+        const response = await fetch(RYFX_PAGES[page]);
 
         if (!response.ok) {
-
             throw new Error(`HTTP ${response.status}`);
-
         }
-
 
         const html = await response.text();
 
@@ -202,6 +196,8 @@ async function loadPage(page) {
 
         if (requestId !== activeRequest) return;
 
+
+        /* PARSE HTML */
 
         const parser = new DOMParser();
 
@@ -218,13 +214,24 @@ async function loadPage(page) {
 
 
         if (!content) {
-
             throw new Error("Page content not found.");
-
         }
 
 
-        app.innerHTML = content.innerHTML;
+        /* PRESERVE PAGE ROOT CLASS */
+
+        const pageClasses = Array.from(content.classList)
+            .filter(className => className !== "page-content");
+
+        pageContent.className = [
+            "page-content",
+            ...pageClasses
+        ].join(" ");
+
+
+        /* INSERT PAGE CONTENT */
+
+        pageContent.innerHTML = content.innerHTML;
 
 
         /* UPDATE APPLICATION STATE */
@@ -256,7 +263,7 @@ async function loadPage(page) {
 
                 detail: {
                     page,
-                    content: app
+                    content: pageContent
                 }
 
             })
@@ -278,7 +285,9 @@ async function loadPage(page) {
         console.error("[Navigation Error]", error);
 
 
-        app.innerHTML = `
+        pageContent.className = "page-content";
+
+        pageContent.innerHTML = `
             <div class="empty-state">
 
                 <div class="empty-state-icon">⚠</div>
@@ -309,12 +318,19 @@ async function loadPage(page) {
 
 function updateActiveMenu(page) {
 
-    document.querySelectorAll(".menu-item").forEach(item => {
+    document.querySelectorAll("[data-page]").forEach(item => {
 
-        item.classList.toggle(
-            "active",
-            item.dataset.page === page
-        );
+        if (
+            item.classList.contains("nav-item") ||
+            item.classList.contains("menu-item")
+        ) {
+
+            item.classList.toggle(
+                "active",
+                item.dataset.page === page
+            );
+
+        }
 
     });
 
@@ -331,13 +347,10 @@ function toggleMobileMenu() {
 
     if (!sidebar) return;
 
-
     const isOpen = sidebar.classList.toggle("open");
 
     if (overlay) {
-
         overlay.classList.toggle("active", isOpen);
-
     }
 
 }
@@ -350,7 +363,6 @@ function closeMobileMenu() {
     const sidebar = document.querySelector(".sidebar");
 
     const overlay = document.querySelector(".sidebar-overlay");
-
 
     sidebar?.classList.remove("open");
 
