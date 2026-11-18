@@ -39,6 +39,15 @@ ALLOWED_TIMEFRAMES = {
     "1d"
 }
 
+VALID_MARKET_STATUSES = {
+    "LIVE",
+    "STALE",
+    "MARKET_CLOSED",
+    "CLOSED",
+    "DELAYED",
+    "UNKNOWN"
+}
+
 
 # ============================================
 # HELPERS
@@ -53,6 +62,9 @@ def current_timestamp():
 
 def valid_price(value):
 
+    if isinstance(value, bool):
+        return False
+
     try:
 
         price = float(value)
@@ -62,7 +74,7 @@ def valid_price(value):
             and price > 0
         )
 
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
 
         return False
 
@@ -72,9 +84,46 @@ def validate_market_data(market):
     if not isinstance(market, dict):
         return False
 
-    return valid_price(
+    if not valid_price(
         market.get("price")
+    ):
+        return False
+
+    bid = market.get("bid")
+    ask = market.get("ask")
+
+    if bid is not None and not valid_price(bid):
+        return False
+
+    if ask is not None and not valid_price(ask):
+        return False
+
+    if (
+        bid is not None
+        and ask is not None
+        and float(ask) < float(bid)
+    ):
+        return False
+
+    return True
+
+
+def normalize_market_status(market):
+
+    status = market.get(
+        "status",
+        "UNKNOWN"
     )
+
+    if not isinstance(status, str):
+        return "UNKNOWN"
+
+    status = status.upper()
+
+    if status not in VALID_MARKET_STATUSES:
+        return "UNKNOWN"
+
+    return status
 
 
 # ============================================
@@ -91,9 +140,13 @@ async def get_xauusd_market():
         if not validate_market_data(market):
 
             raise HTTPException(
-                status_code=503,
+                status_code=502,
                 detail="Invalid XAUUSD market data."
             )
+
+        market["status"] = normalize_market_status(
+            market
+        )
 
         return {
 
@@ -110,6 +163,13 @@ async def get_xauusd_market():
     except HTTPException:
 
         raise
+
+    except RuntimeError as error:
+
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        ) from error
 
     except Exception as error:
 
@@ -156,7 +216,7 @@ async def get_xauusd_candles(
             limit=limit
         )
 
-        if not candles:
+        if not isinstance(candles, list) or not candles:
 
             raise HTTPException(
                 status_code=503,
@@ -182,6 +242,20 @@ async def get_xauusd_candles(
     except HTTPException:
 
         raise
+
+    except RuntimeError as error:
+
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        ) from error
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=502,
+            detail=str(error)
+        ) from error
 
     except Exception as error:
 
@@ -210,24 +284,28 @@ async def get_market_status():
             market
         )
 
+        status = (
+            normalize_market_status(market)
+            if connected
+            else "DISCONNECTED"
+        )
+
         return {
 
             "success": True,
 
             "symbol": "XAUUSD",
 
+            # API connection and market session
+            # are separate states.
+
             "connected": connected,
 
-            "status": (
-                market.get("status", "UNKNOWN")
-                if connected
-                else "DISCONNECTED"
-            ),
+            "status": status,
 
             "is_live": (
-                market.get("is_live", False)
-                if connected
-                else False
+                connected
+                and status == "LIVE"
             ),
 
             "price": (
