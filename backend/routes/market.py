@@ -1,7 +1,9 @@
 # ============================================
 # RYFX XAU — MARKET ROUTES
-# XAUUSD LIVE MARKET API
+# MARKETAPI INTEGRATION
 # ============================================
+
+import math
 
 from datetime import datetime, timezone
 
@@ -27,7 +29,7 @@ router = APIRouter(
 # CONFIGURATION
 # ============================================
 
-ALLOWED_TIMEFRAMES = [
+ALLOWED_TIMEFRAMES = {
     "1m",
     "5m",
     "15m",
@@ -35,7 +37,7 @@ ALLOWED_TIMEFRAMES = [
     "1h",
     "4h",
     "1d"
-]
+}
 
 
 # ============================================
@@ -49,6 +51,32 @@ def current_timestamp():
     ).isoformat()
 
 
+def valid_price(value):
+
+    try:
+
+        price = float(value)
+
+        return (
+            math.isfinite(price)
+            and price > 0
+        )
+
+    except (TypeError, ValueError):
+
+        return False
+
+
+def validate_market_data(market):
+
+    if not isinstance(market, dict):
+        return False
+
+    return valid_price(
+        market.get("price")
+    )
+
+
 # ============================================
 # LIVE MARKET DATA
 # ============================================
@@ -60,20 +88,11 @@ async def get_xauusd_market():
 
         market = await get_market_data()
 
-        if not isinstance(market, dict) or not market:
+        if not validate_market_data(market):
 
             raise HTTPException(
                 status_code=503,
-                detail="XAUUSD market data is unavailable."
-            )
-
-        price = market.get("price")
-
-        if price is None or float(price) <= 0:
-
-            raise HTTPException(
-                status_code=503,
-                detail="Invalid XAUUSD market price."
+                detail="Invalid XAUUSD market data."
             )
 
         return {
@@ -137,7 +156,7 @@ async def get_xauusd_candles(
             limit=limit
         )
 
-        if not isinstance(candles, list) or not candles:
+        if not candles:
 
             raise HTTPException(
                 status_code=503,
@@ -187,20 +206,9 @@ async def get_market_status():
 
         market = await get_market_data()
 
-        connected = isinstance(
-            market,
-            dict
-        ) and bool(market)
-
-        price = (
-            market.get("price")
-            if connected
-            else None
+        connected = validate_market_data(
+            market
         )
-
-        if price is None or float(price) <= 0:
-
-            connected = False
 
         return {
 
@@ -211,9 +219,21 @@ async def get_market_status():
             "connected": connected,
 
             "status": (
-                "connected"
+                market.get("status", "UNKNOWN")
                 if connected
-                else "disconnected"
+                else "DISCONNECTED"
+            ),
+
+            "is_live": (
+                market.get("is_live", False)
+                if connected
+                else False
+            ),
+
+            "price": (
+                market.get("price")
+                if connected
+                else None
             ),
 
             "timestamp": current_timestamp()
@@ -234,7 +254,11 @@ async def get_market_status():
 
             "connected": False,
 
-            "status": "disconnected",
+            "status": "DISCONNECTED",
+
+            "is_live": False,
+
+            "price": None,
 
             "timestamp": current_timestamp()
 
