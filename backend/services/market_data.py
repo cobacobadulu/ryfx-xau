@@ -1,10 +1,12 @@
 # ============================================
 # RYFX XAU — MARKET DATA SERVICE
-# REAL-TIME GOLD MARKET DATA
+# MARKETAPI INTEGRATION
 # ============================================
 
+import math
 import httpx
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from config import settings
@@ -16,7 +18,33 @@ from config import settings
 
 MARKET_API_TIMEOUT = 15.0
 
+MARKET_API_BASE_URL = (
+    settings.MARKET_API_URL.rstrip("/")
+    if settings.MARKET_API_URL
+    else "https://api.marketapi.app/v1"
+)
+
 MARKET_SYMBOL = "XAUUSD"
+
+TIMEFRAME_MAP = {
+    "1m": "M1",
+    "5m": "M5",
+    "15m": "M15",
+    "30m": "M30",
+    "1h": "H1",
+    "4h": "H4",
+    "1d": "D1",
+}
+
+TIMEFRAME_MINUTES = {
+    "1m": 1,
+    "5m": 5,
+    "15m": 15,
+    "30m": 30,
+    "1h": 60,
+    "4h": 240,
+    "1d": 1440,
+}
 
 
 # ============================================
@@ -28,24 +56,20 @@ async def fetch_market_api(
     params: dict | None = None
 ) -> dict[str, Any]:
 
-    if not settings.MARKET_API_URL:
-
+    if not settings.MARKET_API_KEY:
         raise RuntimeError(
-            "MARKET_API_URL has not been configured."
+            "MARKET_API_KEY has not been configured."
         )
 
     headers = {
-        "Accept": "application/json"
-    }
-
-    if settings.MARKET_API_KEY:
-
-        headers["Authorization"] = (
+        "Accept": "application/json",
+        "Authorization": (
             f"Bearer {settings.MARKET_API_KEY}"
         )
+    }
 
     url = (
-        settings.MARKET_API_URL.rstrip("/")
+        MARKET_API_BASE_URL.rstrip("/")
         + "/"
         + endpoint.lstrip("/")
     )
@@ -65,12 +89,32 @@ async def fetch_market_api(
         data = response.json()
 
     if not isinstance(data, dict):
-
         raise ValueError(
-            "Invalid market API response."
+            "Invalid MarketAPI response."
         )
 
     return data
+
+
+# ============================================
+# SAFE NUMBER CONVERSION
+# ============================================
+
+def safe_float(value: Any) -> float | None:
+
+    if value is None or value == "":
+        return None
+
+    try:
+        number = float(value)
+
+    except (TypeError, ValueError):
+        return None
+
+    if not math.isfinite(number):
+        return None
+
+    return number
 
 
 # ============================================
@@ -78,76 +122,71 @@ async def fetch_market_api(
 # ============================================
 
 def normalize_market_data(
-    data: dict[str, Any]
+    response: dict[str, Any]
 ) -> dict[str, Any]:
 
-    source = data.get("data", data)
+    quotes = response.get("data")
 
-    if not isinstance(source, dict):
-
+    if not isinstance(quotes, list) or not quotes:
         raise ValueError(
-            "Invalid XAUUSD market data."
+            "MarketAPI returned no XAUUSD price."
         )
 
-    price = source.get(
-        "price",
-        source.get(
-            "close",
-            source.get("last")
-        )
+    quote = next(
+        (
+            item for item in quotes
+            if isinstance(item, dict)
+            and item.get("symbol") == MARKET_SYMBOL
+        ),
+        None
     )
 
-    if price is None:
-
+    if quote is None:
         raise ValueError(
-            "Market price is missing."
+            "XAUUSD price was not found."
         )
 
-    try:
+    bid = safe_float(quote.get("bid"))
+    ask = safe_float(quote.get("ask"))
+    last = safe_float(quote.get("last"))
 
-        price = float(price)
+    if last is not None and last > 0:
+        price = last
 
-    except (TypeError, ValueError):
+    elif (
+        bid is not None
+        and ask is not None
+        and bid > 0
+        and ask > 0
+    ):
+        price = (bid + ask) / 2
 
+    else:
         raise ValueError(
-            "Invalid market price."
+            "MarketAPI returned an invalid XAUUSD quote."
         )
 
-    if price <= 0:
-
-        raise ValueError(
-            "Market price must be positive."
-        )
+    status = quote.get("status", "UNKNOWN")
 
     return {
-
         "symbol": MARKET_SYMBOL,
-
         "price": price,
-
-        "open": source.get("open"),
-
-        "high": source.get(
-            "high",
-            source.get("day_high")
+        "bid": bid,
+        "ask": ask,
+        "spread": (
+            ask - bid
+            if bid is not None and ask is not None
+            else None
         ),
-
-        "low": source.get(
-            "low",
-            source.get("day_low")
-        ),
-
-        "change": source.get("change"),
-
-        "change_percent": source.get(
-            "change_percent",
-            source.get("percent_change")
-        ),
-
-        "volume": source.get("volume"),
-
-        "timestamp": source.get("timestamp")
-
+        "open": None,
+        "high": None,
+        "low": None,
+        "change": None,
+        "change_percent": None,
+        "volume": None,
+        "timestamp": quote.get("time"),
+        "status": status,
+        "is_live": status == "LIVE"
     }
 
 
@@ -158,9 +197,9 @@ def normalize_market_data(
 async def get_market_data() -> dict[str, Any]:
 
     response = await fetch_market_api(
-        "quote",
+        "prices/latest",
         params={
-            "symbol": MARKET_SYMBOL
+            "symbols": MARKET_SYMBOL
         }
     )
 
@@ -168,29 +207,78 @@ async def get_market_data() -> dict[str, Any]:
 
 
 # ============================================
+# NORMALIZE TIMESTAMP
+# ============================================
+
+def normalize_timestamp(value: Any) -> int | None:
+
+    if value is None:
+        return None
+
+    try:
+
+        if isinstance(value, (int, float)):
+            timestamp = float(value)
+
+            # Convert milliseconds to seconds.
+            if timestamp > 10_000_000_000:
+                timestamp /= 1000
+
+            return int(timestamp)
+
+        if isinstance(value, str):
+
+            try:
+                timestamp = float(value)
+
+                if timestamp > 10_000_000_000:
+                    timestamp /= 1000
+
+                return int(timestamp)
+
+            except ValueError:
+                pass
+
+            parsed = datetime.fromisoformat(
+                value.replace("Z", "+00:00")
+            )
+
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(
+                    tzinfo=timezone.utc
+                )
+
+            return int(parsed.timestamp())
+
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+    return None
+
+
+# ============================================
 # NORMALIZE CANDLE DATA
 # ============================================
 
 def normalize_candles(
-    data: Any
+    response: Any
 ) -> list[dict[str, Any]]:
 
-    if isinstance(data, dict):
+    if isinstance(response, dict):
 
         candles = (
-            data.get("data")
-            or data.get("candles")
-            or data.get("results")
+            response.get("data")
+            or response.get("bars")
+            or response.get("candles")
+            or response.get("results")
         )
 
     else:
-
-        candles = data
+        candles = response
 
     if not isinstance(candles, list):
-
         raise ValueError(
-            "Invalid candle response."
+            "Invalid MarketAPI candle response."
         )
 
     normalized = []
@@ -198,43 +286,42 @@ def normalize_candles(
     for candle in candles:
 
         if not isinstance(candle, dict):
-
             continue
 
-        try:
-
-            timestamp = candle.get(
+        timestamp = normalize_timestamp(
+            candle.get(
                 "time",
                 candle.get("timestamp")
             )
+        )
 
-            open_price = float(candle["open"])
+        open_price = safe_float(
+            candle.get("open")
+        )
 
-            high_price = float(candle["high"])
+        high_price = safe_float(
+            candle.get("high")
+        )
 
-            low_price = float(candle["low"])
+        low_price = safe_float(
+            candle.get("low")
+        )
 
-            close_price = float(candle["close"])
+        close_price = safe_float(
+            candle.get("close")
+        )
 
-        except (
-            KeyError,
-            TypeError,
-            ValueError
-        ):
-
-            continue
-
-        if not timestamp:
-
-            continue
-
-        if min(
+        values = [
             open_price,
             high_price,
             low_price,
             close_price
-        ) <= 0:
+        ]
 
+        if timestamp is None:
+            continue
+
+        if any(value is None or value <= 0 for value in values):
             continue
 
         if high_price < max(
@@ -242,7 +329,6 @@ def normalize_candles(
             close_price,
             low_price
         ):
-
             continue
 
         if low_price > min(
@@ -250,28 +336,26 @@ def normalize_candles(
             close_price,
             high_price
         ):
-
             continue
 
         normalized.append({
-
             "time": timestamp,
-
             "open": open_price,
-
             "high": high_price,
-
             "low": low_price,
-
             "close": close_price
-
         })
 
-    normalized.sort(
-        key=lambda item: str(item["time"])
-    )
+    # Sort chronologically and remove duplicate timestamps.
+    unique_candles = {
+        candle["time"]: candle
+        for candle in normalized
+    }
 
-    return normalized
+    return [
+        unique_candles[timestamp]
+        for timestamp in sorted(unique_candles)
+    ]
 
 
 # ============================================
@@ -283,22 +367,46 @@ async def get_market_candles(
     limit: int = 200
 ) -> list[dict[str, Any]]:
 
+    api_timeframe = TIMEFRAME_MAP.get(timeframe)
+
+    if api_timeframe is None:
+        raise ValueError(
+            f"Unsupported timeframe: {timeframe}"
+        )
+
+    if not 1 <= limit <= 1000:
+        raise ValueError(
+            "Candle limit must be between 1 and 1000."
+        )
+
+    interval = TIMEFRAME_MINUTES[timeframe]
+
+    end_time = datetime.now(timezone.utc)
+
+    start_time = end_time - timedelta(
+        minutes=interval * (limit + 5)
+    )
+
     response = await fetch_market_api(
-
-        "candles",
-
+        "bars",
         params={
-
             "symbol": MARKET_SYMBOL,
-
-            "timeframe": timeframe,
-
+            "timeframe": api_timeframe,
+            "from": start_time.isoformat(
+                timespec="seconds"
+            ).replace("+00:00", "Z"),
+            "to": end_time.isoformat(
+                timespec="seconds"
+            ).replace("+00:00", "Z"),
             "limit": limit
-
         }
-
     )
 
     candles = normalize_candles(response)
+
+    if not candles:
+        raise ValueError(
+            "MarketAPI returned no valid XAUUSD candles."
+        )
 
     return candles[-limit:]
