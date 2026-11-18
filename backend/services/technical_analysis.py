@@ -3,6 +3,8 @@
 # XAUUSD TECHNICAL INTELLIGENCE
 # ============================================
 
+import math
+
 from typing import Any
 
 
@@ -22,6 +24,8 @@ MACD_SIGNAL = 9
 
 DEFAULT_LOOKBACK = 100
 
+SWING_WINDOW = 2
+
 
 # ============================================
 # DATA VALIDATION
@@ -33,11 +37,16 @@ def validate_candles(
 
     if not isinstance(candles, list):
 
-        raise ValueError("Candles must be a list.")
+        raise ValueError(
+            "Candles must be a list."
+        )
 
     validated = []
 
     for candle in candles:
+
+        if not isinstance(candle, dict):
+            continue
 
         try:
 
@@ -54,13 +63,21 @@ def validate_candles(
 
             continue
 
-        if min(
+        values = [
             open_price,
             high_price,
             low_price,
             close_price
-        ) <= 0:
+        ]
 
+        if not all(
+            math.isfinite(value)
+            for value in values
+        ):
+
+            continue
+
+        if min(values) <= 0:
             continue
 
         if high_price < max(
@@ -68,7 +85,6 @@ def validate_candles(
             close_price,
             low_price
         ):
-
             continue
 
         if low_price > min(
@@ -76,7 +92,6 @@ def validate_candles(
             close_price,
             high_price
         ):
-
             continue
 
         validated.append({
@@ -112,19 +127,16 @@ def calculate_ema(
             "EMA period must be positive."
         )
 
-    if len(prices) < period:
+    result = [None] * len(prices)
 
-        return [None] * len(prices)
+    if len(prices) < period:
+        return result
 
     multiplier = 2 / (period + 1)
 
-    result = [None] * len(prices)
-
-    initial_sma = sum(
+    ema = sum(
         prices[:period]
     ) / period
-
-    ema = initial_sma
 
     result[period - 1] = ema
 
@@ -162,7 +174,6 @@ def calculate_rsi(
     result = [None] * len(prices)
 
     if len(prices) <= period:
-
         return result
 
     gains = []
@@ -192,11 +203,9 @@ def calculate_rsi(
     ) -> float:
 
         if loss == 0:
-
             return 100.0
 
         if gain == 0:
-
             return 0.0
 
         relative_strength = gain / loss
@@ -345,7 +354,6 @@ def calculate_atr(
     result = [None] * len(candles)
 
     if len(candles) <= period:
-
         return result
 
     true_ranges = []
@@ -411,30 +419,35 @@ def calculate_support_resistance(
     lookback: int = DEFAULT_LOOKBACK
 ) -> dict[str, float | None]:
 
+    if lookback <= 0:
+
+        raise ValueError(
+            "Lookback must be positive."
+        )
+
     recent = candles[-lookback:]
 
     if not recent:
 
         return {
+
             "support": None,
+
             "resistance": None
+
         }
-
-    support = min(
-        candle["low"]
-        for candle in recent
-    )
-
-    resistance = max(
-        candle["high"]
-        for candle in recent
-    )
 
     return {
 
-        "support": support,
+        "support": min(
+            candle["low"]
+            for candle in recent
+        ),
 
-        "resistance": resistance
+        "resistance": max(
+            candle["high"]
+            for candle in recent
+        )
 
     }
 
@@ -445,8 +458,14 @@ def calculate_support_resistance(
 
 def detect_market_structure(
     candles: list[dict[str, float]],
-    swing_window: int = 2
+    swing_window: int = SWING_WINDOW
 ) -> dict[str, Any]:
+
+    if swing_window <= 0:
+
+        raise ValueError(
+            "Swing window must be positive."
+        )
 
     highs = [
         candle["high"]
@@ -489,39 +508,52 @@ def detect_market_structure(
 
         if (
             high > max(left_highs)
-            and
-            high >= max(right_highs)
+            and high >= max(right_highs)
         ):
 
-            swing_highs.append(high)
+            swing_highs.append({
+
+                "index": index,
+
+                "price": high
+
+            })
 
         if (
             low < min(left_lows)
-            and
-            low <= min(right_lows)
+            and low <= min(right_lows)
         ):
 
-            swing_lows.append(low)
+            swing_lows.append({
+
+                "index": index,
+
+                "price": low
+
+            })
 
     structure = "UNDEFINED"
 
-    if len(swing_highs) >= 2 and len(swing_lows) >= 2:
+    if (
+        len(swing_highs) >= 2
+        and len(swing_lows) >= 2
+    ):
 
-        higher_high = (
-            swing_highs[-1] > swing_highs[-2]
-        )
+        previous_high = swing_highs[-2]["price"]
 
-        higher_low = (
-            swing_lows[-1] > swing_lows[-2]
-        )
+        latest_high = swing_highs[-1]["price"]
 
-        lower_high = (
-            swing_highs[-1] < swing_highs[-2]
-        )
+        previous_low = swing_lows[-2]["price"]
 
-        lower_low = (
-            swing_lows[-1] < swing_lows[-2]
-        )
+        latest_low = swing_lows[-1]["price"]
+
+        higher_high = latest_high > previous_high
+
+        higher_low = latest_low > previous_low
+
+        lower_high = latest_high < previous_high
+
+        lower_low = latest_low < previous_low
 
         if higher_high and higher_low:
 
@@ -539,9 +571,25 @@ def detect_market_structure(
 
         "structure": structure,
 
-        "swing_highs": swing_highs[-5:],
+        "swing_highs": [
 
-        "swing_lows": swing_lows[-5:]
+            item["price"]
+
+            for item in swing_highs[-5:]
+
+        ],
+
+        "swing_lows": [
+
+            item["price"]
+
+            for item in swing_lows[-5:]
+
+        ],
+
+        "swing_high_count": len(swing_highs),
+
+        "swing_low_count": len(swing_lows)
 
     }
 
@@ -559,7 +607,11 @@ def analyze_trend(
 
     if any(
         value is None
-        for value in [ema20, ema50, ema200]
+        for value in [
+            ema20,
+            ema50,
+            ema200
+        ]
     ):
 
         return "INSUFFICIENT_DATA"
@@ -602,6 +654,10 @@ def analyze_market(
 
     current_price = closes[-1]
 
+    # ========================================
+    # EMA
+    # ========================================
+
     ema_results = {
 
         period: calculate_ema(
@@ -619,41 +675,15 @@ def analyze_market(
 
     ema200 = ema_results[200][-1]
 
+    # ========================================
+    # RSI
+    # ========================================
+
     rsi_values = calculate_rsi(
         closes
     )
 
-    macd_results = calculate_macd(
-        closes
-    )
-
-    atr_values = calculate_atr(
-        candles
-    )
-
-    support_resistance = (
-        calculate_support_resistance(
-            candles
-        )
-    )
-
-    market_structure = (
-        detect_market_structure(
-            candles
-        )
-    )
-
     current_rsi = rsi_values[-1]
-
-    current_macd = (
-        macd_results["macd"][-1]
-    )
-
-    current_signal = (
-        macd_results["signal"][-1]
-    )
-
-    current_atr = atr_values[-1]
 
     if current_rsi is None:
 
@@ -670,6 +700,22 @@ def analyze_market(
     else:
 
         rsi_condition = "NEUTRAL"
+
+    # ========================================
+    # MACD
+    # ========================================
+
+    macd_results = calculate_macd(
+        closes
+    )
+
+    current_macd = macd_results["macd"][-1]
+
+    current_signal = macd_results["signal"][-1]
+
+    current_histogram = (
+        macd_results["histogram"][-1]
+    )
 
     if (
         current_macd is None
@@ -690,12 +736,55 @@ def analyze_market(
 
         macd_condition = "NEUTRAL"
 
-    trend = analyze_trend(
-        ema20,
-        ema50,
-        ema200,
-        current_price
+    # ========================================
+    # ATR
+    # ========================================
+
+    atr_values = calculate_atr(
+        candles
     )
+
+    current_atr = atr_values[-1]
+
+    # ========================================
+    # SUPPORT AND RESISTANCE
+    # ========================================
+
+    support_resistance = (
+        calculate_support_resistance(
+            candles
+        )
+    )
+
+    # ========================================
+    # MARKET STRUCTURE
+    # ========================================
+
+    market_structure = (
+        detect_market_structure(
+            candles
+        )
+    )
+
+    # ========================================
+    # TREND
+    # ========================================
+
+    trend = analyze_trend(
+
+        ema20,
+
+        ema50,
+
+        ema200,
+
+        current_price
+
+    )
+
+    # ========================================
+    # RETURN ANALYSIS
+    # ========================================
 
     return {
 
@@ -731,9 +820,7 @@ def analyze_market(
 
                 "signal": current_signal,
 
-                "histogram": (
-                    macd_results["histogram"][-1]
-                ),
+                "histogram": current_histogram,
 
                 "condition": macd_condition
 
@@ -747,13 +834,9 @@ def analyze_market(
 
         },
 
-        "support_resistance": (
-            support_resistance
-        ),
+        "support_resistance": support_resistance,
 
-        "market_structure": (
-            market_structure
-        ),
+        "market_structure": market_structure,
 
         "candles_analyzed": len(candles)
 
