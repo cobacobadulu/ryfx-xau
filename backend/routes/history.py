@@ -6,6 +6,7 @@
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
+from copy import deepcopy
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -21,11 +22,39 @@ router = APIRouter(
 
 
 # ============================================
+# CONFIGURATION
+# ============================================
+
+ALLOWED_TIMEFRAMES = {
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "1d"
+}
+
+ALLOWED_ANALYSIS_TYPES = {
+    "technical",
+    "scalping",
+    "intraday",
+    "swing"
+}
+
+ALLOWED_DIRECTIONS = {
+    "BUY",
+    "SELL",
+    "WAIT"
+}
+
+
+# ============================================
 # TEMPORARY STORAGE
 # ============================================
 
-# Temporary in-memory storage.
-# Data will be lost when the backend restarts.
+# Data is stored in memory.
+# All records will be lost when the backend restarts.
 
 ANALYSIS_HISTORY: dict[str, dict[str, Any]] = {}
 
@@ -35,10 +64,38 @@ ANALYSIS_HISTORY: dict[str, dict[str, Any]] = {}
 # ============================================
 
 def current_timestamp() -> str:
-
     return datetime.now(
         timezone.utc
     ).isoformat()
+
+
+def validate_history_data(
+    analysis: dict[str, Any],
+    timeframe: str,
+    analysis_type: str
+) -> None:
+
+    if not isinstance(analysis, dict) or not analysis:
+        raise ValueError(
+            "Analysis data must be a non-empty dictionary."
+        )
+
+    if timeframe not in ALLOWED_TIMEFRAMES:
+        raise ValueError(
+            "Invalid analysis timeframe."
+        )
+
+    if analysis_type not in ALLOWED_ANALYSIS_TYPES:
+        raise ValueError(
+            "Invalid analysis type."
+        )
+
+    direction = analysis.get("direction")
+
+    if direction not in ALLOWED_DIRECTIONS:
+        raise ValueError(
+            "Invalid analysis direction."
+        )
 
 
 # ============================================
@@ -52,16 +109,18 @@ def save_analysis(
     market_data: dict[str, Any] | None = None
 ) -> dict[str, Any]:
 
-    if not isinstance(analysis, dict):
+    validate_history_data(
+        analysis,
+        timeframe,
+        analysis_type
+    )
 
+    if market_data is not None and not isinstance(
+        market_data,
+        dict
+    ):
         raise ValueError(
-            "Analysis must be a dictionary."
-        )
-
-    if not analysis:
-
-        raise ValueError(
-            "Analysis data is empty."
+            "Market data must be a dictionary."
         )
 
     history_id = str(uuid4())
@@ -71,14 +130,16 @@ def save_analysis(
         "symbol": "XAUUSD",
         "timeframe": timeframe,
         "analysis_type": analysis_type,
-        "market_data": market_data or {},
-        "analysis": analysis,
+        "market_data": deepcopy(
+            market_data or {}
+        ),
+        "analysis": deepcopy(analysis),
         "created_at": current_timestamp()
     }
 
     ANALYSIS_HISTORY[history_id] = record
 
-    return record.copy()
+    return deepcopy(record)
 
 
 # ============================================
@@ -87,13 +148,11 @@ def save_analysis(
 
 @router.get("/")
 async def get_analysis_history(
-
     limit: int = Query(
         default=50,
         ge=1,
         le=500
     )
-
 ):
 
     records = sorted(
@@ -108,10 +167,7 @@ async def get_analysis_history(
         "success": True,
         "symbol": "XAUUSD",
         "count": len(records),
-        "data": [
-            record.copy()
-            for record in records
-        ]
+        "data": deepcopy(records)
     }
 
 
@@ -127,20 +183,17 @@ async def get_history_statistics():
     )
 
     directions = [
-        record.get("analysis", {}).get(
-            "direction",
-            "UNKNOWN"
-        )
+        record.get("analysis", {}).get("direction")
         for record in records
     ]
 
     return {
         "success": True,
+        "symbol": "XAUUSD",
         "total_analyses": len(records),
         "buy_analyses": directions.count("BUY"),
         "sell_analyses": directions.count("SELL"),
-        "wait_analyses": directions.count("WAIT"),
-        "symbol": "XAUUSD"
+        "wait_analyses": directions.count("WAIT")
     }
 
 
@@ -178,7 +231,6 @@ async def get_history_detail(
     )
 
     if record is None:
-
         raise HTTPException(
             status_code=404,
             detail="Analysis history not found."
@@ -186,7 +238,7 @@ async def get_history_detail(
 
     return {
         "success": True,
-        "data": record.copy()
+        "data": deepcopy(record)
     }
 
 
@@ -200,7 +252,6 @@ async def delete_history_item(
 ):
 
     if history_id not in ANALYSIS_HISTORY:
-
         raise HTTPException(
             status_code=404,
             detail="Analysis history not found."
