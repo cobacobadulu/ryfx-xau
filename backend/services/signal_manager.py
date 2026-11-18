@@ -3,6 +3,8 @@
 # XAUUSD TRADING SIGNAL MANAGEMENT
 # ============================================
 
+import math
+
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -25,9 +27,25 @@ VALID_STATUSES = [
     "EXPIRED"
 ]
 
+VALID_TIMEFRAMES = [
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "1d"
+]
 
-# Temporary in-memory storage.
-# Signals will be lost when the backend restarts.
+MAX_TAKE_PROFITS = 5
+
+
+# ============================================
+# TEMPORARY STORAGE
+# ============================================
+
+# Signals will be lost when backend restarts.
+
 SIGNAL_STORAGE: dict[str, dict[str, Any]] = {}
 
 
@@ -63,13 +81,46 @@ def validate_price(
             f"{field_name} must be numeric."
         )
 
-    if price <= 0:
+    if not math.isfinite(price) or price <= 0:
 
         raise ValueError(
-            f"{field_name} must be positive."
+            f"{field_name} must be a finite positive number."
         )
 
     return price
+
+
+def validate_confidence(
+    value: Any
+) -> float:
+
+    if isinstance(value, bool):
+
+        raise ValueError(
+            "Invalid confidence."
+        )
+
+    try:
+
+        confidence = float(value)
+
+    except (TypeError, ValueError):
+
+        raise ValueError(
+            "Confidence must be numeric."
+        )
+
+    if (
+        not math.isfinite(confidence)
+        or confidence < 0
+        or confidence > 100
+    ):
+
+        raise ValueError(
+            "Confidence must be between 0 and 100."
+        )
+
+    return confidence
 
 
 # ============================================
@@ -134,10 +185,22 @@ def validate_signal(
             "Signal direction must be BUY or SELL."
         )
 
-    if not isinstance(take_profits, list) or not take_profits:
+    if not isinstance(take_profits, list):
+
+        raise ValueError(
+            "Take profits must be a list."
+        )
+
+    if not take_profits:
 
         raise ValueError(
             "At least one take profit is required."
+        )
+
+    if len(take_profits) > MAX_TAKE_PROFITS:
+
+        raise ValueError(
+            "Maximum 5 take profit levels are allowed."
         )
 
     entry = validate_price(
@@ -184,7 +247,7 @@ def validate_signal(
                 "BUY take profits must be ascending."
             )
 
-    if direction == "SELL":
+    elif direction == "SELL":
 
         if stop_loss <= entry:
 
@@ -248,6 +311,12 @@ def create_signal(
             "Analysis must be a dictionary."
         )
 
+    if timeframe not in VALID_TIMEFRAMES:
+
+        raise ValueError(
+            "Unsupported signal timeframe."
+        )
+
     direction = str(
         analysis.get("direction", "")
     ).upper()
@@ -273,6 +342,40 @@ def create_signal(
 
     )
 
+    confidence = validate_confidence(
+        analysis.get("confidence", 0)
+    )
+
+    summary = analysis.get(
+        "summary",
+        ""
+    )
+
+    reasoning = analysis.get(
+        "reasoning",
+        ""
+    )
+
+    if not isinstance(summary, str):
+
+        raise ValueError(
+            "Summary must be text."
+        )
+
+    if not isinstance(reasoning, str):
+
+        raise ValueError(
+            "Reasoning must be text."
+        )
+
+    if not isinstance(source, str) or not source.strip():
+
+        raise ValueError(
+            "Signal source must be text."
+        )
+
+    timestamp = current_timestamp()
+
     signal_id = str(
         uuid4()
     )
@@ -295,19 +398,19 @@ def create_signal(
 
         "risk_reward": validated["risk_reward"],
 
-        "confidence": analysis.get("confidence"),
+        "confidence": confidence,
 
-        "summary": analysis.get("summary", ""),
+        "summary": summary,
 
-        "reasoning": analysis.get("reasoning", ""),
+        "reasoning": reasoning,
 
-        "source": source,
+        "source": source.strip(),
 
         "status": "ACTIVE",
 
-        "created_at": current_timestamp(),
+        "created_at": timestamp,
 
-        "updated_at": current_timestamp(),
+        "updated_at": timestamp,
 
         "closed_at": None,
 
@@ -429,15 +532,27 @@ def update_signal_status(
             "Only active signals can be updated."
         )
 
+    if new_status == "ACTIVE":
+
+        raise ValueError(
+            "Signal is already active."
+        )
+
+    if result is not None and not isinstance(result, str):
+
+        raise ValueError(
+            "Signal result must be text."
+        )
+
+    timestamp = current_timestamp()
+
     signal["status"] = new_status
 
-    signal["updated_at"] = current_timestamp()
+    signal["updated_at"] = timestamp
 
-    if new_status != "ACTIVE":
+    signal["closed_at"] = timestamp
 
-        signal["closed_at"] = current_timestamp()
-
-        signal["result"] = result or new_status
+    signal["result"] = result or new_status
 
     return signal.copy()
 
@@ -470,55 +585,36 @@ def get_signal_statistics() -> dict[str, Any]:
     total = len(signals)
 
     active = sum(
-
         signal["status"] == "ACTIVE"
-
         for signal in signals
-
     )
 
     tp_hit = sum(
-
         signal["status"] == "TP HIT"
-
         for signal in signals
-
     )
 
     sl_hit = sum(
-
         signal["status"] == "SL HIT"
-
         for signal in signals
-
     )
 
     cancelled = sum(
-
         signal["status"] == "CANCELLED"
-
         for signal in signals
-
     )
 
     expired = sum(
-
         signal["status"] == "EXPIRED"
-
         for signal in signals
-
     )
 
     closed = tp_hit + sl_hit
 
     win_rate = (
-
         (tp_hit / closed) * 100
-
         if closed > 0
-
         else 0
-
     )
 
     return {
