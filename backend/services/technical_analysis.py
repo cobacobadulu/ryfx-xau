@@ -15,7 +15,6 @@ from typing import Any
 EMA_PERIODS = [20, 50, 200]
 
 RSI_PERIOD = 14
-
 ATR_PERIOD = 14
 
 MACD_FAST = 12
@@ -23,8 +22,32 @@ MACD_SLOW = 26
 MACD_SIGNAL = 9
 
 DEFAULT_LOOKBACK = 100
-
 SWING_WINDOW = 2
+
+MINIMUM_CANDLES = 2
+
+
+# ============================================
+# NUMBER VALIDATION
+# ============================================
+
+def safe_number(value: Any) -> float:
+
+    if isinstance(value, bool):
+        raise ValueError("Boolean is not a valid price.")
+
+    if not isinstance(value, (int, float)):
+        raise ValueError("Price must be numeric.")
+
+    number = float(value)
+
+    if not math.isfinite(number):
+        raise ValueError("Price must be finite.")
+
+    if number <= 0:
+        raise ValueError("Price must be positive.")
+
+    return number
 
 
 # ============================================
@@ -36,10 +59,7 @@ def validate_candles(
 ) -> list[dict[str, float]]:
 
     if not isinstance(candles, list):
-
-        raise ValueError(
-            "Candles must be a list."
-        )
+        raise ValueError("Candles must be a list.")
 
     validated = []
 
@@ -49,62 +69,28 @@ def validate_candles(
             continue
 
         try:
+            open_price = safe_number(candle["open"])
+            high_price = safe_number(candle["high"])
+            low_price = safe_number(candle["low"])
+            close_price = safe_number(candle["close"])
 
-            open_price = float(candle["open"])
-            high_price = float(candle["high"])
-            low_price = float(candle["low"])
-            close_price = float(candle["close"])
-
-        except (
-            KeyError,
-            TypeError,
-            ValueError
-        ):
-
+        except (KeyError, TypeError, ValueError):
             continue
 
-        values = [
-            open_price,
-            high_price,
-            low_price,
-            close_price
-        ]
-
-        if not all(
-            math.isfinite(value)
-            for value in values
-        ):
-
+        if high_price < max(open_price, close_price, low_price):
             continue
 
-        if min(values) <= 0:
-            continue
-
-        if high_price < max(
-            open_price,
-            close_price,
-            low_price
-        ):
-            continue
-
-        if low_price > min(
-            open_price,
-            close_price,
-            high_price
-        ):
+        if low_price > min(open_price, close_price, high_price):
             continue
 
         validated.append({
-
             "open": open_price,
             "high": high_price,
             "low": low_price,
             "close": close_price
-
         })
 
-    if len(validated) < 2:
-
+    if len(validated) < MINIMUM_CANDLES:
         raise ValueError(
             "At least two valid candles are required."
         )
@@ -122,10 +108,7 @@ def calculate_ema(
 ) -> list[float | None]:
 
     if period <= 0:
-
-        raise ValueError(
-            "EMA period must be positive."
-        )
+        raise ValueError("EMA period must be positive.")
 
     result = [None] * len(prices)
 
@@ -134,21 +117,15 @@ def calculate_ema(
 
     multiplier = 2 / (period + 1)
 
-    ema = sum(
-        prices[:period]
-    ) / period
+    ema = sum(prices[:period]) / period
 
     result[period - 1] = ema
 
-    for index in range(
-        period,
-        len(prices)
-    ):
+    for index in range(period, len(prices)):
 
         ema = (
             prices[index] * multiplier
-            +
-            ema * (1 - multiplier)
+            + ema * (1 - multiplier)
         )
 
         result[index] = ema
@@ -166,10 +143,7 @@ def calculate_rsi(
 ) -> list[float | None]:
 
     if period <= 0:
-
-        raise ValueError(
-            "RSI period must be positive."
-        )
+        raise ValueError("RSI period must be positive.")
 
     result = [None] * len(prices)
 
@@ -181,26 +155,18 @@ def calculate_rsi(
 
     for index in range(1, len(prices)):
 
-        change = (
-            prices[index] - prices[index - 1]
-        )
+        change = prices[index] - prices[index - 1]
 
         gains.append(max(change, 0))
-
         losses.append(max(-change, 0))
 
-    average_gain = sum(
-        gains[:period]
-    ) / period
+    average_gain = sum(gains[:period]) / period
+    average_loss = sum(losses[:period]) / period
 
-    average_loss = sum(
-        losses[:period]
-    ) / period
+    def get_rsi(gain, loss):
 
-    def get_rsi(
-        gain: float,
-        loss: float
-    ) -> float:
+        if gain == 0 and loss == 0:
+            return 50.0
 
         if loss == 0:
             return 100.0
@@ -210,34 +176,26 @@ def calculate_rsi(
 
         relative_strength = gain / loss
 
-        return (
-            100 - (100 / (1 + relative_strength))
-        )
+        return 100 - (100 / (1 + relative_strength))
 
     result[period] = get_rsi(
         average_gain,
         average_loss
     )
 
-    for index in range(
-        period + 1,
-        len(prices)
-    ):
+    for index in range(period + 1, len(prices)):
 
         current_gain = gains[index - 1]
-
         current_loss = losses[index - 1]
 
         average_gain = (
             average_gain * (period - 1)
-            +
-            current_gain
+            + current_gain
         ) / period
 
         average_loss = (
             average_loss * (period - 1)
-            +
-            current_loss
+            + current_loss
         ) / period
 
         result[index] = get_rsi(
@@ -268,20 +226,12 @@ def calculate_macd(
 
     macd_line = []
 
-    for fast, slow in zip(
-        fast_ema,
-        slow_ema
-    ):
+    for fast, slow in zip(fast_ema, slow_ema):
 
         if fast is None or slow is None:
-
             macd_line.append(None)
-
         else:
-
-            macd_line.append(
-                fast - slow
-            )
+            macd_line.append(fast - slow)
 
     valid_macd = [
         value
@@ -296,43 +246,24 @@ def calculate_macd(
 
     signal_line = [None] * len(prices)
 
-    start_index = (
-        len(prices) - len(valid_macd)
-    )
+    start_index = len(prices) - len(valid_macd)
 
-    for index, value in enumerate(
-        signal_values
-    ):
-
-        signal_line[
-            start_index + index
-        ] = value
+    for index, value in enumerate(signal_values):
+        signal_line[start_index + index] = value
 
     histogram = []
 
-    for macd, signal in zip(
-        macd_line,
-        signal_line
-    ):
+    for macd, signal in zip(macd_line, signal_line):
 
         if macd is None or signal is None:
-
             histogram.append(None)
-
         else:
-
-            histogram.append(
-                macd - signal
-            )
+            histogram.append(macd - signal)
 
     return {
-
         "macd": macd_line,
-
         "signal": signal_line,
-
         "histogram": histogram
-
     }
 
 
@@ -346,10 +277,7 @@ def calculate_atr(
 ) -> list[float | None]:
 
     if period <= 0:
-
-        raise ValueError(
-            "ATR period must be positive."
-        )
+        raise ValueError("ATR period must be positive.")
 
     result = [None] * len(candles)
 
@@ -368,41 +296,25 @@ def calculate_atr(
 
         else:
 
-            previous_close = (
-                candles[index - 1]["close"]
-            )
+            previous_close = candles[index - 1]["close"]
 
             true_range = max(
-
                 candle["high"] - candle["low"],
-
-                abs(
-                    candle["high"] - previous_close
-                ),
-
-                abs(
-                    candle["low"] - previous_close
-                )
-
+                abs(candle["high"] - previous_close),
+                abs(candle["low"] - previous_close)
             )
 
         true_ranges.append(true_range)
 
-    atr = sum(
-        true_ranges[1:period + 1]
-    ) / period
+    atr = sum(true_ranges[1:period + 1]) / period
 
     result[period] = atr
 
-    for index in range(
-        period + 1,
-        len(candles)
-    ):
+    for index in range(period + 1, len(candles)):
 
         atr = (
             atr * (period - 1)
-            +
-            true_ranges[index]
+            + true_ranges[index]
         ) / period
 
         result[index] = atr
@@ -420,35 +332,25 @@ def calculate_support_resistance(
 ) -> dict[str, float | None]:
 
     if lookback <= 0:
-
-        raise ValueError(
-            "Lookback must be positive."
-        )
+        raise ValueError("Lookback must be positive.")
 
     recent = candles[-lookback:]
 
     if not recent:
-
         return {
-
             "support": None,
-
             "resistance": None
-
         }
 
     return {
-
         "support": min(
             candle["low"]
             for candle in recent
         ),
-
         "resistance": max(
             candle["high"]
             for candle in recent
         )
-
     }
 
 
@@ -462,23 +364,14 @@ def detect_market_structure(
 ) -> dict[str, Any]:
 
     if swing_window <= 0:
-
         raise ValueError(
             "Swing window must be positive."
         )
 
-    highs = [
-        candle["high"]
-        for candle in candles
-    ]
-
-    lows = [
-        candle["low"]
-        for candle in candles
-    ]
+    highs = [candle["high"] for candle in candles]
+    lows = [candle["low"] for candle in candles]
 
     swing_highs = []
-
     swing_lows = []
 
     for index in range(
@@ -487,110 +380,69 @@ def detect_market_structure(
     ):
 
         high = highs[index]
-
         low = lows[index]
 
-        left_highs = highs[
-            index - swing_window:index
-        ]
+        left_highs = highs[index - swing_window:index]
+        right_highs = highs[index + 1:index + swing_window + 1]
 
-        right_highs = highs[
-            index + 1:index + swing_window + 1
-        ]
-
-        left_lows = lows[
-            index - swing_window:index
-        ]
-
-        right_lows = lows[
-            index + 1:index + swing_window + 1
-        ]
+        left_lows = lows[index - swing_window:index]
+        right_lows = lows[index + 1:index + swing_window + 1]
 
         if (
             high > max(left_highs)
             and high >= max(right_highs)
         ):
-
             swing_highs.append({
-
                 "index": index,
-
                 "price": high
-
             })
 
         if (
             low < min(left_lows)
             and low <= min(right_lows)
         ):
-
             swing_lows.append({
-
                 "index": index,
-
                 "price": low
-
             })
 
     structure = "UNDEFINED"
 
-    if (
-        len(swing_highs) >= 2
-        and len(swing_lows) >= 2
-    ):
+    if len(swing_highs) >= 2 and len(swing_lows) >= 2:
 
         previous_high = swing_highs[-2]["price"]
-
         latest_high = swing_highs[-1]["price"]
 
         previous_low = swing_lows[-2]["price"]
-
         latest_low = swing_lows[-1]["price"]
 
         higher_high = latest_high > previous_high
-
         higher_low = latest_low > previous_low
 
         lower_high = latest_high < previous_high
-
         lower_low = latest_low < previous_low
 
         if higher_high and higher_low:
-
             structure = "BULLISH"
 
         elif lower_high and lower_low:
-
             structure = "BEARISH"
 
         else:
-
             structure = "RANGING"
 
     return {
-
         "structure": structure,
-
         "swing_highs": [
-
             item["price"]
-
             for item in swing_highs[-5:]
-
         ],
-
         "swing_lows": [
-
             item["price"]
-
             for item in swing_lows[-5:]
-
         ],
-
         "swing_high_count": len(swing_highs),
-
         "swing_low_count": len(swing_lows)
-
     }
 
 
@@ -607,13 +459,8 @@ def analyze_trend(
 
     if any(
         value is None
-        for value in [
-            ema20,
-            ema50,
-            ema200
-        ]
+        for value in [ema20, ema50, ema200]
     ):
-
         return "INSUFFICIENT_DATA"
 
     if (
@@ -621,7 +468,6 @@ def analyze_trend(
         and ema20 > ema50
         and ema50 > ema200
     ):
-
         return "BULLISH"
 
     if (
@@ -629,7 +475,6 @@ def analyze_trend(
         and ema20 < ema50
         and ema50 < ema200
     ):
-
         return "BEARISH"
 
     return "SIDEWAYS"
@@ -643,9 +488,7 @@ def analyze_market(
     raw_candles: list[dict[str, Any]]
 ) -> dict[str, Any]:
 
-    candles = validate_candles(
-        raw_candles
-    )
+    candles = validate_candles(raw_candles)
 
     closes = [
         candle["close"]
@@ -654,190 +497,97 @@ def analyze_market(
 
     current_price = closes[-1]
 
-    # ========================================
     # EMA
-    # ========================================
-
     ema_results = {
-
-        period: calculate_ema(
-            closes,
-            period
-        )
-
+        period: calculate_ema(closes, period)
         for period in EMA_PERIODS
-
     }
 
     ema20 = ema_results[20][-1]
-
     ema50 = ema_results[50][-1]
-
     ema200 = ema_results[200][-1]
 
-    # ========================================
     # RSI
-    # ========================================
-
-    rsi_values = calculate_rsi(
-        closes
-    )
-
+    rsi_values = calculate_rsi(closes)
     current_rsi = rsi_values[-1]
 
     if current_rsi is None:
-
         rsi_condition = "INSUFFICIENT_DATA"
-
     elif current_rsi >= 70:
-
         rsi_condition = "OVERBOUGHT"
-
     elif current_rsi <= 30:
-
         rsi_condition = "OVERSOLD"
-
     else:
-
         rsi_condition = "NEUTRAL"
 
-    # ========================================
     # MACD
-    # ========================================
-
-    macd_results = calculate_macd(
-        closes
-    )
+    macd_results = calculate_macd(closes)
 
     current_macd = macd_results["macd"][-1]
-
     current_signal = macd_results["signal"][-1]
+    current_histogram = macd_results["histogram"][-1]
 
-    current_histogram = (
-        macd_results["histogram"][-1]
-    )
-
-    if (
-        current_macd is None
-        or current_signal is None
-    ):
-
+    if current_macd is None or current_signal is None:
         macd_condition = "INSUFFICIENT_DATA"
-
     elif current_macd > current_signal:
-
         macd_condition = "BULLISH"
-
     elif current_macd < current_signal:
-
         macd_condition = "BEARISH"
-
     else:
-
         macd_condition = "NEUTRAL"
 
-    # ========================================
     # ATR
-    # ========================================
+    atr_values = calculate_atr(candles)
+    current_atr = atr_values[-1]
 
-    atr_values = calculate_atr(
+    # SUPPORT / RESISTANCE
+    support_resistance = calculate_support_resistance(
         candles
     )
 
-    current_atr = atr_values[-1]
-
-    # ========================================
-    # SUPPORT AND RESISTANCE
-    # ========================================
-
-    support_resistance = (
-        calculate_support_resistance(
-            candles
-        )
-    )
-
-    # ========================================
     # MARKET STRUCTURE
-    # ========================================
-
-    market_structure = (
-        detect_market_structure(
-            candles
-        )
+    market_structure = detect_market_structure(
+        candles
     )
 
-    # ========================================
     # TREND
-    # ========================================
-
     trend = analyze_trend(
-
         ema20,
-
         ema50,
-
         ema200,
-
         current_price
-
     )
-
-    # ========================================
-    # RETURN ANALYSIS
-    # ========================================
 
     return {
-
         "symbol": "XAUUSD",
-
         "current_price": current_price,
-
         "trend": trend,
 
         "indicators": {
-
             "ema": {
-
                 "ema20": ema20,
-
                 "ema50": ema50,
-
                 "ema200": ema200
-
             },
 
             "rsi": {
-
                 "value": current_rsi,
-
                 "condition": rsi_condition
-
             },
 
             "macd": {
-
                 "value": current_macd,
-
                 "signal": current_signal,
-
                 "histogram": current_histogram,
-
                 "condition": macd_condition
-
             },
 
             "atr": {
-
                 "value": current_atr
-
             }
-
         },
 
         "support_resistance": support_resistance,
-
         "market_structure": market_structure,
-
         "candles_analyzed": len(candles)
-
     }
