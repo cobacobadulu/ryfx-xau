@@ -5,22 +5,34 @@
 
 "use strict";
 
+
 /* AI CONFIGURATION */
 
 const RYFX_AI_CONFIG = {
+
     endpoint: "/api/analysis/xauusd",
+
     symbol: "XAUUSD",
+
     timeout: 60000
+
 };
+
 
 /* AI STATE */
 
 const RYFX_AI_STATE = {
+
     analyzing: false,
+
     lastAnalysis: null,
+
     error: null,
+
     requestId: 0
+
 };
+
 
 /* REQUEST AI ANALYSIS */
 
@@ -28,34 +40,59 @@ async function requestAIAnalysis(options = {}) {
 
     if (RYFX_AI_STATE.analyzing) return;
 
+
     RYFX_AI_STATE.analyzing = true;
+
     RYFX_AI_STATE.error = null;
 
-    const requestId = ++RYFX_AI_STATE.requestId;
+
+    const requestId =
+        ++RYFX_AI_STATE.requestId;
+
 
     const button =
+
         document.getElementById("runAIAnalysis") ||
+
         document.getElementById("analyzeButton");
+
 
     setAnalysisLoading(true, button);
 
+    setAnalysisText(
+        "analysisStatus",
+        "Analyzing XAUUSD market..."
+    );
+
+
     const controller = new AbortController();
 
+
     const timeout = setTimeout(
+
         () => controller.abort(),
+
         RYFX_AI_CONFIG.timeout
+
     );
+
 
     try {
 
         const response = await fetch(
+
             RYFX_AI_CONFIG.endpoint,
+
             {
+
                 method: "POST",
 
                 headers: {
+
                     "Content-Type": "application/json",
+
                     "Accept": "application/json"
+
                 },
 
                 body: JSON.stringify({
@@ -64,13 +101,17 @@ async function requestAIAnalysis(options = {}) {
 
                     timeframe: options.timeframe || "M15",
 
-                    analysis_type: options.analysisType || "technical"
+                    analysis_type:
+                        options.analysisType || "technical"
 
                 }),
 
                 signal: controller.signal
+
             }
+
         );
+
 
         if (!response.ok) {
 
@@ -80,48 +121,95 @@ async function requestAIAnalysis(options = {}) {
 
         }
 
+
         const result = await response.json();
 
+
         const analysis =
+
             result.data ||
+
             result.analysis ||
+
             result;
+
 
         validateAnalysis(analysis);
 
-        if (requestId !== RYFX_AI_STATE.requestId) return;
+
+        if (requestId !== RYFX_AI_STATE.requestId) {
+            return;
+        }
+
 
         RYFX_AI_STATE.lastAnalysis = analysis;
 
+        RYFX_AI_STATE.error = null;
+
+
         renderAIAnalysis(analysis);
 
-        document.dispatchEvent(
-            new CustomEvent("ryfx:analysis-completed", {
-                detail: analysis
-            })
+
+        setAnalysisText(
+            "analysisStatus",
+            "Analysis completed successfully"
         );
+
+
+        setAnalysisText(
+            "analysisTimestamp",
+            formatAnalysisTimestamp(
+                analysis.timestamp
+            )
+        );
+
+
+        document.dispatchEvent(
+
+            new CustomEvent(
+                "ryfx:analysis-completed",
+
+                {
+                    detail: analysis
+                }
+
+            )
+
+        );
+
 
     } catch (error) {
 
-        if (requestId !== RYFX_AI_STATE.requestId) return;
+        if (requestId !== RYFX_AI_STATE.requestId) {
+            return;
+        }
 
-        console.error("[ryFX AI Analysis]", error);
+
+        console.error(
+            "[ryFX AI Analysis]",
+            error
+        );
+
 
         RYFX_AI_STATE.error = error.message;
 
-        showAnalysisError(
+
+        const message =
 
             error.name === "AbortError"
 
                 ? "Analysis timed out. Please try again."
 
-                : "Unable to analyze market data. Please try again."
+                : "Unable to analyze market data. Please try again.";
 
-        );
+
+        showAnalysisError(message);
+
 
     } finally {
 
         clearTimeout(timeout);
+
 
         if (requestId === RYFX_AI_STATE.requestId) {
 
@@ -135,6 +223,7 @@ async function requestAIAnalysis(options = {}) {
 
 }
 
+
 /* VALIDATE AI RESPONSE */
 
 function validateAnalysis(data) {
@@ -145,32 +234,55 @@ function validateAnalysis(data) {
 
     }
 
+
     const direction = String(
+
         data.direction || ""
+
     ).toUpperCase();
 
+
     const validDirections = [
+
         "BUY",
+
         "SELL",
+
         "WAIT"
+
     ];
+
 
     if (!validDirections.includes(direction)) {
 
-        throw new Error("Invalid trading direction");
+        throw new Error(
+            "Invalid trading direction"
+        );
 
     }
+
 
     if (
+
         typeof data.reasoning !== "string" ||
+
         !data.reasoning.trim()
+
     ) {
 
-        throw new Error("Missing analysis reasoning");
+        throw new Error(
+            "Missing analysis reasoning"
+        );
 
     }
 
-    if (direction === "WAIT") return;
+
+    if (direction === "WAIT") {
+
+        return true;
+
+    }
+
 
     const entry = getNumericPrice(data.entry);
 
@@ -178,75 +290,110 @@ function validateAnalysis(data) {
 
     const takeProfits = getTakeProfitValues(data);
 
+
     if (
+
         entry === null ||
+
         stopLoss === null ||
+
         takeProfits.length === 0
+
     ) {
 
-        throw new Error("Invalid trading levels");
+        throw new Error(
+            "Invalid trading levels"
+        );
 
     }
+
 
     if (direction === "BUY") {
 
         if (stopLoss >= entry) {
 
-            throw new Error("Invalid BUY stop loss");
+            throw new Error(
+                "Invalid BUY stop loss"
+            );
 
         }
 
+
         if (!takeProfits.some(price => price > entry)) {
 
-            throw new Error("Invalid BUY take profit");
+            throw new Error(
+                "Invalid BUY take profit"
+            );
 
         }
 
     }
+
 
     if (direction === "SELL") {
 
         if (stopLoss <= entry) {
 
-            throw new Error("Invalid SELL stop loss");
+            throw new Error(
+                "Invalid SELL stop loss"
+            );
 
         }
 
+
         if (!takeProfits.some(price => price < entry)) {
 
-            throw new Error("Invalid SELL take profit");
+            throw new Error(
+                "Invalid SELL take profit"
+            );
 
         }
 
     }
 
+
+    return true;
+
 }
+
 
 /* GET NUMERIC PRICE */
 
 function getNumericPrice(value) {
 
     if (
+
         value === null ||
+
         value === undefined ||
+
         value === ""
+
     ) {
+
         return null;
+
     }
+
 
     const price = Number(value);
 
+
     return Number.isFinite(price) && price > 0
+
         ? price
+
         : null;
 
 }
+
 
 /* GET TAKE PROFIT VALUES */
 
 function getTakeProfitValues(data) {
 
     const values = [];
+
 
     if (Array.isArray(data.take_profits)) {
 
@@ -258,35 +405,61 @@ function getTakeProfitValues(data) {
 
     }
 
+
     if (data.take_profit !== undefined) {
 
         values.push(data.take_profit);
 
     }
 
-    if (data.tp1 !== undefined) values.push(data.tp1);
 
-    if (data.tp2 !== undefined) values.push(data.tp2);
+    if (data.tp1 !== undefined) {
 
-    if (data.tp3 !== undefined) values.push(data.tp3);
+        values.push(data.tp1);
+
+    }
+
+
+    if (data.tp2 !== undefined) {
+
+        values.push(data.tp2);
+
+    }
+
+
+    if (data.tp3 !== undefined) {
+
+        values.push(data.tp3);
+
+    }
+
 
     return values
+
         .map(value => {
 
-            if (typeof value === "object" && value !== null) {
+            if (
+                typeof value === "object" &&
+                value !== null
+            ) {
 
                 return getNumericPrice(
+
                     value.price ?? value.value
+
                 );
 
             }
 
+
             return getNumericPrice(value);
 
         })
+
         .filter(value => value !== null);
 
 }
+
 
 /* ANALYSIS LOADING */
 
@@ -294,21 +467,118 @@ function setAnalysisLoading(loading, button) {
 
     if (!button) return;
 
+
     button.disabled = loading;
 
+
     button.textContent = loading
+
         ? "Analyzing XAUUSD..."
+
         : "Run AI Analysis";
 
 }
+
+
+/* FORMAT CONFIDENCE */
+
+function formatConfidence(value) {
+
+    if (
+
+        value === null ||
+
+        value === undefined ||
+
+        value === ""
+
+    ) {
+
+        return "--";
+
+    }
+
+
+    const number = Number(value);
+
+
+    if (!Number.isFinite(number)) {
+
+        return String(value);
+
+    }
+
+
+    const percentage =
+
+        number <= 1 && number >= 0
+
+            ? number * 100
+
+            : number;
+
+
+    return `${percentage.toFixed(1)}%`;
+
+}
+
+
+/* FORMAT PRICE */
+
+function formatAnalysisPrice(value) {
+
+    const price = getNumericPrice(value);
+
+    if (price === null) return "--";
+
+
+    return price.toLocaleString("en-US", {
+
+        minimumFractionDigits: 2,
+
+        maximumFractionDigits: 2
+
+    });
+
+}
+
+
+/* FORMAT TIMESTAMP */
+
+function formatAnalysisTimestamp(value) {
+
+    if (!value) {
+
+        return new Date().toLocaleString("en-GB");
+
+    }
+
+
+    const date = new Date(value);
+
+
+    if (Number.isNaN(date.getTime())) {
+
+        return String(value);
+
+    }
+
+
+    return date.toLocaleString("en-GB");
+
+}
+
 
 /* RENDER AI ANALYSIS */
 
 function renderAIAnalysis(data) {
 
     const direction = String(
+
         data.direction
+
     ).toUpperCase();
+
 
     const directionClass = {
 
@@ -320,19 +590,57 @@ function renderAIAnalysis(data) {
 
     }[direction];
 
-    const entry = data.entry ?? "--";
 
-    const stopLoss = data.stop_loss ?? "--";
+    const entry =
 
-    const takeProfits = getTakeProfitValues(data);
+        direction === "WAIT"
 
-    const confidence = data.confidence ?? "--";
+            ? "--"
+
+            : formatAnalysisPrice(data.entry);
+
+
+    const stopLoss =
+
+        direction === "WAIT"
+
+            ? "--"
+
+            : formatAnalysisPrice(data.stop_loss);
+
+
+    const takeProfits =
+
+        direction === "WAIT"
+
+            ? []
+
+            : getTakeProfitValues(data);
+
+
+    const formattedTakeProfits =
+
+        takeProfits.length
+
+            ? takeProfits
+                .map(formatAnalysisPrice)
+                .join(" / ")
+
+            : "--";
+
+
+    const confidence = formatConfidence(
+        data.confidence
+    );
+
 
     const timeframe = data.timeframe || "M15";
 
-    const timestamp =
-        data.timestamp ||
-        new Date().toISOString();
+
+    const timestamp = formatAnalysisTimestamp(
+        data.timestamp
+    );
+
 
     /* DIRECTION */
 
@@ -341,41 +649,67 @@ function renderAIAnalysis(data) {
         direction
     );
 
+
     /* CONFIDENCE */
 
     setAnalysisText(
         "analysisConfidence",
-        formatConfidence(confidence)
+        confidence
     );
+
 
     /* SUMMARY */
 
     setAnalysisText(
+
         "analysisSummary",
+
         data.summary || data.reasoning || "--"
+
     );
+
 
     /* MARKET STRUCTURE */
 
     setAnalysisText(
+
         "analysisStructure",
-        data.market_structure || data.structure || "--"
+
+        data.market_structure ||
+        data.structure ||
+        "--"
+
     );
 
+
     setAnalysisText(
+
         "analysisBOS",
-        data.bos || data.break_of_structure || "--"
+
+        data.bos ||
+        data.break_of_structure ||
+        "--"
+
     );
 
+
     setAnalysisText(
+
         "analysisLiquidity",
+
         data.liquidity || "--"
+
     );
 
+
     setAnalysisText(
+
         "analysisVolatility",
+
         data.volatility || "--"
+
     );
+
 
     /* TRADE LEVELS */
 
@@ -384,17 +718,18 @@ function renderAIAnalysis(data) {
         entry
     );
 
+
     setAnalysisText(
         "analysisStopLoss",
         stopLoss
     );
 
+
     setAnalysisText(
         "analysisTakeProfit",
-        takeProfits.length
-            ? takeProfits.join(" / ")
-            : "--"
+        formattedTakeProfits
     );
+
 
     /* TIMESTAMP */
 
@@ -403,10 +738,12 @@ function renderAIAnalysis(data) {
         timestamp
     );
 
+
     setAnalysisText(
         "analysisTimeframe",
         timeframe
     );
+
 
     /* DIRECTION BADGE */
 
@@ -414,13 +751,19 @@ function renderAIAnalysis(data) {
         "analysisDirection"
     );
 
+
     if (directionElement) {
 
         directionElement.classList.remove(
+
             "signal-buy",
+
             "signal-sell",
+
             "signal-wait"
+
         );
+
 
         directionElement.classList.add(
             directionClass
@@ -428,18 +771,17 @@ function renderAIAnalysis(data) {
 
     }
 
+
     /* REASONING */
 
-    const reasoningElement = document.getElementById(
-        "analysisReasoning"
+    setAnalysisText(
+
+        "analysisReasoning",
+
+        data.reasoning || "--"
+
     );
 
-    if (reasoningElement) {
-
-        reasoningElement.textContent =
-            data.reasoning || "--";
-
-    }
 
     /* RESULT CONTAINER */
 
@@ -447,85 +789,146 @@ function renderAIAnalysis(data) {
         "aiAnalysisResult"
     );
 
+
     if (container) {
 
-        container.innerHTML = `
+        container.replaceChildren();
 
-            <div class="signal-card">
 
-                <div class="panel-header">
+        const card = document.createElement("div");
 
-                    <div>
-                        <h2>AI Trading Decision</h2>
+        card.className = "signal-card";
 
-                        <p class="panel-subtitle">
-                            XAUUSD Market Intelligence
-                        </p>
-                    </div>
 
-                    <span class="signal-direction ${directionClass}">
-                        ${escapeAnalysisText(direction)}
-                    </span>
+        const header = document.createElement("div");
 
-                </div>
+        header.className = "panel-header";
 
-                <div class="signal-details">
 
-                    <div class="signal-detail">
-                        <span>ENTRY ZONE</span>
-                        <strong>${escapeAnalysisText(entry)}</strong>
-                    </div>
+        const title = document.createElement("div");
 
-                    <div class="signal-detail">
-                        <span>STOP LOSS</span>
-                        <strong>${escapeAnalysisText(stopLoss)}</strong>
-                    </div>
 
-                    <div class="signal-detail">
-                        <span>TAKE PROFIT</span>
-                        <strong>${escapeAnalysisText(
-                            takeProfits.length
-                                ? takeProfits.join(" / ")
-                                : "--"
-                        )}</strong>
-                    </div>
+        const heading = document.createElement("h2");
 
-                    <div class="signal-detail">
-                        <span>CONFIDENCE</span>
-                        <strong>${escapeAnalysisText(
-                            formatConfidence(confidence)
-                        )}</strong>
-                    </div>
+        heading.textContent = "AI Trading Decision";
 
-                </div>
 
-                <div class="divider"></div>
+        const subtitle = document.createElement("p");
 
-                <h3 class="section-title">
-                    AI Market Reasoning
-                </h3>
+        subtitle.className = "panel-subtitle";
 
-                <p class="analysis-reasoning">
-                    ${escapeAnalysisText(data.reasoning)}
-                </p>
+        subtitle.textContent =
+            "XAUUSD Market Intelligence";
 
-                <div class="divider"></div>
 
-                <p class="text-muted">
-                    Timeframe: ${escapeAnalysisText(timeframe)}
-                </p>
+        title.append(heading, subtitle);
 
-                <p class="text-muted">
-                    Analysis time: ${escapeAnalysisText(timestamp)}
-                </p>
 
-            </div>
+        const badge = document.createElement("span");
 
-        `;
+        badge.className =
+            `signal-direction ${directionClass}`;
+
+        badge.textContent = direction;
+
+
+        header.append(title, badge);
+
+
+        const details = document.createElement("div");
+
+        details.className = "signal-details";
+
+
+        const detailItems = [
+
+            ["ENTRY ZONE", entry],
+
+            ["STOP LOSS", stopLoss],
+
+            ["TAKE PROFIT", formattedTakeProfits],
+
+            ["CONFIDENCE", confidence]
+
+        ];
+
+
+        detailItems.forEach(([label, value]) => {
+
+            const item = document.createElement("div");
+
+            item.className = "signal-detail";
+
+
+            const span = document.createElement("span");
+
+            span.textContent = label;
+
+
+            const strong = document.createElement("strong");
+
+            strong.textContent = value;
+
+
+            item.append(span, strong);
+
+            details.appendChild(item);
+
+        });
+
+
+        const divider = document.createElement("div");
+
+        divider.className = "divider";
+
+
+        const reasoningTitle = document.createElement("h3");
+
+        reasoningTitle.className = "section-title";
+
+        reasoningTitle.textContent =
+            "AI Market Reasoning";
+
+
+        const reasoning = document.createElement("p");
+
+        reasoning.className = "analysis-reasoning";
+
+        reasoning.textContent =
+            data.reasoning || "--";
+
+
+        const timestampText = document.createElement("p");
+
+        timestampText.className = "text-muted";
+
+        timestampText.textContent =
+            `Timeframe: ${timeframe} | Analysis time: ${timestamp}`;
+
+
+        card.append(
+
+            header,
+
+            details,
+
+            divider,
+
+            reasoningTitle,
+
+            reasoning,
+
+            timestampText
+
+        );
+
+
+        container.appendChild(card);
 
     }
 
 }
+
 
 /* UPDATE TEXT ELEMENT */
 
@@ -535,49 +938,17 @@ function setAnalysisText(id, value) {
 
     if (!element) return;
 
+
     element.textContent =
+
         value === null || value === undefined
+
             ? "--"
+
             : String(value);
 
 }
 
-/* FORMAT CONFIDENCE */
-
-function formatConfidence(value) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-        return "--";
-    }
-
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
-
-        return String(value);
-
-    }
-
-    return `${number}%`;
-
-}
-
-/* ESCAPE TEXT */
-
-function escapeAnalysisText(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
 
 /* ANALYSIS ERROR */
 
@@ -587,11 +958,13 @@ function showAnalysisError(message) {
         "aiAnalysisResult"
     );
 
+
     if (container) {
 
         const error = document.createElement("div");
 
         error.className = "notification";
+
 
         const content = document.createElement("p");
 
@@ -599,11 +972,13 @@ function showAnalysisError(message) {
 
         content.textContent = message;
 
+
         error.appendChild(content);
 
         container.replaceChildren(error);
 
     }
+
 
     setAnalysisText(
         "analysisStatus",
@@ -612,23 +987,34 @@ function showAnalysisError(message) {
 
 }
 
+
 /* ANALYSIS BUTTON */
 
 document.addEventListener("click", event => {
 
     const button = event.target.closest(
+
         "#runAIAnalysis, #analyzeButton"
+
     );
+
 
     if (!button) return;
 
+
     const timeframe =
+
         document.getElementById("analysisTimeframe")?.value ||
+
         "M15";
 
+
     const analysisType =
+
         document.getElementById("analysisType")?.value ||
+
         "technical";
+
 
     requestAIAnalysis({
 
@@ -640,6 +1026,7 @@ document.addEventListener("click", event => {
 
 });
 
+
 /* EXPORT */
 
 window.RYFX_AI = {
@@ -648,9 +1035,18 @@ window.RYFX_AI = {
 
     renderAIAnalysis,
 
+    validateAnalysis,
+
+    getTakeProfitValues,
+
+
     getState() {
 
-        return { ...RYFX_AI_STATE };
+        return {
+
+            ...RYFX_AI_STATE
+
+        };
 
     }
 
