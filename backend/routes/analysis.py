@@ -3,6 +3,8 @@
 # GEMINI XAUUSD ANALYSIS API
 # ============================================
 
+import math
+
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
@@ -37,6 +39,33 @@ REQUEST_CANDLES = 250
 
 
 # ============================================
+# HELPERS
+# ============================================
+
+def current_timestamp():
+
+    return datetime.now(
+        timezone.utc
+    ).isoformat()
+
+
+def valid_price(value):
+
+    try:
+
+        price = float(value)
+
+        return (
+            math.isfinite(price)
+            and price > 0
+        )
+
+    except (TypeError, ValueError):
+
+        return False
+
+
+# ============================================
 # MAIN ANALYSIS ENDPOINT
 # ============================================
 
@@ -59,7 +88,7 @@ async def analyze_xauusd_market(
     try:
 
         # ====================================
-        # STEP 2: GET REAL MARKET CANDLES
+        # STEP 2: GET MARKET CANDLES
         # ====================================
 
         candles = await get_market_candles(
@@ -84,7 +113,23 @@ async def analyze_xauusd_market(
             )
 
         # ====================================
-        # STEP 3: TECHNICAL ANALYSIS
+        # STEP 3: VALIDATE LATEST PRICE
+        # ====================================
+
+        latest_candle = candles[-1]
+
+        current_price = latest_candle.get(
+            "close"
+        )
+
+        if not valid_price(current_price):
+
+            raise ValueError(
+                "Invalid latest XAUUSD market price."
+            )
+
+        # ====================================
+        # STEP 4: TECHNICAL ANALYSIS
         # ====================================
 
         technical_data = analyze_market(
@@ -97,8 +142,18 @@ async def analyze_xauusd_market(
                 "Technical analysis returned invalid data."
             )
 
+        technical_price = technical_data.get(
+            "current_price"
+        )
+
+        if not valid_price(technical_price):
+
+            raise ValueError(
+                "Technical analysis returned an invalid price."
+            )
+
         # ====================================
-        # STEP 4: GEMINI AI ANALYSIS
+        # STEP 5: GEMINI AI ANALYSIS
         # ====================================
 
         ai_result = await analyze_xauusd(
@@ -122,26 +177,44 @@ async def analyze_xauusd_market(
             )
 
         # ====================================
-        # STEP 5: SAVE ANALYSIS HISTORY
+        # STEP 6: MARKET SNAPSHOT
         # ====================================
 
         market_snapshot = {
-            "current_price": technical_data.get(
-                "current_price"
-            ),
-            "candles_analyzed": len(candles)
+
+            "symbol": "XAUUSD",
+
+            "current_price": float(current_price),
+
+            "timeframe": request.timeframe,
+
+            "candles_analyzed": len(candles),
+
+            "last_candle_time": latest_candle.get(
+                "time"
+            )
+
         }
 
+        # ====================================
+        # STEP 7: SAVE ANALYSIS HISTORY
+        # ====================================
+
         history_record = save_analysis(
+
             analysis=analysis,
+
             timeframe=request.timeframe,
+
             analysis_type=request.analysis_type,
+
             market_data=market_snapshot
+
         )
 
         # ====================================
-        # STEP 6: RETURN RESULT
-        # ====================================
+        # STEP 8: RETURN RESULT
+        # ========================================
 
         return {
 
@@ -161,9 +234,7 @@ async def analyze_xauusd_market(
 
             "analysis": analysis,
 
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "timestamp": current_timestamp()
 
         }
 
@@ -209,11 +280,13 @@ async def analysis_status():
     )
 
     market_configured = bool(
-        settings.MARKET_API_URL
+        settings.MARKET_API_KEY
+        and settings.MARKET_API_URL
     )
 
     service_ready = (
-        ai_configured and market_configured
+        ai_configured
+        and market_configured
     )
 
     return {
@@ -236,8 +309,6 @@ async def analysis_status():
 
         "market_configured": market_configured,
 
-        "timestamp": datetime.now(
-            timezone.utc
-        ).isoformat()
+        "timestamp": current_timestamp()
 
     }
