@@ -4,6 +4,7 @@
 # ============================================
 
 import math
+import logging
 
 from datetime import datetime, timezone
 
@@ -25,6 +26,13 @@ from routes.history import save_analysis
 
 
 # ============================================
+# LOGGER
+# ============================================
+
+logger = logging.getLogger("ryfx.analysis")
+
+
+# ============================================
 # ROUTER
 # ============================================
 
@@ -41,6 +49,23 @@ router = APIRouter(
 MINIMUM_CANDLES = 200
 REQUEST_CANDLES = 250
 
+SUPPORTED_TIMEFRAMES = {
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "1d",
+}
+
+SUPPORTED_ANALYSIS_TYPES = {
+    "technical",
+    "scalping",
+    "intraday",
+    "swing",
+}
+
 
 # ============================================
 # HELPERS
@@ -55,7 +80,7 @@ def current_timestamp():
 
 def valid_price(value):
 
-    if isinstance(value, bool):
+    if value is None or isinstance(value, bool):
         return False
 
     try:
@@ -67,9 +92,161 @@ def valid_price(value):
             and price > 0
         )
 
-    except (TypeError, ValueError):
+    except (
+        TypeError,
+        ValueError,
+        OverflowError
+    ):
 
         return False
+
+
+def validate_analysis_request(request):
+
+    if request.symbol != "XAUUSD":
+
+        raise HTTPException(
+            status_code=400,
+            detail="Only XAUUSD analysis is supported."
+        )
+
+    if request.timeframe not in SUPPORTED_TIMEFRAMES:
+
+        raise HTTPException(
+            status_code=422,
+            detail="Unsupported analysis timeframe."
+        )
+
+    if request.analysis_type not in SUPPORTED_ANALYSIS_TYPES:
+
+        raise HTTPException(
+            status_code=422,
+            detail="Unsupported analysis type."
+        )
+
+
+def validate_candle_data(candles):
+
+    if not isinstance(candles, list):
+
+        raise ValueError(
+            "Invalid market candle response."
+        )
+
+    if len(candles) < MINIMUM_CANDLES:
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Insufficient candle data. "
+                "At least 200 candles are required."
+            )
+        )
+
+    previous_timestamp = None
+
+    for candle in candles:
+
+        if not isinstance(candle, dict):
+
+            raise ValueError(
+                "Invalid candle data."
+            )
+
+        timestamp = candle.get("time")
+
+        if (
+            isinstance(timestamp, bool)
+            or not isinstance(timestamp, (int, float))
+            or not math.isfinite(timestamp)
+            or timestamp <= 0
+        ):
+
+            raise ValueError(
+                "Invalid candle timestamp."
+            )
+
+        if (
+            previous_timestamp is not None
+            and timestamp <= previous_timestamp
+        ):
+
+            raise ValueError(
+                "Candle timestamps must be chronological."
+            )
+
+        previous_timestamp = timestamp
+
+        for field in (
+            "open",
+            "high",
+            "low",
+            "close"
+        ):
+
+            if not valid_price(candle.get(field)):
+
+                raise ValueError(
+                    f"Invalid candle {field} price."
+                )
+
+        open_price = float(candle["open"])
+        high_price = float(candle["high"])
+        low_price = float(candle["low"])
+        close_price = float(candle["close"])
+
+        if high_price < max(
+            open_price,
+            close_price,
+            low_price
+        ):
+
+            raise ValueError(
+                "Invalid candle high price."
+            )
+
+        if low_price > min(
+            open_price,
+            close_price,
+            high_price
+        ):
+
+            raise ValueError(
+                "Invalid candle low price."
+            )
+
+
+def validate_technical_price(
+    technical_data,
+    current_price
+):
+
+    if not isinstance(technical_data, dict):
+
+        raise ValueError(
+            "Technical analysis returned invalid data."
+        )
+
+    technical_price = technical_data.get(
+        "current_price"
+    )
+
+    if not valid_price(technical_price):
+
+        raise ValueError(
+            "Technical analysis returned an invalid price."
+        )
+
+    if not math.isclose(
+        float(technical_price),
+        float(current_price),
+        rel_tol=1e-8,
+        abs_tol=1e-8
+    ):
+
+        raise ValueError(
+            "Technical analysis price does not match the latest candle."
+        )
 
 
 # ============================================
@@ -85,12 +262,7 @@ async def analyze_xauusd_market(
     # STEP 1: VALIDATE REQUEST
     # ========================================
 
-    if request.symbol != "XAUUSD":
-
-        raise HTTPException(
-            status_code=400,
-            detail="Only XAUUSD analysis is supported."
-        )
+    validate_analysis_request(request)
 
     try:
 
@@ -103,33 +275,13 @@ async def analyze_xauusd_market(
             limit=REQUEST_CANDLES
         )
 
-        if not isinstance(candles, list):
-
-            raise ValueError(
-                "Invalid market candle response."
-            )
-
-        if len(candles) < MINIMUM_CANDLES:
-
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Insufficient candle data. "
-                    "At least 200 candles are required."
-                )
-            )
-
         # ====================================
-        # STEP 3: VALIDATE LATEST CANDLE
+        # STEP 3: VALIDATE CANDLE DATA
         # ====================================
+
+        validate_candle_data(candles)
 
         latest_candle = candles[-1]
-
-        if not isinstance(latest_candle, dict):
-
-            raise ValueError(
-                "Invalid latest market candle."
-            )
 
         current_price = latest_candle.get(
             "close"
@@ -149,21 +301,10 @@ async def analyze_xauusd_market(
             candles
         )
 
-        if not isinstance(technical_data, dict):
-
-            raise ValueError(
-                "Technical analysis returned invalid data."
-            )
-
-        technical_price = technical_data.get(
-            "current_price"
+        validate_technical_price(
+            technical_data,
+            current_price
         )
-
-        if not valid_price(technical_price):
-
-            raise ValueError(
-                "Technical analysis returned an invalid price."
-            )
 
         # ====================================
         # STEP 5: GEMINI AI ANALYSIS
@@ -197,10 +338,8 @@ async def analyze_xauusd_market(
 
         try:
 
-            validated_analysis = (
-                AnalysisResult.model_validate(
-                    raw_analysis
-                )
+            validated_analysis = AnalysisResult.model_validate(
+                raw_analysis
             )
 
             analysis = validated_analysis.model_dump(
@@ -209,8 +348,9 @@ async def analyze_xauusd_market(
 
         except ValidationError as error:
 
-            print(
-                f"RYFX XAU AI Validation Error: {error}"
+            logger.warning(
+                "AI analysis validation failed: %s",
+                error
             )
 
             raise ValueError(
@@ -233,13 +373,13 @@ async def analyze_xauusd_market(
 
             "last_candle_time": latest_candle.get(
                 "time"
-            )
+            ),
 
         }
 
         # ====================================
         # STEP 8: SAVE ANALYSIS HISTORY
-        # ====================================
+        # ========================================
 
         history_record = save_analysis(
 
@@ -255,7 +395,7 @@ async def analyze_xauusd_market(
 
         # ====================================
         # STEP 9: RETURN RESULT
-        # ====================================
+        # ========================================
 
         return {
 
@@ -285,12 +425,22 @@ async def analyze_xauusd_market(
 
     except RuntimeError as error:
 
+        logger.error(
+            "Market or AI service error: %s",
+            error
+        )
+
         raise HTTPException(
             status_code=503,
             detail=str(error)
         ) from error
 
     except ValueError as error:
+
+        logger.warning(
+            "Analysis validation error: %s",
+            error
+        )
 
         raise HTTPException(
             status_code=422,
@@ -299,8 +449,8 @@ async def analyze_xauusd_market(
 
     except Exception as error:
 
-        print(
-            f"RYFX XAU Analysis Error: {error}"
+        logger.exception(
+            "Unexpected XAUUSD analysis error."
         )
 
         raise HTTPException(
