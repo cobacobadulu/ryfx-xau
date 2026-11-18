@@ -1,6 +1,6 @@
 /* =========================================
    ryFX XAU — LIVE MARKET DATA
-   XAUUSD MARKET CONNECTION
+   MARKETAPI INTEGRATION
 ========================================= */
 
 "use strict";
@@ -32,6 +32,10 @@ const RYFX_MARKET_STATE = {
     currentPrice: null,
     previousPrice: null,
 
+    bid: null,
+    ask: null,
+    spread: null,
+
     dailyChange: null,
     dailyChangePercent: null,
 
@@ -39,6 +43,9 @@ const RYFX_MARKET_STATE = {
     low: null,
     open: null,
     volume: null,
+
+    marketStatus: "UNKNOWN",
+    isLive: false,
 
     lastUpdate: null,
     error: null
@@ -63,7 +70,9 @@ function marketNumber(value) {
 
     const number = Number(value);
 
-    return Number.isFinite(number) ? number : null;
+    return Number.isFinite(number)
+        ? number
+        : null;
 
 }
 
@@ -116,7 +125,6 @@ async function fetchMarketData() {
             }
         );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -125,19 +133,25 @@ async function fetchMarketData() {
 
         }
 
-
         const result = await response.json();
 
-        const data = result.data || result;
+        if (
+            !result ||
+            result.success !== true ||
+            !result.data
+        ) {
 
+            throw new Error(
+                "Invalid market API response"
+            );
 
-        updateMarketData(data);
+        }
 
+        updateMarketData(result.data);
 
         RYFX_MARKET_STATE.error = null;
 
         updateMarketConnection(true);
-
 
     } catch (error) {
 
@@ -147,7 +161,6 @@ async function fetchMarketData() {
 
         updateMarketConnection(false);
 
-
         document.dispatchEvent(
             new CustomEvent("ryfx:market-error", {
                 detail: {
@@ -155,7 +168,6 @@ async function fetchMarketData() {
                 }
             })
         );
-
 
     } finally {
 
@@ -176,13 +188,7 @@ function updateMarketData(data) {
 
     }
 
-
-    const price = marketNumber(
-        data.price ??
-        data.close ??
-        data.last
-    );
-
+    const price = marketNumber(data.price);
 
     if (price === null || price <= 0) {
 
@@ -190,9 +196,7 @@ function updateMarketData(data) {
 
     }
 
-
     const previous = RYFX_MARKET_STATE.currentPrice;
-
 
     RYFX_MARKET_STATE.previousPrice = previous;
 
@@ -201,19 +205,26 @@ function updateMarketData(data) {
     RYFX_MARKET_STATE.lastPrice = price;
 
 
+    /* BID / ASK / SPREAD */
+
+    RYFX_MARKET_STATE.bid =
+        marketNumber(data.bid);
+
+    RYFX_MARKET_STATE.ask =
+        marketNumber(data.ask);
+
+    RYFX_MARKET_STATE.spread =
+        marketNumber(data.spread);
+
+
     /* DAILY STATISTICS */
 
     const open = marketNumber(data.open);
 
-    const change = marketNumber(
-        data.change ??
-        data.daily_change
-    );
+    const change = marketNumber(data.change);
 
     const changePercent = marketNumber(
-        data.change_percent ??
-        data.changePercent ??
-        data.daily_change_percent
+        data.change_percent
     );
 
 
@@ -257,25 +268,45 @@ function updateMarketData(data) {
     };
 
 
-    Object.entries(statistics).forEach(([key, value]) => {
-
-        if (value !== null) {
+    Object.entries(statistics).forEach(
+        ([key, value]) => {
 
             RYFX_MARKET_STATE[key] = value;
 
         }
+    );
 
-    });
+
+    /* MARKET STATUS */
+
+    RYFX_MARKET_STATE.marketStatus =
+        data.status || "UNKNOWN";
+
+    RYFX_MARKET_STATE.isLive =
+        data.is_live === true;
 
 
-    RYFX_MARKET_STATE.lastUpdate = new Date();
+    /* LAST UPDATE */
+
+    RYFX_MARKET_STATE.lastUpdate =
+        data.timestamp
+            ? new Date(data.timestamp)
+            : new Date();
 
 
     updatePriceDisplay();
 
-    updateMarketStatistics(RYFX_MARKET_STATE);
+    updateBidAskDisplay();
+
+    updateSpreadDisplay();
+
+    updateMarketStatistics(
+        RYFX_MARKET_STATE
+    );
 
     updateMarketChangeDisplay();
+
+    updateMarketDataStatus();
 
     updateLastMarketUpdate();
 
@@ -305,10 +336,10 @@ function updateMarketData(data) {
 
 function updatePriceDisplay() {
 
-    const price = RYFX_MARKET_STATE.currentPrice;
+    const price =
+        RYFX_MARKET_STATE.currentPrice;
 
     if (price === null) return;
-
 
     const selectors = [
 
@@ -319,20 +350,94 @@ function updatePriceDisplay() {
 
     ];
 
-
     selectors.forEach(selector => {
 
-        document.querySelectorAll(selector).forEach(element => {
+        document.querySelectorAll(selector).forEach(
+            element => {
 
-            element.textContent =
-                marketFormatPrice(price);
+                element.textContent =
+                    marketFormatPrice(price);
 
-        });
+            }
+        );
 
     });
 
-
     updatePriceChangeDisplay();
+
+}
+
+
+/* BID / ASK DISPLAY */
+
+function updateBidAskDisplay() {
+
+    const values = {
+
+        bid: RYFX_MARKET_STATE.bid,
+
+        ask: RYFX_MARKET_STATE.ask
+
+    };
+
+    Object.entries(values).forEach(
+        ([key, value]) => {
+
+            const selectors = [
+
+                `#market${key.charAt(0).toUpperCase() + key.slice(1)}`,
+
+                `[data-market-${key}]`
+
+            ];
+
+            selectors.forEach(selector => {
+
+                document.querySelectorAll(selector).forEach(
+                    element => {
+
+                        element.textContent =
+                            marketFormatPrice(value);
+
+                    }
+                );
+
+            });
+
+        }
+    );
+
+}
+
+
+/* SPREAD DISPLAY */
+
+function updateSpreadDisplay() {
+
+    const spread =
+        RYFX_MARKET_STATE.spread;
+
+    const selectors = [
+
+        "#marketSpread",
+        "[data-market-spread]"
+
+    ];
+
+    selectors.forEach(selector => {
+
+        document.querySelectorAll(selector).forEach(
+            element => {
+
+                element.textContent =
+                    spread === null
+                        ? "--"
+                        : marketFormatPrice(spread);
+
+            }
+        );
+
+    });
 
 }
 
@@ -341,31 +446,11 @@ function updatePriceDisplay() {
 
 function updatePriceChangeDisplay() {
 
-    const change = RYFX_MARKET_STATE.dailyChange;
+    const change =
+        RYFX_MARKET_STATE.dailyChange;
 
     const percentage =
         RYFX_MARKET_STATE.dailyChangePercent;
-
-
-    if (change === null) return;
-
-
-    const positive = change >= 0;
-
-
-    const formattedChange =
-        `${positive ? "+" : ""}${marketFormatPrice(change)}`;
-
-
-    const formattedPercent =
-        percentage !== null
-            ? ` (${positive ? "+" : ""}${percentage.toFixed(2)}%)`
-            : "";
-
-
-    const text =
-        formattedChange + formattedPercent;
-
 
     const selectors = [
 
@@ -376,28 +461,6 @@ function updatePriceChangeDisplay() {
 
     ];
 
-
-    selectors.forEach(selector => {
-
-        document.querySelectorAll(selector).forEach(element => {
-
-            element.textContent = text;
-
-            element.classList.toggle(
-                "price-up",
-                positive
-            );
-
-            element.classList.toggle(
-                "price-down",
-                !positive
-            );
-
-        });
-
-    });
-
-
     const percentSelectors = [
 
         "#goldChangePercent",
@@ -405,29 +468,88 @@ function updatePriceChangeDisplay() {
 
     ];
 
+    if (change === null) {
+
+        [...selectors, ...percentSelectors].forEach(
+            selector => {
+
+                document.querySelectorAll(selector).forEach(
+                    element => {
+
+                        element.textContent = "--";
+
+                        element.classList.remove(
+                            "price-up",
+                            "price-down"
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+        return;
+
+    }
+
+    const positive = change >= 0;
+
+    const formattedChange =
+        `${positive ? "+" : ""}${marketFormatPrice(change)}`;
+
+    const formattedPercent =
+        percentage !== null
+            ? ` (${positive ? "+" : ""}${percentage.toFixed(2)}%)`
+            : "";
+
+
+    selectors.forEach(selector => {
+
+        document.querySelectorAll(selector).forEach(
+            element => {
+
+                element.textContent =
+                    formattedChange + formattedPercent;
+
+                element.classList.toggle(
+                    "price-up",
+                    positive
+                );
+
+                element.classList.toggle(
+                    "price-down",
+                    !positive
+                );
+
+            }
+        );
+
+    });
+
 
     percentSelectors.forEach(selector => {
 
-        document.querySelectorAll(selector).forEach(element => {
-
-            if (percentage !== null) {
+        document.querySelectorAll(selector).forEach(
+            element => {
 
                 element.textContent =
-                    `${positive ? "+" : ""}${percentage.toFixed(2)}%`;
+                    percentage === null
+                        ? "--"
+                        : `${positive ? "+" : ""}${percentage.toFixed(2)}%`;
+
+                element.classList.toggle(
+                    "price-up",
+                    positive
+                );
+
+                element.classList.toggle(
+                    "price-down",
+                    !positive
+                );
 
             }
-
-            element.classList.toggle(
-                "price-up",
-                positive
-            );
-
-            element.classList.toggle(
-                "price-down",
-                !positive
-            );
-
-        });
+        );
 
     });
 
@@ -438,10 +560,10 @@ function updatePriceChangeDisplay() {
 
 function updateMarketChangeDisplay() {
 
-    const element = document.getElementById("marketChange");
+    const element =
+        document.getElementById("marketChange");
 
     if (!element) return;
-
 
     const percentage =
         RYFX_MARKET_STATE.dailyChangePercent;
@@ -450,17 +572,19 @@ function updateMarketChangeDisplay() {
 
         element.textContent = "--";
 
+        element.classList.remove(
+            "price-up",
+            "price-down"
+        );
+
         return;
 
     }
 
-
     const positive = percentage >= 0;
-
 
     element.textContent =
         `${positive ? "+" : ""}${percentage.toFixed(2)}%`;
-
 
     element.classList.toggle(
         "price-up",
@@ -505,26 +629,68 @@ function updateMarketStatistics(data = {}) {
 
     };
 
+    Object.entries(selectors).forEach(
+        ([key, targets]) => {
 
-    Object.entries(selectors).forEach(([key, targets]) => {
+            const value = marketNumber(data[key]);
 
-        const value = marketNumber(data[key]);
+            targets.forEach(selector => {
 
-        if (value === null) return;
+                document.querySelectorAll(selector).forEach(
+                    element => {
 
+                        element.textContent =
+                            value === null
+                                ? "--"
+                                : key === "volume"
+                                    ? value.toLocaleString("en-US")
+                                    : marketFormatPrice(value);
 
-        targets.forEach(selector => {
-
-            document.querySelectorAll(selector).forEach(element => {
-
-                element.textContent =
-                    key === "volume"
-                        ? value.toLocaleString("en-US")
-                        : marketFormatPrice(value);
+                    }
+                );
 
             });
 
-        });
+        }
+    );
+
+}
+
+
+/* MARKET DATA STATUS */
+
+function updateMarketDataStatus() {
+
+    const status =
+        RYFX_MARKET_STATE.marketStatus;
+
+    const isLive =
+        RYFX_MARKET_STATE.isLive;
+
+    const label = isLive
+        ? "LIVE MARKET"
+        : status === "DELAYED"
+            ? "DELAYED MARKET"
+            : status === "CLOSED"
+                ? "MARKET CLOSED"
+                : "MARKET CONNECTED";
+
+    const selectors = [
+
+        "#marketDataStatus",
+        "[data-market-data-status]"
+
+    ];
+
+    selectors.forEach(selector => {
+
+        document.querySelectorAll(selector).forEach(
+            element => {
+
+                element.textContent = label;
+
+            }
+        );
 
     });
 
@@ -541,19 +707,15 @@ function updateMarketConnection(connected) {
     RYFX_MARKET_STATE.connected = connected;
 
 
-    /* DASHBOARD STATUS */
-
     const statusElements = document.querySelectorAll(
         "#marketStatus, [data-market-status]"
     );
 
-
     statusElements.forEach(element => {
 
         element.textContent = connected
-            ? "LIVE MARKET"
+            ? "MARKET ONLINE"
             : "MARKET DISCONNECTED";
-
 
         element.classList.toggle(
             "connected",
@@ -568,12 +730,9 @@ function updateMarketConnection(connected) {
     });
 
 
-    /* STATUS INDICATORS */
-
     const indicators = document.querySelectorAll(
         ".market-status .status-indicator, #topbarMarketIndicator"
     );
-
 
     indicators.forEach(element => {
 
@@ -595,8 +754,6 @@ function updateMarketConnection(connected) {
     });
 
 
-    /* TOPBAR STATUS */
-
     const topbarStatus =
         document.getElementById("topbarMarketStatus");
 
@@ -609,16 +766,12 @@ function updateMarketConnection(connected) {
     }
 
 
-    /* GLOBAL STATE */
-
     if (typeof RYFX_STATE !== "undefined") {
 
         RYFX_STATE.marketConnected = connected;
 
     }
 
-
-    /* CONNECTION EVENTS */
 
     if (connected && !wasConnected) {
 
@@ -643,7 +796,6 @@ function updateLastMarketUpdate() {
 
     if (!RYFX_MARKET_STATE.lastUpdate) return;
 
-
     const selectors = [
 
         "#marketLastUpdate",
@@ -651,17 +803,18 @@ function updateLastMarketUpdate() {
 
     ];
 
-
     selectors.forEach(selector => {
 
-        document.querySelectorAll(selector).forEach(element => {
+        document.querySelectorAll(selector).forEach(
+            element => {
 
-            element.textContent =
-                RYFX_MARKET_STATE.lastUpdate.toLocaleTimeString(
-                    "en-GB"
-                );
+                element.textContent =
+                    RYFX_MARKET_STATE.lastUpdate.toLocaleTimeString(
+                        "en-GB"
+                    );
 
-        });
+            }
+        );
 
     });
 
@@ -675,7 +828,6 @@ function startMarketUpdates() {
     stopMarketUpdates();
 
     fetchMarketData();
-
 
     marketRefreshTimer = setInterval(
         fetchMarketData,
@@ -702,56 +854,72 @@ function stopMarketUpdates() {
 
 /* APPLICATION INITIALIZATION */
 
-document.addEventListener("ryfx:app-ready", () => {
+document.addEventListener(
+    "ryfx:app-ready",
+    () => {
 
-    if (!document.hidden) {
+        if (!document.hidden) {
 
-        startMarketUpdates();
+            startMarketUpdates();
+
+        }
 
     }
-
-});
+);
 
 
 /* TAB VISIBILITY */
 
-document.addEventListener("visibilitychange", () => {
+document.addEventListener(
+    "visibilitychange",
+    () => {
 
-    if (document.hidden) {
+        if (document.hidden) {
 
-        stopMarketUpdates();
+            stopMarketUpdates();
 
-    } else {
+        } else {
 
-        startMarketUpdates();
+            startMarketUpdates();
+
+        }
 
     }
-
-});
+);
 
 
 /* PAGE RELOAD SUPPORT */
 
-document.addEventListener("ryfx:page-loaded", () => {
+document.addEventListener(
+    "ryfx:page-loaded",
+    () => {
 
-    if (RYFX_MARKET_STATE.currentPrice !== null) {
+        if (RYFX_MARKET_STATE.currentPrice !== null) {
 
-        updatePriceDisplay();
+            updatePriceDisplay();
 
-        updateMarketStatistics(RYFX_MARKET_STATE);
+            updateBidAskDisplay();
 
-        updateMarketChangeDisplay();
+            updateSpreadDisplay();
 
-        updateLastMarketUpdate();
+            updateMarketStatistics(
+                RYFX_MARKET_STATE
+            );
+
+            updateMarketChangeDisplay();
+
+            updateMarketDataStatus();
+
+            updateLastMarketUpdate();
+
+        }
+
+        updateMarketConnection(
+            RYFX_MARKET_STATE.connected
+        );
 
     }
-
-
-    updateMarketConnection(
-        RYFX_MARKET_STATE.connected
-    );
-
-});
+);
 
 
 /* EXPORT */
@@ -764,6 +932,10 @@ window.RYFX_MARKET = {
 
     updatePriceDisplay,
 
+    updateBidAskDisplay,
+
+    updateSpreadDisplay,
+
     updateMarketStatistics,
 
     updateMarketConnection,
@@ -771,7 +943,6 @@ window.RYFX_MARKET = {
     startMarketUpdates,
 
     stopMarketUpdates,
-
 
     getState() {
 
