@@ -46,6 +46,9 @@ TIMEFRAME_MINUTES = {
     "1d": 1440,
 }
 
+# Extra calendar time to account for market closures.
+HISTORY_WINDOW_MULTIPLIER = 1.6
+
 
 # ============================================
 # HTTP CLIENT
@@ -86,7 +89,13 @@ async def fetch_market_api(
 
         response.raise_for_status()
 
-        data = response.json()
+        try:
+            data = response.json()
+
+        except ValueError as error:
+            raise ValueError(
+                "MarketAPI returned invalid JSON."
+            ) from error
 
     if not isinstance(data, dict):
         raise ValueError(
@@ -102,13 +111,16 @@ async def fetch_market_api(
 
 def safe_float(value: Any) -> float | None:
 
-    if value is None or value == "":
+    if value is None or isinstance(value, bool):
+        return None
+
+    if value == "":
         return None
 
     try:
         number = float(value)
 
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
 
     if not math.isfinite(number):
@@ -150,7 +162,19 @@ def normalize_market_data(
     ask = safe_float(quote.get("ask"))
     last = safe_float(quote.get("last"))
 
+    if (
+        bid is not None
+        and ask is not None
+        and bid > 0
+        and ask > 0
+        and ask < bid
+    ):
+        raise ValueError(
+            "MarketAPI returned an invalid bid/ask spread."
+        )
+
     if last is not None and last > 0:
+
         price = last
 
     elif (
@@ -159,14 +183,24 @@ def normalize_market_data(
         and bid > 0
         and ask > 0
     ):
+
         price = (bid + ask) / 2
 
     else:
+
         raise ValueError(
             "MarketAPI returned an invalid XAUUSD quote."
         )
 
-    status = quote.get("status", "UNKNOWN")
+    status = quote.get(
+        "status",
+        "UNKNOWN"
+    )
+
+    if not isinstance(status, str):
+        status = "UNKNOWN"
+
+    status = status.upper()
 
     return {
         "symbol": MARKET_SYMBOL,
@@ -175,7 +209,12 @@ def normalize_market_data(
         "ask": ask,
         "spread": (
             ask - bid
-            if bid is not None and ask is not None
+            if (
+                bid is not None
+                and ask is not None
+                and bid > 0
+                and ask >= bid
+            )
             else None
         ),
         "open": None,
@@ -212,27 +251,45 @@ async def get_market_data() -> dict[str, Any]:
 
 def normalize_timestamp(value: Any) -> int | None:
 
-    if value is None:
+    if value is None or isinstance(value, bool):
         return None
 
     try:
 
         if isinstance(value, (int, float)):
+
             timestamp = float(value)
 
-            # Convert milliseconds to seconds.
+            if not math.isfinite(timestamp):
+                return None
+
             if timestamp > 10_000_000_000:
                 timestamp /= 1000
+
+            if timestamp <= 0:
+                return None
 
             return int(timestamp)
 
         if isinstance(value, str):
 
+            value = value.strip()
+
+            if not value:
+                return None
+
             try:
+
                 timestamp = float(value)
+
+                if not math.isfinite(timestamp):
+                    return None
 
                 if timestamp > 10_000_000_000:
                     timestamp /= 1000
+
+                if timestamp <= 0:
+                    return None
 
                 return int(timestamp)
 
@@ -248,9 +305,19 @@ def normalize_timestamp(value: Any) -> int | None:
                     tzinfo=timezone.utc
                 )
 
-            return int(parsed.timestamp())
+            timestamp = parsed.timestamp()
 
-    except (ValueError, TypeError, OverflowError):
+            if not math.isfinite(timestamp) or timestamp <= 0:
+                return None
+
+            return int(timestamp)
+
+    except (
+        ValueError,
+        TypeError,
+        OverflowError,
+        OSError
+    ):
         return None
 
     return None
@@ -274,6 +341,7 @@ def normalize_candles(
         )
 
     else:
+
         candles = response
 
     if not isinstance(candles, list):
@@ -288,11 +356,13 @@ def normalize_candles(
         if not isinstance(candle, dict):
             continue
 
+        timestamp_value = candle.get("time")
+
+        if timestamp_value is None:
+            timestamp_value = candle.get("timestamp")
+
         timestamp = normalize_timestamp(
-            candle.get(
-                "time",
-                candle.get("timestamp")
-            )
+            timestamp_value
         )
 
         open_price = safe_float(
@@ -321,7 +391,10 @@ def normalize_candles(
         if timestamp is None:
             continue
 
-        if any(value is None or value <= 0 for value in values):
+        if any(
+            value is None or value <= 0
+            for value in values
+        ):
             continue
 
         if high_price < max(
@@ -346,12 +419,13 @@ def normalize_candles(
             "close": close_price
         })
 
-    # Sort chronologically and remove duplicate timestamps.
+    # Remove duplicate timestamps.
     unique_candles = {
         candle["time"]: candle
         for candle in normalized
     }
 
+    # Sort from oldest to newest.
     return [
         unique_candles[timestamp]
         for timestamp in sorted(unique_candles)
@@ -367,24 +441,40 @@ async def get_market_candles(
     limit: int = 200
 ) -> list[dict[str, Any]]:
 
-    api_timeframe = TIMEFRAME_MAP.get(timeframe)
+    api_timeframe = TIMEFRAME_MAP.get(
+        timeframe
+    )
 
     if api_timeframe is None:
         raise ValueError(
             f"Unsupported timeframe: {timeframe}"
         )
 
-    if not 1 <= limit <= 1000:
+    if (
+        isinstance(limit, bool)
+        or not isinstance(limit, int)
+        or not 1 <= limit <= 1000
+    ):
         raise ValueError(
             "Candle limit must be between 1 and 1000."
         )
 
     interval = TIMEFRAME_MINUTES[timeframe]
 
-    end_time = datetime.now(timezone.utc)
+    end_time = datetime.now(
+        timezone.utc
+    )
+
+    # Expand the calendar range because the market
+    # does not produce candles during closed sessions.
+    history_minutes = int(
+        interval
+        * (limit + 5)
+        * HISTORY_WINDOW_MULTIPLIER
+    )
 
     start_time = end_time - timedelta(
-        minutes=interval * (limit + 5)
+        minutes=history_minutes
     )
 
     response = await fetch_market_api(
@@ -402,11 +492,28 @@ async def get_market_candles(
         }
     )
 
-    candles = normalize_candles(response)
+    candles = normalize_candles(
+        response
+    )
 
     if not candles:
         raise ValueError(
             "MarketAPI returned no valid XAUUSD candles."
+        )
+
+    # Exclude candles with timestamps in the future.
+    current_timestamp = int(
+        end_time.timestamp()
+    )
+
+    candles = [
+        candle for candle in candles
+        if candle["time"] <= current_timestamp
+    ]
+
+    if not candles:
+        raise ValueError(
+            "No valid historical XAUUSD candles found."
         )
 
     return candles[-limit:]
