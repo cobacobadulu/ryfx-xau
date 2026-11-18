@@ -5,9 +5,11 @@
 
 "use strict";
 
+
 /* CHART CONFIGURATION */
 
 const RYFX_CHART_CONFIG = {
+
     libraryUrl:
         "https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js",
 
@@ -18,6 +20,7 @@ const RYFX_CHART_CONFIG = {
     defaultTimeframe: "15",
 
     timeframes: {
+
         "1": "1m",
         "5": "5m",
         "15": "15m",
@@ -25,110 +28,236 @@ const RYFX_CHART_CONFIG = {
         "60": "1h",
         "240": "4h",
         "D": "1d"
+
     }
+
 };
+
 
 /* CHART STATE */
 
 const RYFX_CHART_STATE = {
+
     chart: null,
+
     candleSeries: null,
+
     currentTimeframe: "15",
+
     loading: false,
+
     libraryLoaded: false,
+
+    libraryPromise: null,
+
     resizeObserver: null,
+
     requestId: 0,
-    activeContainer: null
+
+    activeContainer: null,
+
+    errorElement: null
+
 };
+
 
 /* LOAD CHART LIBRARY */
 
 function loadChartLibrary() {
 
-    return new Promise((resolve, reject) => {
+    if (window.LightweightCharts) {
 
-        if (window.LightweightCharts) {
-            RYFX_CHART_STATE.libraryLoaded = true;
-            resolve();
-            return;
-        }
+        RYFX_CHART_STATE.libraryLoaded = true;
 
-        const existingScript = document.querySelector(
-            'script[data-ryfx-chart-library]'
-        );
+        return Promise.resolve();
 
-        if (existingScript) {
+    }
 
-            existingScript.addEventListener(
-                "load",
-                () => resolve(),
-                { once: true }
+
+    if (RYFX_CHART_STATE.libraryPromise) {
+
+        return RYFX_CHART_STATE.libraryPromise;
+
+    }
+
+
+    RYFX_CHART_STATE.libraryPromise =
+        new Promise((resolve, reject) => {
+
+            const existingScript = document.querySelector(
+                'script[data-ryfx-chart-library]'
             );
 
-            existingScript.addEventListener(
-                "error",
-                () => reject(
-                    new Error("Unable to load chart library")
-                ),
-                { once: true }
-            );
 
-            return;
-        }
+            if (existingScript) {
 
-        const script = document.createElement("script");
+                existingScript.addEventListener(
+                    "load",
+                    () => {
 
-        script.src = RYFX_CHART_CONFIG.libraryUrl;
-        script.async = true;
-        script.dataset.ryfxChartLibrary = "true";
+                        RYFX_CHART_STATE.libraryLoaded =
+                            !!window.LightweightCharts;
 
-        script.onload = () => {
+                        if (RYFX_CHART_STATE.libraryLoaded) {
 
-            if (window.LightweightCharts) {
+                            resolve();
 
-                RYFX_CHART_STATE.libraryLoaded = true;
-                resolve();
+                        } else {
 
-            } else {
+                            reject(
+                                new Error("Chart library unavailable")
+                            );
 
-                reject(
-                    new Error("Chart library unavailable")
+                        }
+
+                    },
+                    { once: true }
                 );
+
+
+                existingScript.addEventListener(
+                    "error",
+                    () => reject(
+                        new Error("Unable to load chart library")
+                    ),
+                    { once: true }
+                );
+
+                return;
 
             }
 
-        };
 
-        script.onerror = () => {
+            const script = document.createElement("script");
 
-            reject(
-                new Error("Unable to load chart library")
-            );
+            script.src = RYFX_CHART_CONFIG.libraryUrl;
 
-        };
+            script.async = true;
 
-        document.head.appendChild(script);
+            script.dataset.ryfxChartLibrary = "true";
 
-    });
+
+            script.onload = () => {
+
+                if (window.LightweightCharts) {
+
+                    RYFX_CHART_STATE.libraryLoaded = true;
+
+                    resolve();
+
+                } else {
+
+                    reject(
+                        new Error("Chart library unavailable")
+                    );
+
+                }
+
+            };
+
+
+            script.onerror = () => {
+
+                reject(
+                    new Error("Unable to load chart library")
+                );
+
+            };
+
+
+            document.head.appendChild(script);
+
+        });
+
+
+    return RYFX_CHART_STATE.libraryPromise;
 
 }
+
 
 /* GET CHART CONTAINER */
 
 function getChartContainer() {
 
     return (
+
         document.getElementById("xauusdChart") ||
+
         document.getElementById("xauChart")
+
     );
 
 }
+
+
+/* CHART ERROR */
+
+function showChartError(message) {
+
+    const container =
+        RYFX_CHART_STATE.activeContainer ||
+        getChartContainer();
+
+    if (!container) return;
+
+
+    let errorElement =
+        container.querySelector(".chart-placeholder");
+
+
+    if (!errorElement) {
+
+        errorElement = document.createElement("div");
+
+        errorElement.className = "chart-placeholder";
+
+        container.appendChild(errorElement);
+
+    }
+
+
+    errorElement.innerHTML = `
+
+        <div class="chart-placeholder-icon">⚠</div>
+
+        <p></p>
+
+    `;
+
+
+    errorElement.querySelector("p").textContent = message;
+
+    errorElement.style.display = "flex";
+
+    RYFX_CHART_STATE.errorElement = errorElement;
+
+}
+
+
+/* HIDE CHART ERROR */
+
+function hideChartError() {
+
+    const errorElement =
+        RYFX_CHART_STATE.errorElement;
+
+    if (errorElement) {
+
+        errorElement.remove();
+
+        RYFX_CHART_STATE.errorElement = null;
+
+    }
+
+}
+
 
 /* CLEANUP CHART */
 
 function destroyChart() {
 
     RYFX_CHART_STATE.requestId++;
+
 
     if (RYFX_CHART_STATE.resizeObserver) {
 
@@ -138,6 +267,7 @@ function destroyChart() {
 
     }
 
+
     if (RYFX_CHART_STATE.chart) {
 
         RYFX_CHART_STATE.chart.remove();
@@ -146,11 +276,17 @@ function destroyChart() {
 
     }
 
+
     RYFX_CHART_STATE.candleSeries = null;
+
     RYFX_CHART_STATE.activeContainer = null;
+
     RYFX_CHART_STATE.loading = false;
 
+    RYFX_CHART_STATE.errorElement = null;
+
 }
+
 
 /* INITIALIZE CHART */
 
@@ -160,31 +296,57 @@ async function initializeChart() {
 
     if (!container) return;
 
+
     destroyChart();
 
+
     RYFX_CHART_STATE.activeContainer = container;
+
 
     try {
 
         await loadChartLibrary();
 
+
         if (
+
             !container.isConnected ||
+
             RYFX_CHART_STATE.activeContainer !== container
+
         ) {
+
             return;
+
         }
 
+
         const chartLibrary = window.LightweightCharts;
+
+
+        if (!chartLibrary.createChart) {
+
+            throw new Error("Invalid chart library");
+
+        }
+
+
+        const width =
+            container.clientWidth || 600;
+
+        const height =
+            container.clientHeight || 380;
+
 
         RYFX_CHART_STATE.chart =
             chartLibrary.createChart(container, {
 
-                width: container.clientWidth || 600,
+                width,
 
-                height: container.clientHeight || 380,
+                height,
 
                 layout: {
+
                     background: {
                         color: "#0B1422"
                     },
@@ -192,9 +354,11 @@ async function initializeChart() {
                     textColor: "#8290A5",
 
                     fontFamily: "Inter, sans-serif"
+
                 },
 
                 grid: {
+
                     vertLines: {
                         color: "rgba(255,255,255,0.04)"
                     },
@@ -202,43 +366,61 @@ async function initializeChart() {
                     horzLines: {
                         color: "rgba(255,255,255,0.04)"
                     }
+
                 },
 
                 crosshair: {
+
                     mode: chartLibrary.CrosshairMode.Normal
+
                 },
 
                 rightPriceScale: {
+
                     borderColor: "rgba(255,255,255,0.08)"
+
                 },
 
                 timeScale: {
+
                     borderColor: "rgba(255,255,255,0.08)",
+
                     timeVisible: true,
+
                     secondsVisible: false
+
                 },
 
                 handleScroll: true,
+
                 handleScale: true
 
             });
 
+
         RYFX_CHART_STATE.candleSeries =
             RYFX_CHART_STATE.chart.addSeries(
+
                 chartLibrary.CandlestickSeries,
+
                 {
 
                     upColor: "#22C997",
+
                     downColor: "#F05B68",
 
                     borderUpColor: "#22C997",
+
                     borderDownColor: "#F05B68",
 
                     wickUpColor: "#22C997",
+
                     wickDownColor: "#F05B68"
 
                 }
+
             );
+
 
         observeChartResize(container);
 
@@ -248,47 +430,63 @@ async function initializeChart() {
             RYFX_CHART_STATE.currentTimeframe
         );
 
+
         console.log("[ryFX Chart] Initialized");
+
 
     } catch (error) {
 
         console.error("[ryFX Chart]", error);
 
         showChartError(
-            "Chart library could not be loaded."
+            "Chart could not be initialized. Please try again."
         );
 
     }
 
 }
+
 
 /* NORMALIZE CANDLE TIME */
 
 function normalizeCandleTime(value) {
 
-    if (typeof value === "string" && !/^\d+$/.test(value)) {
+    if (
+
+        typeof value === "string" &&
+
+        !/^\d+$/.test(value)
+
+    ) {
 
         const parsed = Math.floor(
             new Date(value).getTime() / 1000
         );
 
-        return Number.isFinite(parsed) ? parsed : NaN;
+        return Number.isFinite(parsed)
+            ? parsed
+            : NaN;
 
     }
+
 
     let time = Number(value);
 
+
     if (!Number.isFinite(time)) return NaN;
 
-    // Convert milliseconds to seconds.
 
     if (time > 100000000000) {
+
         time = Math.floor(time / 1000);
+
     }
+
 
     return Math.floor(time);
 
 }
+
 
 /* LOAD CANDLE DATA */
 
@@ -298,9 +496,16 @@ async function loadCandles(timeframe) {
 
     if (!RYFX_CHART_CONFIG.timeframes[timeframe]) return;
 
-    const requestId = ++RYFX_CHART_STATE.requestId;
+
+    const requestId =
+        ++RYFX_CHART_STATE.requestId;
+
 
     RYFX_CHART_STATE.loading = true;
+
+
+    hideChartError();
+
 
     try {
 
@@ -313,34 +518,65 @@ async function loadCandles(timeframe) {
 
         });
 
+
         const response = await fetch(
-            `${RYFX_CHART_CONFIG.candleEndpoint}?${params}`
+
+            `${RYFX_CHART_CONFIG.candleEndpoint}?${params}`,
+
+            {
+                method: "GET",
+
+                headers: {
+                    "Accept": "application/json"
+                },
+
+                cache: "no-store"
+
+            }
+
         );
+
 
         if (!response.ok) {
 
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(
+                `HTTP ${response.status}`
+            );
 
         }
+
 
         const result = await response.json();
 
-        // Ignore outdated requests.
 
-        if (requestId !== RYFX_CHART_STATE.requestId) {
+        if (
+
+            requestId !== RYFX_CHART_STATE.requestId ||
+
+            !RYFX_CHART_STATE.candleSeries
+
+        ) {
+
             return;
+
         }
 
+
         const candles =
+
             result.data ||
+
             result.candles ||
+
             result;
+
 
         if (!Array.isArray(candles)) {
 
             throw new Error("Invalid candle response");
 
         }
+
 
         const validCandles = candles
 
@@ -386,18 +622,23 @@ async function loadCandles(timeframe) {
 
             .sort((a, b) => a.time - b.time);
 
+
         const uniqueCandles = [
 
             ...new Map(
 
                 validCandles.map(candle => [
+
                     candle.time,
+
                     candle
+
                 ])
 
             ).values()
 
         ];
+
 
         if (!uniqueCandles.length) {
 
@@ -405,37 +646,61 @@ async function loadCandles(timeframe) {
 
         }
 
+
         if (
+
             requestId !== RYFX_CHART_STATE.requestId ||
+
             !RYFX_CHART_STATE.candleSeries
+
         ) {
+
             return;
+
         }
+
 
         RYFX_CHART_STATE.candleSeries.setData(
             uniqueCandles
         );
 
+
         RYFX_CHART_STATE.chart
             .timeScale()
             .fitContent();
 
+
+        hideChartError();
+
+
         console.log(
+
             "[ryFX Chart] Candles loaded:",
+
             uniqueCandles.length
+
         );
+
 
     } catch (error) {
 
         if (requestId !== RYFX_CHART_STATE.requestId) {
+
             return;
+
         }
 
-        console.error("[ryFX Chart Data]", error);
+
+        console.error(
+            "[ryFX Chart Data]",
+            error
+        );
+
 
         showChartError(
             "Unable to load XAUUSD candle data."
         );
+
 
     } finally {
 
@@ -449,25 +714,25 @@ async function loadCandles(timeframe) {
 
 }
 
+
 /* CHANGE TIMEFRAME */
 
 function changeChartTimeframe(timeframe) {
 
-    if (!RYFX_CHART_CONFIG.timeframes[timeframe]) {
-        return;
-    }
+    if (!RYFX_CHART_CONFIG.timeframes[timeframe]) return;
 
-    if (!RYFX_CHART_STATE.candleSeries) {
-        return;
-    }
+    if (!RYFX_CHART_STATE.candleSeries) return;
+
 
     RYFX_CHART_STATE.currentTimeframe = timeframe;
+
 
     updateTimeframeButtons();
 
     loadCandles(timeframe);
 
 }
+
 
 /* UPDATE TIMEFRAME BUTTONS */
 
@@ -476,24 +741,62 @@ function updateTimeframeButtons() {
     document.querySelectorAll("[data-timeframe]")
         .forEach(button => {
 
-            button.classList.toggle(
-
-                "active",
+            const active =
 
                 button.dataset.timeframe ===
-                    RYFX_CHART_STATE.currentTimeframe
 
+                RYFX_CHART_STATE.currentTimeframe;
+
+
+            button.classList.toggle(
+                "active",
+                active
+            );
+
+
+            button.setAttribute(
+                "aria-pressed",
+                String(active)
             );
 
         });
 
 }
 
+
 /* CHART RESIZE */
 
-function observeChartResize(container) {
+function resizeChart() {
 
-    if (typeof ResizeObserver === "undefined") return;
+    const chart = RYFX_CHART_STATE.chart;
+
+    const container =
+        RYFX_CHART_STATE.activeContainer;
+
+
+    if (!chart || !container) return;
+
+
+    const width = container.clientWidth;
+
+    const height = container.clientHeight;
+
+
+    if (width <= 0 || height <= 0) return;
+
+
+    chart.applyOptions({
+
+        width,
+
+        height
+
+    });
+
+}
+
+
+function observeChartResize(container) {
 
     if (RYFX_CHART_STATE.resizeObserver) {
 
@@ -501,114 +804,129 @@ function observeChartResize(container) {
 
     }
 
-    RYFX_CHART_STATE.resizeObserver =
-        new ResizeObserver(entries => {
 
-            if (!RYFX_CHART_STATE.chart) return;
+    if (typeof ResizeObserver !== "undefined") {
 
-            const entry = entries[0];
+        RYFX_CHART_STATE.resizeObserver =
+            new ResizeObserver(() => {
 
-            if (!entry) return;
-
-            const width = entry.contentRect.width;
-
-            const height = entry.contentRect.height;
-
-            if (width <= 0 || height <= 0) return;
-
-            RYFX_CHART_STATE.chart.applyOptions({
-
-                width,
-                height
+                resizeChart();
 
             });
 
-        });
 
-    RYFX_CHART_STATE.resizeObserver.observe(container);
+        RYFX_CHART_STATE.resizeObserver.observe(
+            container
+        );
+
+    } else {
+
+        window.addEventListener(
+            "resize",
+            resizeChart
+        );
+
+    }
 
 }
+
 
 /* FULLSCREEN */
 
-function toggleChartFullscreen() {
+async function toggleChartFullscreen() {
 
     const container =
+
         document.querySelector(".market-container") ||
+
         getChartContainer();
+
 
     if (!container) return;
 
-    if (!document.fullscreenElement) {
 
-        if (container.requestFullscreen) {
+    try {
 
-            container.requestFullscreen().catch(error => {
+        if (!document.fullscreenElement) {
 
-                console.error(
-                    "[ryFX Chart Fullscreen]",
-                    error
-                );
+            await container.requestFullscreen();
 
-            });
+        } else {
+
+            await document.exitFullscreen();
 
         }
 
-    } else {
+    } catch (error) {
 
-        document.exitFullscreen?.();
+        console.error(
+            "[ryFX Chart Fullscreen]",
+            error
+        );
 
     }
 
 }
 
-/* CHART ERROR */
 
-function showChartError(message) {
+/* FULLSCREEN RESIZE */
 
-    const container = getChartContainer();
+document.addEventListener(
+    "fullscreenchange",
+    () => {
 
-    if (!container) return;
+        setTimeout(() => {
 
-    container.innerHTML = `
+            resizeChart();
 
-        <div class="chart-placeholder">
-
-            <div class="chart-placeholder-icon">⚠</div>
-
-            <p>${message}</p>
-
-        </div>
-
-    `;
-
-}
-
-/* INITIALIZATION ON PAGE LOAD */
-
-document.addEventListener("ryfx:page-loaded", event => {
-
-    if (event.detail?.page === "live-market") {
-
-        initializeChart();
-
-    } else {
-
-        destroyChart();
+        }, 100);
 
     }
+);
 
-});
+
+/* WINDOW RESIZE FALLBACK */
+
+window.addEventListener(
+    "resize",
+    resizeChart
+);
+
+
+/* PAGE INITIALIZATION */
+
+document.addEventListener(
+    "ryfx:page-loaded",
+    event => {
+
+        if (event.detail?.page === "live-market") {
+
+            initializeChart();
+
+        } else {
+
+            destroyChart();
+
+        }
+
+    }
+);
+
 
 /* TIMEFRAME EVENTS */
 
 document.addEventListener("click", event => {
 
-    const button = event.target.closest("[data-timeframe]");
+    const button =
+        event.target.closest("[data-timeframe]");
+
 
     if (!button) return;
 
-    const timeframe = button.dataset.timeframe;
+
+    const timeframe =
+        button.dataset.timeframe;
+
 
     if (timeframe) {
 
@@ -618,17 +936,24 @@ document.addEventListener("click", event => {
 
 });
 
+
 /* FULLSCREEN BUTTON EVENT */
 
 document.addEventListener("click", event => {
 
-    const button = event.target.closest("#chartFullscreen");
+    const button =
+        event.target.closest("#chartFullscreen");
+
 
     if (!button) return;
+
+
+    event.preventDefault();
 
     toggleChartFullscreen();
 
 });
+
 
 /* EXPORT */
 
@@ -642,11 +967,24 @@ window.RYFX_CHART = {
 
     toggleChartFullscreen,
 
+    resizeChart,
+
     destroyChart,
+
 
     getState() {
 
-        return { ...RYFX_CHART_STATE };
+        return {
+
+            ...RYFX_CHART_STATE,
+
+            chart: undefined,
+
+            candleSeries: undefined,
+
+            resizeObserver: undefined
+
+        };
 
     }
 
