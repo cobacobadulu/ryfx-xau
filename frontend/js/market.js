@@ -12,7 +12,6 @@ const RYFX_MARKET_CONFIG = {
 
     symbol: "XAUUSD",
 
-    // Backend API endpoint
     endpoint: "/api/market/xauusd",
 
     refreshInterval: 30000,
@@ -27,35 +26,71 @@ const RYFX_MARKET_CONFIG = {
 const RYFX_MARKET_STATE = {
 
     connected: false,
-
     loading: false,
 
     lastPrice: null,
-
     currentPrice: null,
-
     previousPrice: null,
 
     dailyChange: null,
-
     dailyChangePercent: null,
 
     high: null,
-
     low: null,
-
     open: null,
-
     volume: null,
 
     lastUpdate: null,
-
     error: null
 
 };
 
 
 let marketRefreshTimer = null;
+
+
+/* SAFE NUMBER */
+
+function marketNumber(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+        return null;
+    }
+
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number : null;
+
+}
+
+
+/* FORMAT PRICE */
+
+function marketFormatPrice(value) {
+
+    const number = marketNumber(value);
+
+    if (number === null) return "--";
+
+    if (typeof formatPrice === "function") {
+
+        return formatPrice(
+            number,
+            RYFX_MARKET_CONFIG.decimals
+        );
+
+    }
+
+    return number.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+}
 
 
 /* FETCH MARKET DATA */
@@ -99,10 +134,7 @@ async function fetchMarketData() {
         updateMarketData(data);
 
 
-        RYFX_MARKET_STATE.connected = true;
-
         RYFX_MARKET_STATE.error = null;
-
 
         updateMarketConnection(true);
 
@@ -111,11 +143,7 @@ async function fetchMarketData() {
 
         console.error("[ryFX Market]", error);
 
-
-        RYFX_MARKET_STATE.connected = false;
-
         RYFX_MARKET_STATE.error = error.message;
-
 
         updateMarketConnection(false);
 
@@ -149,12 +177,14 @@ function updateMarketData(data) {
     }
 
 
-    const price = Number(
-        data.price ?? data.close
+    const price = marketNumber(
+        data.price ??
+        data.close ??
+        data.last
     );
 
 
-    if (!Number.isFinite(price) || price <= 0) {
+    if (price === null || price <= 0) {
 
         throw new Error("Invalid XAUUSD price");
 
@@ -171,53 +201,65 @@ function updateMarketData(data) {
     RYFX_MARKET_STATE.lastPrice = price;
 
 
-    /* DAILY CHANGE */
+    /* DAILY STATISTICS */
 
-    const change = Number(
-        data.change
+    const open = marketNumber(data.open);
+
+    const change = marketNumber(
+        data.change ??
+        data.daily_change
     );
 
-    const changePercent = Number(
-        data.change_percent ?? data.changePercent
+    const changePercent = marketNumber(
+        data.change_percent ??
+        data.changePercent ??
+        data.daily_change_percent
     );
 
 
-    if (Number.isFinite(change)) {
+    if (change !== null) {
 
         RYFX_MARKET_STATE.dailyChange = change;
 
-    } else if (Number.isFinite(Number(data.open))) {
+    } else if (open !== null && open > 0) {
 
         RYFX_MARKET_STATE.dailyChange =
-            price - Number(data.open);
+            price - open;
 
     }
 
 
-    if (Number.isFinite(changePercent)) {
+    if (changePercent !== null) {
 
         RYFX_MARKET_STATE.dailyChangePercent =
             changePercent;
 
-    } else if (
-        Number.isFinite(Number(data.open)) &&
-        Number(data.open) > 0
-    ) {
+    } else if (open !== null && open > 0) {
 
         RYFX_MARKET_STATE.dailyChangePercent =
-            ((price - Number(data.open)) /
-                Number(data.open)) * 100;
+            ((price - open) / open) * 100;
 
     }
 
 
     /* MARKET STATISTICS */
 
-    ["high", "low", "open", "volume"].forEach(key => {
+    const statistics = {
 
-        const value = Number(data[key]);
+        high: marketNumber(data.high),
 
-        if (Number.isFinite(value)) {
+        low: marketNumber(data.low),
+
+        open,
+
+        volume: marketNumber(data.volume)
+
+    };
+
+
+    Object.entries(statistics).forEach(([key, value]) => {
+
+        if (value !== null) {
 
             RYFX_MARKET_STATE[key] = value;
 
@@ -231,7 +273,9 @@ function updateMarketData(data) {
 
     updatePriceDisplay();
 
-    updateMarketStatistics(data);
+    updateMarketStatistics(RYFX_MARKET_STATE);
+
+    updateMarketChangeDisplay();
 
     updateLastMarketUpdate();
 
@@ -266,27 +310,22 @@ function updatePriceDisplay() {
     if (price === null) return;
 
 
-    const priceSelectors = [
+    const selectors = [
 
         "#currentPrice",
-
         "#goldPrice",
-
         "#liveGoldPrice",
-
         "[data-market-price]"
 
     ];
 
 
-    priceSelectors.forEach(selector => {
+    selectors.forEach(selector => {
 
         document.querySelectorAll(selector).forEach(element => {
 
-            element.textContent = formatPrice(
-                price,
-                RYFX_MARKET_CONFIG.decimals
-            );
+            element.textContent =
+                marketFormatPrice(price);
 
         });
 
@@ -315,26 +354,24 @@ function updatePriceChangeDisplay() {
 
 
     const formattedChange =
-        `${positive ? "+" : ""}${formatPrice(change)}`;
+        `${positive ? "+" : ""}${marketFormatPrice(change)}`;
 
 
     const formattedPercent =
-        Number.isFinite(percentage)
+        percentage !== null
             ? ` (${positive ? "+" : ""}${percentage.toFixed(2)}%)`
             : "";
 
 
-    const text = formattedChange + formattedPercent;
+    const text =
+        formattedChange + formattedPercent;
 
 
     const selectors = [
 
         "#priceChange",
-
         "#goldChange",
-
         "#liveGoldChange",
-
         "[data-market-change]"
 
     ];
@@ -364,7 +401,6 @@ function updatePriceChangeDisplay() {
     const percentSelectors = [
 
         "#goldChangePercent",
-
         "#liveGoldChangePercent"
 
     ];
@@ -374,7 +410,7 @@ function updatePriceChangeDisplay() {
 
         document.querySelectorAll(selector).forEach(element => {
 
-            if (Number.isFinite(percentage)) {
+            if (percentage !== null) {
 
                 element.textContent =
                     `${positive ? "+" : ""}${percentage.toFixed(2)}%`;
@@ -398,22 +434,50 @@ function updatePriceChangeDisplay() {
 }
 
 
+/* MARKET CHANGE CARD */
+
+function updateMarketChangeDisplay() {
+
+    const element = document.getElementById("marketChange");
+
+    if (!element) return;
+
+
+    const percentage =
+        RYFX_MARKET_STATE.dailyChangePercent;
+
+    if (percentage === null) {
+
+        element.textContent = "--";
+
+        return;
+
+    }
+
+
+    const positive = percentage >= 0;
+
+
+    element.textContent =
+        `${positive ? "+" : ""}${percentage.toFixed(2)}%`;
+
+
+    element.classList.toggle(
+        "price-up",
+        positive
+    );
+
+    element.classList.toggle(
+        "price-down",
+        !positive
+    );
+
+}
+
+
 /* MARKET STATISTICS */
 
 function updateMarketStatistics(data = {}) {
-
-    const fields = {
-
-        open: data.open,
-
-        high: data.high,
-
-        low: data.low,
-
-        volume: data.volume
-
-    };
-
 
     const selectors = {
 
@@ -442,23 +506,21 @@ function updateMarketStatistics(data = {}) {
     };
 
 
-    Object.entries(fields).forEach(([key, value]) => {
+    Object.entries(selectors).forEach(([key, targets]) => {
 
-        if (
-            value === undefined ||
-            value === null ||
-            !Number.isFinite(Number(value))
-        ) return;
+        const value = marketNumber(data[key]);
+
+        if (value === null) return;
 
 
-        selectors[key].forEach(selector => {
+        targets.forEach(selector => {
 
             document.querySelectorAll(selector).forEach(element => {
 
                 element.textContent =
                     key === "volume"
-                        ? Number(value).toLocaleString("en-US")
-                        : formatPrice(value);
+                        ? value.toLocaleString("en-US")
+                        : marketFormatPrice(value);
 
             });
 
@@ -472,6 +534,14 @@ function updateMarketStatistics(data = {}) {
 /* MARKET CONNECTION STATUS */
 
 function updateMarketConnection(connected) {
+
+    const wasConnected =
+        RYFX_MARKET_STATE.connected;
+
+    RYFX_MARKET_STATE.connected = connected;
+
+
+    /* DASHBOARD STATUS */
 
     const statusElements = document.querySelectorAll(
         "#marketStatus, [data-market-status]"
@@ -498,7 +568,71 @@ function updateMarketConnection(connected) {
     });
 
 
-    RYFX_STATE.marketConnected = connected;
+    /* STATUS INDICATORS */
+
+    const indicators = document.querySelectorAll(
+        ".market-status .status-indicator, #topbarMarketIndicator"
+    );
+
+
+    indicators.forEach(element => {
+
+        element.classList.toggle(
+            "connected",
+            connected
+        );
+
+        element.classList.toggle(
+            "offline",
+            !connected
+        );
+
+        element.classList.toggle(
+            "disconnected",
+            !connected
+        );
+
+    });
+
+
+    /* TOPBAR STATUS */
+
+    const topbarStatus =
+        document.getElementById("topbarMarketStatus");
+
+    if (topbarStatus) {
+
+        topbarStatus.textContent = connected
+            ? "Market Online"
+            : "Market Offline";
+
+    }
+
+
+    /* GLOBAL STATE */
+
+    if (typeof RYFX_STATE !== "undefined") {
+
+        RYFX_STATE.marketConnected = connected;
+
+    }
+
+
+    /* CONNECTION EVENTS */
+
+    if (connected && !wasConnected) {
+
+        document.dispatchEvent(
+            new CustomEvent("ryfx:market-connected")
+        );
+
+    } else if (!connected && wasConnected) {
+
+        document.dispatchEvent(
+            new CustomEvent("ryfx:market-disconnected")
+        );
+
+    }
 
 }
 
@@ -507,16 +641,15 @@ function updateMarketConnection(connected) {
 
 function updateLastMarketUpdate() {
 
+    if (!RYFX_MARKET_STATE.lastUpdate) return;
+
+
     const selectors = [
 
         "#marketLastUpdate",
-
         "#liveLastUpdate"
 
     ];
-
-
-    if (!RYFX_MARKET_STATE.lastUpdate) return;
 
 
     selectors.forEach(selector => {
@@ -571,7 +704,11 @@ function stopMarketUpdates() {
 
 document.addEventListener("ryfx:app-ready", () => {
 
-    startMarketUpdates();
+    if (!document.hidden) {
+
+        startMarketUpdates();
+
+    }
 
 });
 
@@ -601,9 +738,9 @@ document.addEventListener("ryfx:page-loaded", () => {
 
         updatePriceDisplay();
 
-        updateMarketStatistics(
-            RYFX_MARKET_STATE
-        );
+        updateMarketStatistics(RYFX_MARKET_STATE);
+
+        updateMarketChangeDisplay();
 
         updateLastMarketUpdate();
 
@@ -626,6 +763,10 @@ window.RYFX_MARKET = {
     updateMarketData,
 
     updatePriceDisplay,
+
+    updateMarketStatistics,
+
+    updateMarketConnection,
 
     startMarketUpdates,
 
