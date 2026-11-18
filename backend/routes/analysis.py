@@ -8,10 +8,14 @@ import math
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 
 from config import settings
 
-from models.analysis import AnalysisRequest
+from models.analysis import (
+    AnalysisRequest,
+    AnalysisResult
+)
 
 from services.market_data import get_market_candles
 from services.technical_analysis import analyze_market
@@ -50,6 +54,9 @@ def current_timestamp():
 
 
 def valid_price(value):
+
+    if isinstance(value, bool):
+        return False
 
     try:
 
@@ -113,10 +120,16 @@ async def analyze_xauusd_market(
             )
 
         # ====================================
-        # STEP 3: VALIDATE LATEST PRICE
+        # STEP 3: VALIDATE LATEST CANDLE
         # ====================================
 
         latest_candle = candles[-1]
+
+        if not isinstance(latest_candle, dict):
+
+            raise ValueError(
+                "Invalid latest market candle."
+            )
 
         current_price = latest_candle.get(
             "close"
@@ -168,16 +181,44 @@ async def analyze_xauusd_market(
                 "AI engine returned an invalid response."
             )
 
-        analysis = ai_result.get("analysis")
+        raw_analysis = ai_result.get(
+            "analysis"
+        )
 
-        if not isinstance(analysis, dict):
+        if not isinstance(raw_analysis, dict):
 
             raise ValueError(
                 "AI analysis result is missing."
             )
 
         # ====================================
-        # STEP 6: MARKET SNAPSHOT
+        # STEP 6: PYDANTIC VALIDATION
+        # ====================================
+
+        try:
+
+            validated_analysis = (
+                AnalysisResult.model_validate(
+                    raw_analysis
+                )
+            )
+
+            analysis = validated_analysis.model_dump(
+                mode="json"
+            )
+
+        except ValidationError as error:
+
+            print(
+                f"RYFX XAU AI Validation Error: {error}"
+            )
+
+            raise ValueError(
+                "AI returned analysis data that failed validation."
+            ) from error
+
+        # ====================================
+        # STEP 7: MARKET SNAPSHOT
         # ====================================
 
         market_snapshot = {
@@ -197,7 +238,7 @@ async def analyze_xauusd_market(
         }
 
         # ====================================
-        # STEP 7: SAVE ANALYSIS HISTORY
+        # STEP 8: SAVE ANALYSIS HISTORY
         # ====================================
 
         history_record = save_analysis(
@@ -213,8 +254,8 @@ async def analyze_xauusd_market(
         )
 
         # ====================================
-        # STEP 8: RETURN RESULT
-        # ========================================
+        # STEP 9: RETURN RESULT
+        # ====================================
 
         return {
 
@@ -297,7 +338,7 @@ async def analysis_status():
 
         "symbol": "XAUUSD",
 
-        "provider": "Gemini",
+        "provider": settings.AI_PROVIDER,
 
         "status": (
             "configured"
