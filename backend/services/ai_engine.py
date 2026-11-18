@@ -4,8 +4,7 @@
 # ============================================
 
 import json
-import re
-
+import math
 import httpx
 
 from typing import Any
@@ -25,6 +24,8 @@ AI_TIMEOUT = 60.0
 
 MAX_OUTPUT_TOKENS = 3000
 
+MAX_TAKE_PROFITS = 5
+
 
 # ============================================
 # SYSTEM INSTRUCTIONS
@@ -34,8 +35,8 @@ SYSTEM_INSTRUCTION = """
 You are RYFX XAU AI, a professional gold market
 analysis assistant specializing exclusively in XAUUSD.
 
-Your task is to analyze real market information and
-technical indicators provided by the backend.
+Analyze only the real technical information supplied
+by the backend.
 
 STRICT RULES:
 
@@ -46,8 +47,7 @@ STRICT RULES:
 
 3. Use only the supplied market data.
 
-4. Do not create entry, stop loss, or take profit
-   prices without sufficient technical justification.
+4. Never invent entry, stop loss, or take profit prices.
 
 5. If market conditions are unclear, return WAIT.
 
@@ -57,20 +57,27 @@ STRICT RULES:
 
 8. WAIT means there is no sufficiently clear setup.
 
-9. Confidence must be a number between 0 and 100.
+9. Confidence must be between 0 and 100.
    It represents analytical confidence, not a
    guaranteed probability of winning.
 
 10. Never promise profits or guaranteed results.
 
-11. Explain the reasoning clearly and objectively.
+11. Explain reasoning objectively.
 
-12. If data is insufficient, explicitly state it.
+12. Explicitly mention insufficient data.
 
-13. Do not fabricate BOS, CHoCH, liquidity sweeps,
+13. Never fabricate BOS, CHoCH, liquidity sweeps,
     support, resistance, or market structure.
 
 14. Return valid JSON only.
+
+15. For WAIT, entry and stop_loss must be null,
+    take_profits must be an empty array,
+    and risk_reward must be null.
+
+16. For BUY and SELL, provide technically justified
+    trade levels only when the supplied data supports them.
 """
 
 
@@ -79,7 +86,9 @@ STRICT RULES:
 # ============================================
 
 RESPONSE_SCHEMA = {
+
     "type": "OBJECT",
+
     "properties": {
 
         "direction": {
@@ -116,27 +125,32 @@ RESPONSE_SCHEMA = {
         },
 
         "entry": {
-            "type": ["NUMBER", "NULL"]
+            "type": "NUMBER",
+            "nullable": True
         },
 
         "stop_loss": {
-            "type": ["NUMBER", "NULL"]
+            "type": "NUMBER",
+            "nullable": True
         },
 
         "take_profits": {
             "type": "ARRAY",
             "items": {
                 "type": "NUMBER"
-            }
+            },
+            "maxItems": MAX_TAKE_PROFITS
         },
 
         "risk_reward": {
-            "type": ["STRING", "NULL"]
+            "type": "STRING",
+            "nullable": True
         }
 
     },
 
     "required": [
+
         "direction",
         "confidence",
         "summary",
@@ -149,9 +163,11 @@ RESPONSE_SCHEMA = {
         "stop_loss",
         "take_profits",
         "risk_reward"
+
     ],
 
     "propertyOrdering": [
+
         "direction",
         "confidence",
         "summary",
@@ -164,7 +180,9 @@ RESPONSE_SCHEMA = {
         "stop_loss",
         "take_profits",
         "risk_reward"
+
     ]
+
 }
 
 
@@ -191,17 +209,35 @@ def build_analysis_prompt(
     }
 
     return (
+
         "Analyze the following XAUUSD market data.\n\n"
-        "Determine whether the market currently presents "
+
+        "Determine whether the market presents "
         "a justified BUY, SELL, or WAIT opportunity.\n\n"
-        "Only provide trade levels when the supplied data "
-        "supports a technically justified setup.\n\n"
-        "If the setup is unclear, return WAIT and use null "
-        "for entry and stop_loss with an empty take_profits "
-        "array.\n\n"
-        "Return your analysis using the required JSON schema.\n\n"
+
+        "Use only the supplied technical information.\n\n"
+
+        "Do not invent prices or indicators.\n\n"
+
+        "If the setup is unclear, return WAIT with:\n"
+
+        "- entry: null\n"
+        "- stop_loss: null\n"
+        "- take_profits: []\n"
+        "- risk_reward: null\n\n"
+
+        "For BUY or SELL, provide justified trade levels.\n\n"
+
+        "Return JSON matching the required schema.\n\n"
+
         "MARKET DATA:\n"
-        + json.dumps(payload, ensure_ascii=False)
+
+        + json.dumps(
+            payload,
+            ensure_ascii=False,
+            allow_nan=False
+        )
+
     )
 
 
@@ -285,28 +321,56 @@ async def call_gemini(
 
     }
 
-    async with httpx.AsyncClient(
-        timeout=AI_TIMEOUT
-    ) as client:
+    try:
 
-        response = await client.post(
+        async with httpx.AsyncClient(
+            timeout=AI_TIMEOUT
+        ) as client:
 
-            url,
+            response = await client.post(
 
-            headers=headers,
+                url,
 
-            json=payload
+                headers=headers,
 
-        )
+                json=payload
 
-        if response.is_error:
-
-            raise RuntimeError(
-                f"Gemini API request failed: "
-                f"HTTP {response.status_code}"
             )
 
-        result = response.json()
+            if response.is_error:
+
+                try:
+
+                    error_data = response.json()
+
+                    error_message = (
+                        error_data
+                        .get("error", {})
+                        .get("message", "Unknown Gemini API error.")
+                    )
+
+                except ValueError:
+
+                    error_message = "Invalid Gemini API error response."
+
+                raise RuntimeError(
+                    f"Gemini API HTTP {response.status_code}: "
+                    f"{error_message}"
+                )
+
+            result = response.json()
+
+    except httpx.TimeoutException as error:
+
+        raise RuntimeError(
+            "Gemini API request timed out."
+        ) from error
+
+    except httpx.RequestError as error:
+
+        raise RuntimeError(
+            "Unable to connect to Gemini API."
+        ) from error
 
     candidates = result.get("candidates", [])
 
@@ -324,6 +388,12 @@ async def call_gemini(
 
         raise RuntimeError(
             "Gemini analysis was incomplete."
+        )
+
+    if finish_reason not in (None, "STOP"):
+
+        raise RuntimeError(
+            f"Gemini analysis stopped: {finish_reason}"
         )
 
     parts = (
@@ -363,18 +433,19 @@ def parse_ai_response(
 
     cleaned = response_text.strip()
 
-    cleaned = re.sub(
-        r"^```(?:json)?\s*",
-        "",
-        cleaned,
-        flags=re.IGNORECASE
-    )
+    if cleaned.startswith("```"):
 
-    cleaned = re.sub(
-        r"\s*```$",
-        "",
-        cleaned
-    )
+        lines = cleaned.splitlines()
+
+        if lines and lines[0].startswith("```"):
+
+            lines = lines[1:]
+
+        if lines and lines[-1].strip() == "```":
+
+            lines = lines[:-1]
+
+        cleaned = "\n".join(lines).strip()
 
     try:
 
@@ -392,31 +463,28 @@ def parse_ai_response(
             "Invalid AI analysis structure."
         )
 
+    # ========================================
+    # DIRECTION
+    # ========================================
+
     direction = str(
         result.get("direction", "")
     ).upper()
 
-    if direction not in [
-        "BUY",
-        "SELL",
-        "WAIT"
-    ]:
+    if direction not in ["BUY", "SELL", "WAIT"]:
 
         raise ValueError(
             "Invalid AI trading direction."
         )
 
-    try:
+    # ========================================
+    # CONFIDENCE
+    # ========================================
 
-        confidence = float(
-            result.get("confidence", 0)
-        )
-
-    except (TypeError, ValueError):
-
-        raise ValueError(
-            "Invalid AI confidence value."
-        )
+    confidence = validate_number(
+        result.get("confidence"),
+        "confidence"
+    )
 
     if not 0 <= confidence <= 100:
 
@@ -424,12 +492,53 @@ def parse_ai_response(
             "AI confidence must be between 0 and 100."
         )
 
-    entry = result.get("entry")
+    # ========================================
+    # TEXT FIELDS
+    # ========================================
 
-    stop_loss = result.get("stop_loss")
+    text_fields = [
+
+        "summary",
+        "reasoning",
+        "structure",
+        "bos",
+        "liquidity",
+        "volatility"
+
+    ]
+
+    for field in text_fields:
+
+        if not isinstance(result.get(field), str):
+
+            raise ValueError(
+                f"Invalid AI field: {field}."
+            )
+
+    for field in ["summary", "reasoning"]:
+
+        if not result[field].strip():
+
+            raise ValueError(
+                f"AI field {field} cannot be empty."
+            )
+
+    # ========================================
+    # TRADE LEVELS
+    # ========================================
+
+    entry = validate_price(
+        result.get("entry"),
+        "entry"
+    )
+
+    stop_loss = validate_price(
+        result.get("stop_loss"),
+        "stop_loss"
+    )
 
     take_profits = result.get(
-        "take_profits", []
+        "take_profits"
     )
 
     if not isinstance(take_profits, list):
@@ -438,45 +547,11 @@ def parse_ai_response(
             "Invalid take profit structure."
         )
 
-    def validate_price(value, field_name):
+    if len(take_profits) > MAX_TAKE_PROFITS:
 
-        if value is None:
-
-            return None
-
-        if isinstance(value, bool):
-
-            raise ValueError(
-                f"Invalid {field_name}."
-            )
-
-        try:
-
-            number = float(value)
-
-        except (TypeError, ValueError):
-
-            raise ValueError(
-                f"Invalid {field_name}."
-            )
-
-        if number <= 0:
-
-            raise ValueError(
-                f"{field_name} must be positive."
-            )
-
-        return number
-
-    entry = validate_price(
-        entry,
-        "entry"
-    )
-
-    stop_loss = validate_price(
-        stop_loss,
-        "stop_loss"
-    )
+        raise ValueError(
+            "Maximum 5 take profit levels allowed."
+        )
 
     take_profits = [
 
@@ -489,6 +564,10 @@ def parse_ai_response(
 
     ]
 
+    # ========================================
+    # WAIT VALIDATION
+    # ========================================
+
     if direction == "WAIT":
 
         entry = None
@@ -497,48 +576,85 @@ def parse_ai_response(
 
         take_profits = []
 
-    elif (
-        entry is None
-        or stop_loss is None
-        or not take_profits
-    ):
+        risk_reward = None
 
-        raise ValueError(
-            "BUY/SELL analysis requires complete trade levels."
+    else:
+
+        if (
+            entry is None
+            or stop_loss is None
+            or not take_profits
+        ):
+
+            raise ValueError(
+                "BUY/SELL requires complete trade levels."
+            )
+
+        # ====================================
+        # BUY VALIDATION
+        # ====================================
+
+        if direction == "BUY":
+
+            if stop_loss >= entry:
+
+                raise ValueError(
+                    "BUY stop loss must be below entry."
+                )
+
+            if any(
+                target <= entry
+                for target in take_profits
+            ):
+
+                raise ValueError(
+                    "BUY take profits must be above entry."
+                )
+
+            if take_profits != sorted(take_profits):
+
+                raise ValueError(
+                    "BUY take profits must be ascending."
+                )
+
+        # ====================================
+        # SELL VALIDATION
+        # ====================================
+
+        if direction == "SELL":
+
+            if stop_loss <= entry:
+
+                raise ValueError(
+                    "SELL stop loss must be above entry."
+                )
+
+            if any(
+                target >= entry
+                for target in take_profits
+            ):
+
+                raise ValueError(
+                    "SELL take profits must be below entry."
+                )
+
+            if take_profits != sorted(
+                take_profits,
+                reverse=True
+            ):
+
+                raise ValueError(
+                    "SELL take profits must be descending."
+                )
+
+        risk_reward = result.get(
+            "risk_reward"
         )
 
-    if direction == "BUY":
-
-        if stop_loss >= entry:
+        if not isinstance(risk_reward, str):
 
             raise ValueError(
-                "BUY stop loss must be below entry."
-            )
-
-        if any(
-            target <= entry
-            for target in take_profits
-        ):
-
-            raise ValueError(
-                "BUY take profits must be above entry."
-            )
-
-    if direction == "SELL":
-
-        if stop_loss <= entry:
-
-            raise ValueError(
-                "SELL stop loss must be above entry."
-            )
-
-        if any(
-            target >= entry
-            for target in take_profits
-        ):
-
-            raise ValueError(
-                "SELL take profits must be below entry."
+                "Invalid risk/reward value."
             )
 
     return {
@@ -547,29 +663,17 @@ def parse_ai_response(
 
         "confidence": confidence,
 
-        "summary": str(
-            result.get("summary", "")
-        ),
+        "summary": result["summary"].strip(),
 
-        "reasoning": str(
-            result.get("reasoning", "")
-        ),
+        "reasoning": result["reasoning"].strip(),
 
-        "structure": str(
-            result.get("structure", "")
-        ),
+        "structure": result["structure"].strip(),
 
-        "bos": str(
-            result.get("bos", "")
-        ),
+        "bos": result["bos"].strip(),
 
-        "liquidity": str(
-            result.get("liquidity", "")
-        ),
+        "liquidity": result["liquidity"].strip(),
 
-        "volatility": str(
-            result.get("volatility", "")
-        ),
+        "volatility": result["volatility"].strip(),
 
         "entry": entry,
 
@@ -577,11 +681,70 @@ def parse_ai_response(
 
         "take_profits": take_profits,
 
-        "risk_reward": result.get(
-            "risk_reward"
-        )
+        "risk_reward": risk_reward
 
     }
+
+
+# ============================================
+# NUMBER VALIDATION
+# ============================================
+
+def validate_number(
+    value: Any,
+    field_name: str
+) -> float:
+
+    if isinstance(value, bool):
+
+        raise ValueError(
+            f"Invalid {field_name}."
+        )
+
+    try:
+
+        number = float(value)
+
+    except (TypeError, ValueError):
+
+        raise ValueError(
+            f"Invalid {field_name}."
+        )
+
+    if not math.isfinite(number):
+
+        raise ValueError(
+            f"{field_name} must be finite."
+        )
+
+    return number
+
+
+# ============================================
+# PRICE VALIDATION
+# ============================================
+
+def validate_price(
+    value: Any,
+    field_name: str
+):
+
+    if value is None:
+
+        return None
+
+    number = validate_number(
+        value,
+        field_name
+    )
+
+    if number <= 0:
+
+        raise ValueError(
+            f"{field_name} must be positive."
+        )
+
+    return number
 
 
 # ============================================
