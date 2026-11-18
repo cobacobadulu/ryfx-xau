@@ -6,7 +6,11 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+
+from models.signal import (
+    SignalCreate,
+    SignalStatusUpdate
+)
 
 from services.signal_manager import (
     create_signal,
@@ -28,40 +32,29 @@ router = APIRouter(
 
 
 # ============================================
-# REQUEST MODELS
+# CONFIGURATION
 # ============================================
 
-class CreateSignalRequest(BaseModel):
-
-    direction: str
-
-    entry: float = Field(gt=0)
-
-    stop_loss: float = Field(gt=0)
-
-    take_profits: list[float] = Field(
-        min_length=1,
-        max_length=5
-    )
-
-    timeframe: str = "15m"
-
-    confidence: float = Field(
-        default=0,
-        ge=0,
-        le=100
-    )
-
-    summary: str = ""
-
-    reasoning: str = ""
+ALLOWED_TIMEFRAMES = [
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "1d"
+]
 
 
-class UpdateSignalRequest(BaseModel):
+# ============================================
+# HELPERS
+# ============================================
 
-    status: str
+def current_timestamp():
 
-    result: str | None = None
+    return datetime.now(
+        timezone.utc
+    ).isoformat()
 
 
 # ============================================
@@ -70,32 +63,34 @@ class UpdateSignalRequest(BaseModel):
 
 @router.post("/")
 async def create_new_signal(
-    request: CreateSignalRequest
+    request: SignalCreate
 ):
+
+    if request.timeframe not in ALLOWED_TIMEFRAMES:
+
+        raise HTTPException(
+            status_code=422,
+            detail="Unsupported signal timeframe."
+        )
 
     try:
 
+        signal_data = request.model_dump()
+
+        timeframe = signal_data.pop(
+            "timeframe"
+        )
+
+        signal_data.pop(
+            "symbol",
+            None
+        )
+
         signal = create_signal(
 
-            analysis={
+            analysis=signal_data,
 
-                "direction": request.direction,
-
-                "entry": request.entry,
-
-                "stop_loss": request.stop_loss,
-
-                "take_profits": request.take_profits,
-
-                "confidence": request.confidence,
-
-                "summary": request.summary,
-
-                "reasoning": request.reasoning
-
-            },
-
-            timeframe=request.timeframe,
+            timeframe=timeframe,
 
             source="API"
 
@@ -107,18 +102,19 @@ async def create_new_signal(
 
             "message": "XAUUSD signal created.",
 
-            "data": signal
+            "symbol": "XAUUSD",
+
+            "data": signal,
+
+            "timestamp": current_timestamp()
 
         }
 
     except ValueError as error:
 
         raise HTTPException(
-
             status_code=422,
-
             detail=str(error)
-
         ) from error
 
 
@@ -144,11 +140,8 @@ async def list_signals(
     try:
 
         signals = get_all_signals(
-
             status=status,
-
             limit=limit
-
         )
 
         return {
@@ -159,18 +152,17 @@ async def list_signals(
 
             "count": len(signals),
 
-            "data": signals
+            "data": signals,
+
+            "timestamp": current_timestamp()
 
         }
 
     except ValueError as error:
 
         raise HTTPException(
-
             status_code=400,
-
             detail=str(error)
-
         ) from error
 
 
@@ -185,11 +177,11 @@ async def signal_statistics():
 
         "success": True,
 
+        "symbol": "XAUUSD",
+
         "data": get_signal_statistics(),
 
-        "timestamp": datetime.now(
-            timezone.utc
-        ).isoformat()
+        "timestamp": current_timestamp()
 
     }
 
@@ -210,11 +202,8 @@ async def signal_detail(
     if signal is None:
 
         raise HTTPException(
-
             status_code=404,
-
             detail="Signal not found."
-
         )
 
     return {
@@ -235,7 +224,7 @@ async def update_signal(
 
     signal_id: str,
 
-    request: UpdateSignalRequest
+    request: SignalStatusUpdate
 
 ):
 
@@ -254,11 +243,8 @@ async def update_signal(
         if signal is None:
 
             raise HTTPException(
-
                 status_code=404,
-
                 detail="Signal not found."
-
             )
 
         return {
@@ -267,18 +253,17 @@ async def update_signal(
 
             "message": "Signal status updated.",
 
-            "data": signal
+            "data": signal,
+
+            "timestamp": current_timestamp()
 
         }
 
     except ValueError as error:
 
         raise HTTPException(
-
             status_code=400,
-
             detail=str(error)
-
         ) from error
 
 
@@ -306,11 +291,8 @@ async def cancel_existing_signal(
         if signal is None:
 
             raise HTTPException(
-
                 status_code=404,
-
                 detail="Signal not found."
-
             )
 
         return {
@@ -319,16 +301,15 @@ async def cancel_existing_signal(
 
             "message": "Signal cancelled.",
 
-            "data": signal
+            "data": signal,
+
+            "timestamp": current_timestamp()
 
         }
 
     except ValueError as error:
 
         raise HTTPException(
-
             status_code=400,
-
             detail=str(error)
-
         ) from error
