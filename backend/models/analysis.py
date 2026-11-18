@@ -10,6 +10,7 @@ from typing import Literal
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     model_validator,
     field_validator
@@ -54,15 +55,18 @@ def validate_finite_number(value):
         return value
 
     if isinstance(value, bool):
-
         raise ValueError(
             "Boolean values are not valid numbers."
+        )
+
+    if not isinstance(value, (int, float)):
+        raise ValueError(
+            "Value must be a numeric type."
         )
 
     number = float(value)
 
     if not math.isfinite(number):
-
         raise ValueError(
             "Number must be finite."
         )
@@ -71,10 +75,44 @@ def validate_finite_number(value):
 
 
 # ============================================
+# SHARED TEXT VALIDATION
+# ============================================
+
+def validate_text(
+    value,
+    field_name,
+    max_length=5000
+):
+
+    if not isinstance(value, str):
+        raise ValueError(
+            f"{field_name} must be text."
+        )
+
+    value = value.strip()
+
+    if not value:
+        raise ValueError(
+            f"{field_name} cannot be empty."
+        )
+
+    if len(value) > max_length:
+        raise ValueError(
+            f"{field_name} is too long."
+        )
+
+    return value
+
+
+# ============================================
 # TRADE LEVELS MODEL
 # ============================================
 
 class TradeLevels(BaseModel):
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
     entry: float | None = Field(
         default=None,
@@ -100,7 +138,6 @@ class TradeLevels(BaseModel):
     )
     @classmethod
     def validate_prices(cls, value):
-
         return validate_finite_number(value)
 
     @field_validator(
@@ -111,7 +148,6 @@ class TradeLevels(BaseModel):
     def validate_take_profits(cls, values):
 
         if not isinstance(values, list):
-
             raise ValueError(
                 "Take profits must be a list."
             )
@@ -127,6 +163,10 @@ class TradeLevels(BaseModel):
 # ============================================
 
 class AnalysisResult(BaseModel):
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
     direction: AnalysisDirection
 
@@ -176,7 +216,6 @@ class AnalysisResult(BaseModel):
     )
     @classmethod
     def validate_numeric_fields(cls, value):
-
         return validate_finite_number(value)
 
     @field_validator(
@@ -187,7 +226,6 @@ class AnalysisResult(BaseModel):
     def validate_tp_numbers(cls, values):
 
         if not isinstance(values, list):
-
             raise ValueError(
                 "Take profits must be a list."
             )
@@ -201,20 +239,58 @@ class AnalysisResult(BaseModel):
     # TEXT VALIDATION
     # ========================================
 
+    @field_validator("summary", "reasoning")
+    @classmethod
+    def validate_required_text(cls, value, info):
+
+        return validate_text(
+            value,
+            info.field_name
+        )
+
     @field_validator(
-        "summary",
-        "reasoning"
+        "structure",
+        "bos",
+        "liquidity",
+        "volatility"
     )
     @classmethod
-    def validate_required_text(cls, value):
+    def validate_optional_text(cls, value, info):
 
-        if not value.strip():
-
+        if not isinstance(value, str):
             raise ValueError(
-                "This text field cannot be empty."
+                f"{info.field_name} must be text."
             )
 
-        return value.strip()
+        value = value.strip()
+
+        if len(value) > 5000:
+            raise ValueError(
+                f"{info.field_name} is too long."
+            )
+
+        return value
+
+    @field_validator("risk_reward")
+    @classmethod
+    def validate_risk_reward(cls, value):
+
+        if value is None:
+            return value
+
+        if not isinstance(value, str):
+            raise ValueError(
+                "Risk/reward must be text."
+            )
+
+        value = value.strip()
+
+        if len(value) > 50:
+            raise ValueError(
+                "Risk/reward is too long."
+            )
+
+        return value
 
     # ========================================
     # TRADE LEVEL VALIDATION
@@ -226,11 +302,8 @@ class AnalysisResult(BaseModel):
         if self.direction == "WAIT":
 
             self.entry = None
-
             self.stop_loss = None
-
             self.take_profits = []
-
             self.risk_reward = None
 
             return self
@@ -240,15 +313,18 @@ class AnalysisResult(BaseModel):
             or self.stop_loss is None
             or not self.take_profits
         ):
-
             raise ValueError(
                 "BUY/SELL requires complete trade levels."
+            )
+
+        if not self.risk_reward:
+            raise ValueError(
+                "BUY/SELL requires risk/reward."
             )
 
         if self.direction == "BUY":
 
             if self.stop_loss >= self.entry:
-
                 raise ValueError(
                     "BUY stop loss must be below entry."
                 )
@@ -257,7 +333,6 @@ class AnalysisResult(BaseModel):
                 target <= self.entry
                 for target in self.take_profits
             ):
-
                 raise ValueError(
                     "BUY take profits must be above entry."
                 )
@@ -265,7 +340,6 @@ class AnalysisResult(BaseModel):
             if self.take_profits != sorted(
                 self.take_profits
             ):
-
                 raise ValueError(
                     "BUY take profits must be ascending."
                 )
@@ -273,7 +347,6 @@ class AnalysisResult(BaseModel):
         elif self.direction == "SELL":
 
             if self.stop_loss <= self.entry:
-
                 raise ValueError(
                     "SELL stop loss must be above entry."
                 )
@@ -282,7 +355,6 @@ class AnalysisResult(BaseModel):
                 target >= self.entry
                 for target in self.take_profits
             ):
-
                 raise ValueError(
                     "SELL take profits must be below entry."
                 )
@@ -291,7 +363,6 @@ class AnalysisResult(BaseModel):
                 self.take_profits,
                 reverse=True
             ):
-
                 raise ValueError(
                     "SELL take profits must be descending."
                 )
@@ -305,6 +376,10 @@ class AnalysisResult(BaseModel):
 
 class AnalysisRequest(BaseModel):
 
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
     symbol: Literal["XAUUSD"] = "XAUUSD"
 
     timeframe: AnalysisTimeframe = "15m"
@@ -317,6 +392,10 @@ class AnalysisRequest(BaseModel):
 # ============================================
 
 class AnalysisResponse(BaseModel):
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
     success: bool = True
 
@@ -341,6 +420,10 @@ class AnalysisResponse(BaseModel):
 
 class AnalysisHistoryItem(BaseModel):
 
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
     id: str
 
     symbol: Literal["XAUUSD"] = "XAUUSD"
@@ -360,11 +443,21 @@ class AnalysisHistoryItem(BaseModel):
 
     created_at: datetime
 
-    @field_validator("confidence", mode="before")
+    @field_validator(
+        "confidence",
+        mode="before"
+    )
     @classmethod
     def validate_confidence(cls, value):
-
         return validate_finite_number(value)
+
+    @field_validator("summary")
+    @classmethod
+    def validate_summary(cls, value):
+        return validate_text(
+            value,
+            "summary"
+        )
 
 
 # ============================================
@@ -372,6 +465,10 @@ class AnalysisHistoryItem(BaseModel):
 # ============================================
 
 class AnalysisHistoryResponse(BaseModel):
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
     success: bool = True
 
