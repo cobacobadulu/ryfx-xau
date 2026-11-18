@@ -6,11 +6,16 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+
+from config import settings
+
+from models.analysis import AnalysisRequest
 
 from services.market_data import get_market_candles
 from services.technical_analysis import analyze_market
 from services.ai_engine import analyze_xauusd
+
+from routes.history import save_analysis
 
 
 # ============================================
@@ -24,38 +29,11 @@ router = APIRouter(
 
 
 # ============================================
-# REQUEST MODEL
-# ============================================
-
-class AnalysisRequest(BaseModel):
-
-    symbol: str = "XAUUSD"
-
-    timeframe: str = "15m"
-
-    analysis_type: str = "technical"
-
-
-# ============================================
 # CONFIGURATION
 # ============================================
 
-ALLOWED_TIMEFRAMES = [
-    "1m",
-    "5m",
-    "15m",
-    "30m",
-    "1h",
-    "4h",
-    "1d"
-]
-
-ALLOWED_ANALYSIS_TYPES = [
-    "technical",
-    "scalping",
-    "intraday",
-    "swing"
-]
+MINIMUM_CANDLES = 200
+REQUEST_CANDLES = 250
 
 
 # ============================================
@@ -67,46 +45,35 @@ async def analyze_xauusd_market(
     request: AnalysisRequest
 ):
 
-    # Validate symbol
+    # ========================================
+    # STEP 1: VALIDATE REQUEST
+    # ========================================
 
-    if request.symbol.upper() != "XAUUSD":
+    if request.symbol != "XAUUSD":
 
         raise HTTPException(
             status_code=400,
             detail="Only XAUUSD analysis is supported."
         )
 
-    # Validate timeframe
-
-    if request.timeframe not in ALLOWED_TIMEFRAMES:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported timeframe."
-        )
-
-    # Validate analysis type
-
-    if request.analysis_type not in ALLOWED_ANALYSIS_TYPES:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported analysis type."
-        )
-
     try:
 
-        # STEP 1: GET REAL MARKET CANDLES
+        # ====================================
+        # STEP 2: GET REAL MARKET CANDLES
+        # ====================================
 
         candles = await get_market_candles(
-
             timeframe=request.timeframe,
-
-            limit=250
-
+            limit=REQUEST_CANDLES
         )
 
-        if len(candles) < 200:
+        if not isinstance(candles, list):
+
+            raise ValueError(
+                "Invalid market candle response."
+            )
+
+        if len(candles) < MINIMUM_CANDLES:
 
             raise HTTPException(
                 status_code=503,
@@ -116,25 +83,65 @@ async def analyze_xauusd_market(
                 )
             )
 
-        # STEP 2: TECHNICAL ANALYSIS
+        # ====================================
+        # STEP 3: TECHNICAL ANALYSIS
+        # ====================================
 
         technical_data = analyze_market(
             candles
         )
 
-        # STEP 3: GEMINI AI ANALYSIS
+        if not isinstance(technical_data, dict):
+
+            raise ValueError(
+                "Technical analysis returned invalid data."
+            )
+
+        # ====================================
+        # STEP 4: GEMINI AI ANALYSIS
+        # ====================================
 
         ai_result = await analyze_xauusd(
-
             technical_data=technical_data,
-
             timeframe=request.timeframe,
-
             analysis_type=request.analysis_type
-
         )
 
-        # STEP 4: RETURN RESULT
+        if not isinstance(ai_result, dict):
+
+            raise ValueError(
+                "AI engine returned an invalid response."
+            )
+
+        analysis = ai_result.get("analysis")
+
+        if not isinstance(analysis, dict):
+
+            raise ValueError(
+                "AI analysis result is missing."
+            )
+
+        # ====================================
+        # STEP 5: SAVE ANALYSIS HISTORY
+        # ====================================
+
+        market_snapshot = {
+            "current_price": technical_data.get(
+                "current_price"
+            ),
+            "candles_analyzed": len(candles)
+        }
+
+        history_record = save_analysis(
+            analysis=analysis,
+            timeframe=request.timeframe,
+            analysis_type=request.analysis_type,
+            market_data=market_snapshot
+        )
+
+        # ====================================
+        # STEP 6: RETURN RESULT
+        # ====================================
 
         return {
 
@@ -146,19 +153,13 @@ async def analyze_xauusd_market(
 
             "analysis_type": request.analysis_type,
 
-            "market_data": {
+            "history_id": history_record["id"],
 
-                "current_price": (
-                    technical_data["current_price"]
-                ),
-
-                "candles_analyzed": len(candles)
-
-            },
+            "market_data": market_snapshot,
 
             "technical_analysis": technical_data,
 
-            "analysis": ai_result["analysis"],
+            "analysis": analysis,
 
             "timestamp": datetime.now(
                 timezone.utc
@@ -173,31 +174,26 @@ async def analyze_xauusd_market(
     except RuntimeError as error:
 
         raise HTTPException(
-
             status_code=503,
-
             detail=str(error)
-
         ) from error
 
     except ValueError as error:
 
         raise HTTPException(
-
             status_code=422,
-
             detail=str(error)
-
         ) from error
 
     except Exception as error:
 
+        print(
+            f"RYFX XAU Analysis Error: {error}"
+        )
+
         raise HTTPException(
-
             status_code=502,
-
             detail="Unable to complete XAUUSD AI analysis."
-
         ) from error
 
 
@@ -207,6 +203,18 @@ async def analyze_xauusd_market(
 
 @router.get("/status")
 async def analysis_status():
+
+    ai_configured = bool(
+        settings.AI_API_KEY
+    )
+
+    market_configured = bool(
+        settings.MARKET_API_URL
+    )
+
+    service_ready = (
+        ai_configured and market_configured
+    )
 
     return {
 
@@ -218,7 +226,15 @@ async def analysis_status():
 
         "provider": "Gemini",
 
-        "status": "available",
+        "status": (
+            "configured"
+            if service_ready
+            else "not_configured"
+        ),
+
+        "ai_configured": ai_configured,
+
+        "market_configured": market_configured,
 
         "timestamp": datetime.now(
             timezone.utc
