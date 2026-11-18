@@ -1,6 +1,7 @@
 /* =========================================
-   ryFX XAU — UI COMPONENTS
+   ryFX XAU — PREMIUM UI COMPONENTS
 ========================================= */
+
 
 /* CARDS */
 
@@ -14,9 +15,8 @@
 
 .card:hover {
     border-color: rgba(75, 157, 255, 0.2);
+    transform: translateY(-2px);
 }
-
-/* CARD ICON */
 
 .card-icon {
     width: 40px;
@@ -29,6 +29,130 @@
     color: var(--blue);
     font-size: 18px;
 }
+
+
+/* SIDEBAR BRAND */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 25px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-brand h2 {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--text);
+}
+
+.sidebar-brand h2 span {
+    color: var(--gold);
+}
+
+.sidebar-brand p {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 1.2px;
+}
+
+
+/* SIDEBAR NAVIGATION */
+
+.sidebar-nav {
+    flex: 1;
+    padding: 20px 12px;
+}
+
+.nav-section {
+    margin: 20px 10px 9px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.nav-item,
+.menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 13px;
+    margin-bottom: 5px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    transition: 0.25s ease;
+}
+
+.nav-item:hover,
+.menu-item:hover {
+    background: rgba(75, 157, 255, 0.08);
+    color: var(--text);
+}
+
+.nav-item.active,
+.menu-item.active {
+    background: rgba(75, 157, 255, 0.13);
+    color: var(--blue);
+    border: 1px solid rgba(75, 157, 255, 0.12);
+}
+
+.nav-item i,
+.menu-item i {
+    width: 19px;
+    text-align: center;
+    font-size: 15px;
+}
+
+
+/* SIDEBAR FOOTER */
+
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+/* TOPBAR COMPONENTS */
+
+.topbar-left,
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.topbar-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.topbar-breadcrumb {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.topbar-symbol {
+    padding: 7px 12px;
+    background: rgba(216, 179, 107, 0.1);
+    border: 1px solid rgba(216, 179, 107, 0.2);
+    border-radius: 8px;
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 800;
+}
+
 
 /* MARKET STATUS */
 
@@ -49,6 +173,21 @@
     color: var(--red);
 }
 
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px rgba(34, 201, 151, 0.5);
+}
+
+.status-indicator.offline {
+    background: var(--red);
+    box-shadow: 0 0 10px rgba(240, 91, 104, 0.4);
+}
+
+
 /* TRADING SIGNAL */
 
 .signal-card {
@@ -56,6 +195,11 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 20px;
+    transition: 0.25s ease;
+}
+
+.signal-card:hover {
+    border-color: rgba(75, 157, 255, 0.2);
 }
 
 .signal-direction {
@@ -88,6 +232,7 @@
     border: 1px solid rgba(216, 179, 107, 0.2);
 }
 
+
 /* SIGNAL DETAILS */
 
 .signal-details {
@@ -102,6 +247,7 @@
     border: 1px solid var(--border);
     border-radius: 9px;
     padding: 12px;
+    min-width: 0;
 }
 
 .signal-detail span {
@@ -114,13 +260,16 @@
 .signal-detail strong {
     font-size: 13px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
+
 
 /* TABLE */
 
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
+    border-radius: 10px;
 }
 
 .data-table {
@@ -145,6 +294,10 @@
     border-bottom: 1px solid var(--border);
 }
 
+.data-table tbody tr {
+    transition: background 0.2s ease;
+}
+
 .data-table tbody tr:hover {
     background: rgba(255, 255, 255, 0.02);
 }
@@ -152,6 +305,7 @@
 .data-table tbody tr:last-child td {
     border-bottom: none;
 }
+
 
 /* PROGRESS BAR */
 
@@ -179,6 +333,7 @@
     background: var(--green);
 }
 
+
 /* TABS */
 
 .tabs {
@@ -187,6 +342,11 @@
     gap: 7px;
     overflow-x: auto;
     border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .tab {
@@ -207,6 +367,7 @@
     color: var(--blue);
     border-bottom-color: var(--blue);
 }
+
 
 /* NOTIFICATION */
 
@@ -242,6 +403,7 @@
     font-size: 11px;
 }
 
+
 /* EMPTY STATE */
 
 .empty-state {
@@ -270,6 +432,7 @@
     max-width: 300px;
 }
 
+
 /* DIVIDER */
 
 .divider {
@@ -278,6 +441,7 @@
     background: var(--border);
     margin: 18px 0;
 }
+
 
 /* AVATAR */
 
@@ -293,6 +457,7 @@
     font-size: 12px;
     font-weight: 700;
 }
+
 
 /* TOOLTIP */
 
@@ -316,9 +481,20 @@
     z-index: 20;
 }
 
+
 /* RESPONSIVE */
 
+@media (max-width: 900px) {
+
+    .topbar-left,
+    .topbar-right {
+        gap: 9px;
+    }
+
+}
+
 @media (max-width: 600px) {
+
     .card,
     .signal-card {
         padding: 15px;
@@ -336,4 +512,22 @@
     .data-table td {
         padding: 11px 9px;
     }
+
+    .topbar-symbol {
+        padding: 6px 9px;
+        font-size: 10px;
+    }
+
+    .topbar-breadcrumb {
+        font-size: 10px;
+    }
+
+}
+
+@media (max-width: 380px) {
+
+    .signal-details {
+        grid-template-columns: 1fr;
+    }
+
 }
