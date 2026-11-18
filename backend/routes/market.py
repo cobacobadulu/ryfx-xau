@@ -24,6 +24,32 @@ router = APIRouter(
 
 
 # ============================================
+# CONFIGURATION
+# ============================================
+
+ALLOWED_TIMEFRAMES = [
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "1d"
+]
+
+
+# ============================================
+# HELPERS
+# ============================================
+
+def current_timestamp():
+
+    return datetime.now(
+        timezone.utc
+    ).isoformat()
+
+
+# ============================================
 # LIVE MARKET DATA
 # ============================================
 
@@ -34,13 +60,21 @@ async def get_xauusd_market():
 
         market = await get_market_data()
 
-        if not market:
+        if not isinstance(market, dict) or not market:
 
             raise HTTPException(
                 status_code=503,
                 detail="XAUUSD market data is unavailable."
             )
 
+        price = market.get("price")
+
+        if price is None or float(price) <= 0:
+
+            raise HTTPException(
+                status_code=503,
+                detail="Invalid XAUUSD market price."
+            )
 
         return {
 
@@ -50,26 +84,23 @@ async def get_xauusd_market():
 
             "data": market,
 
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "timestamp": current_timestamp()
 
         }
-
 
     except HTTPException:
 
         raise
 
-
     except Exception as error:
 
+        print(
+            f"RYFX XAU Market Error: {error}"
+        )
+
         raise HTTPException(
-
             status_code=502,
-
             detail="Unable to retrieve XAUUSD market data."
-
         ) from error
 
 
@@ -92,57 +123,26 @@ async def get_xauusd_candles(
 
 ):
 
-    allowed_timeframes = [
-
-        "1m",
-
-        "5m",
-
-        "15m",
-
-        "30m",
-
-        "1h",
-
-        "4h",
-
-        "1d"
-
-    ]
-
-
-    if timeframe not in allowed_timeframes:
+    if timeframe not in ALLOWED_TIMEFRAMES:
 
         raise HTTPException(
-
             status_code=400,
-
             detail="Unsupported timeframe."
-
         )
-
 
     try:
 
         candles = await get_market_candles(
-
             timeframe=timeframe,
-
             limit=limit
-
         )
 
-
-        if not candles:
+        if not isinstance(candles, list) or not candles:
 
             raise HTTPException(
-
                 status_code=503,
-
                 detail="XAUUSD candle data is unavailable."
-
             )
-
 
         return {
 
@@ -156,26 +156,23 @@ async def get_xauusd_candles(
 
             "data": candles,
 
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "timestamp": current_timestamp()
 
         }
-
 
     except HTTPException:
 
         raise
 
-
     except Exception as error:
 
+        print(
+            f"RYFX XAU Candle Error: {error}"
+        )
+
         raise HTTPException(
-
             status_code=502,
-
             detail="Unable to retrieve XAUUSD candle data."
-
         ) from error
 
 
@@ -190,8 +187,20 @@ async def get_market_status():
 
         market = await get_market_data()
 
-        connected = bool(market)
+        connected = isinstance(
+            market,
+            dict
+        ) and bool(market)
 
+        price = (
+            market.get("price")
+            if connected
+            else None
+        )
+
+        if price is None or float(price) <= 0:
+
+            connected = False
 
         return {
 
@@ -202,23 +211,20 @@ async def get_market_status():
             "connected": connected,
 
             "status": (
-
                 "connected"
-
                 if connected
-
                 else "disconnected"
-
             ),
 
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "timestamp": current_timestamp()
 
         }
 
+    except Exception as error:
 
-    except Exception:
+        print(
+            f"RYFX XAU Market Status Error: {error}"
+        )
 
         return {
 
@@ -230,8 +236,6 @@ async def get_market_status():
 
             "status": "disconnected",
 
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "timestamp": current_timestamp()
 
         }
