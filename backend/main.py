@@ -41,9 +41,15 @@ async def lifespan(app: FastAPI):
     print("- Trading Signals API")
     print("- Analysis History API")
 
+    print("================================")
+    print("RYFX XAU BACKEND READY")
+    print("================================")
+
     yield
 
+    print("================================")
     print("RYFX XAU BACKEND SHUTTING DOWN")
+    print("================================")
 
 
 # ============================================
@@ -69,11 +75,18 @@ app = FastAPI(
 # CORS CONFIGURATION
 # ============================================
 
+cors_origins = settings.cors_origins
+
+if not cors_origins:
+    raise RuntimeError(
+        "ALLOWED_ORIGINS must contain at least one origin."
+    )
+
 app.add_middleware(
 
     CORSMiddleware,
 
-    allow_origins=settings.cors_origins,
+    allow_origins=cors_origins,
 
     allow_credentials=True,
 
@@ -86,7 +99,11 @@ app.add_middleware(
         "OPTIONS"
     ],
 
-    allow_headers=["*"]
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Accept"
+    ]
 
 )
 
@@ -95,7 +112,7 @@ app.add_middleware(
 # API ROUTER REGISTRATION
 # ============================================
 
-API_PREFIX = settings.API_PREFIX
+API_PREFIX = settings.API_PREFIX.rstrip("/")
 
 app.include_router(
     market.router,
@@ -135,9 +152,11 @@ async def root():
 
         "message": "RYFX XAU Backend is running.",
 
-        "symbol": settings.MARKET_SYMBOL,
+        "symbol": "XAUUSD",
 
-        "documentation": "/docs"
+        "documentation": "/docs",
+
+        "health": "/health"
 
     }
 
@@ -157,7 +176,9 @@ async def health_check():
 
         "application": settings.APP_NAME,
 
-        "version": settings.APP_VERSION
+        "version": settings.APP_VERSION,
+
+        "environment": settings.ENVIRONMENT
 
     }
 
@@ -210,5 +231,56 @@ async def api_information():
             "/api/history/statistics/summary"
 
         ]
+
+    }
+
+
+# ============================================
+# SERVICE CONFIGURATION STATUS
+# ============================================
+
+@app.get("/api/services")
+async def service_information():
+
+    return {
+
+        "success": True,
+
+        "symbol": "XAUUSD",
+
+        "services": {
+
+            "market_api": {
+
+                "provider": "MarketAPI",
+
+                "configured": bool(
+                    settings.MARKET_API_KEY
+                    and settings.MARKET_API_URL
+                )
+
+            },
+
+            "ai_engine": {
+
+                "provider": settings.AI_PROVIDER,
+
+                "configured": bool(
+                    settings.AI_API_KEY
+                )
+
+            },
+
+            "database": {
+
+                "configured": bool(
+                    settings.DATABASE_URL
+                ),
+
+                "storage": "Not yet integrated"
+
+            }
+
+        }
 
     }
