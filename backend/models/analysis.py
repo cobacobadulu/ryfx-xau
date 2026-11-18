@@ -3,17 +3,28 @@
 # GOLD MARKET INTELLIGENCE
 # ============================================
 
-from datetime import datetime
+import math
+
+from datetime import datetime, timezone
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    model_validator,
+    field_validator
+)
 
 
 # ============================================
 # TYPE DEFINITIONS
 # ============================================
 
-AnalysisDirection = Literal["BUY", "SELL", "WAIT"]
+AnalysisDirection = Literal[
+    "BUY",
+    "SELL",
+    "WAIT"
+]
 
 AnalysisTimeframe = Literal[
     "1m",
@@ -31,6 +42,32 @@ AnalysisType = Literal[
     "intraday",
     "swing"
 ]
+
+
+# ============================================
+# SHARED NUMBER VALIDATION
+# ============================================
+
+def validate_finite_number(value):
+
+    if value is None:
+        return value
+
+    if isinstance(value, bool):
+
+        raise ValueError(
+            "Boolean values are not valid numbers."
+        )
+
+    number = float(value)
+
+    if not math.isfinite(number):
+
+        raise ValueError(
+            "Number must be finite."
+        )
+
+    return number
 
 
 # ============================================
@@ -54,10 +91,35 @@ class TradeLevels(BaseModel):
         max_length=5
     )
 
-    risk_reward: float | None = Field(
-        default=None,
-        gt=0
+    risk_reward: str | None = None
+
+    @field_validator(
+        "entry",
+        "stop_loss",
+        mode="before"
     )
+    @classmethod
+    def validate_prices(cls, value):
+
+        return validate_finite_number(value)
+
+    @field_validator(
+        "take_profits",
+        mode="before"
+    )
+    @classmethod
+    def validate_take_profits(cls, values):
+
+        if not isinstance(values, list):
+
+            raise ValueError(
+                "Take profits must be a list."
+            )
+
+        return [
+            validate_finite_number(value)
+            for value in values
+        ]
 
 
 # ============================================
@@ -100,10 +162,63 @@ class AnalysisResult(BaseModel):
         max_length=5
     )
 
-    risk_reward: float | None = Field(
-        default=None,
-        gt=0
+    risk_reward: str | None = None
+
+    # ========================================
+    # FINITE NUMBER VALIDATION
+    # ========================================
+
+    @field_validator(
+        "confidence",
+        "entry",
+        "stop_loss",
+        mode="before"
     )
+    @classmethod
+    def validate_numeric_fields(cls, value):
+
+        return validate_finite_number(value)
+
+    @field_validator(
+        "take_profits",
+        mode="before"
+    )
+    @classmethod
+    def validate_tp_numbers(cls, values):
+
+        if not isinstance(values, list):
+
+            raise ValueError(
+                "Take profits must be a list."
+            )
+
+        return [
+            validate_finite_number(value)
+            for value in values
+        ]
+
+    # ========================================
+    # TEXT VALIDATION
+    # ========================================
+
+    @field_validator(
+        "summary",
+        "reasoning"
+    )
+    @classmethod
+    def validate_required_text(cls, value):
+
+        if not value.strip():
+
+            raise ValueError(
+                "This text field cannot be empty."
+            )
+
+        return value.strip()
+
+    # ========================================
+    # TRADE LEVEL VALIDATION
+    # ========================================
 
     @model_validator(mode="after")
     def validate_trade_levels(self):
@@ -111,8 +226,11 @@ class AnalysisResult(BaseModel):
         if self.direction == "WAIT":
 
             self.entry = None
+
             self.stop_loss = None
+
             self.take_profits = []
+
             self.risk_reward = None
 
             return self
@@ -124,8 +242,7 @@ class AnalysisResult(BaseModel):
         ):
 
             raise ValueError(
-                "BUY/SELL analysis requires "
-                "entry, stop loss, and take profits."
+                "BUY/SELL requires complete trade levels."
             )
 
         if self.direction == "BUY":
@@ -212,7 +329,9 @@ class AnalysisResponse(BaseModel):
     analysis: AnalysisResult
 
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(
+            timezone.utc
+        )
     )
 
 
@@ -240,6 +359,12 @@ class AnalysisHistoryItem(BaseModel):
     summary: str
 
     created_at: datetime
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def validate_confidence(cls, value):
+
+        return validate_finite_number(value)
 
 
 # ============================================
