@@ -48,12 +48,72 @@
 }
 
 /* =========================================
+   FORM & INPUTS (MODERN DARK THEME)
+========================================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Styling untuk semua input, select, dan textarea */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="password"],
+select,
+textarea {
+    width: 100%;
+    background: #0C1729;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* Saat diklik / fokus */
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(75, 157, 255, 0.15);
+}
+
+/* Placeholder */
+input::placeholder,
+textarea::placeholder {
+    color: #58677D;
+}
+
+/* Warna opsi di dropdown */
+select option {
+    background: #0C1729;
+    color: var(--text);
+}
+
+/* =========================================
    WELCOME SECTION (DASHBOARD)
 ========================================= */
 
 .welcome-section {
     display: flex;
-    flex-direction: column; /* Ubah ke vertikal agar rapi di HP */
+    flex-direction: column;
     gap: 16px;
     padding: 20px;
     background: linear-gradient(135deg, rgba(75, 157, 255, 0.08), rgba(216, 179, 107, 0.05));
@@ -111,7 +171,7 @@
 
 .market-overview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Grid lebih rapat */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 12px;
 }
 
@@ -274,7 +334,7 @@
 }
 
 /* =========================================
-   STATISTICS GRID (2 Kolom agar rapi di HP)
+   STATISTICS GRID
 ========================================= */
 
 .statistics-grid {
@@ -311,6 +371,118 @@
     color: var(--muted);
     font-size: 9px;
     margin-top: 2px;
+}
+
+/* =========================================
+   JOURNAL FORM
+========================================= */
+
+.journal-form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.journal-form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.journal-notes-group {
+    margin-bottom: 20px;
+}
+
+.journal-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+/* =========================================
+   SETTINGS PANEL
+========================================= */
+
+.settings-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.settings-item p {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.settings-item select {
+    max-width: 200px;
+}
+
+/* Toggle Switch Modern */
+.settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.settings-toggle input {
+    display: none;
+}
+
+.toggle-slider {
+    width: 44px;
+    height: 24px;
+    background: #26354A;
+    border-radius: 20px;
+    position: relative;
+    transition: 0.3s ease;
+}
+
+.toggle-slider::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: 0.3s ease;
+}
+
+.settings-toggle input:checked + .toggle-slider {
+    background: var(--blue);
+}
+
+.settings-toggle input:checked + .toggle-slider::after {
+    transform: translateX(20px);
+    background: #fff;
 }
 
 /* =========================================
@@ -372,10 +544,6 @@
     line-height: 1.5;
 }
 
-/* =========================================
-   DASHBOARD FOOTER (Perbaikan Mepet)
-========================================= */
-
 .dashboard-footer {
     display: flex;
     flex-direction: column;
@@ -407,4 +575,14 @@
     height: 1px;
     background: var(--border);
     margin: 16px 0;
+}
+
+/* =========================================
+   RESPONSIVE (Tablet & Desktop)
+========================================= */
+
+@media (min-width: 768px) {
+    .journal-form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
