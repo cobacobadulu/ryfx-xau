@@ -431,7 +431,6 @@ textarea:focus {
 
     .sidebar {
         transform: translateX(-100%);
-        z-index: 2000;
     }
 
     .sidebar.open {
@@ -441,7 +440,7 @@ textarea:focus {
     .sidebar-overlay {
         position: fixed;
         inset: 0;
-        z-index: 1900;
+        z-index: 950;
         background: rgba(0, 0, 0, 0.6);
         opacity: 0;
         visibility: hidden;
@@ -459,8 +458,6 @@ textarea:focus {
     }
 
     .topbar {
-        position: relative;
-        z-index: 100;
         padding: 0 18px;
     }
 
