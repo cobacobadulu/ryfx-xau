@@ -519,9 +519,12 @@ async function loadCandles(timeframe) {
         });
 
 
+        const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+
+
         const response = await fetch(
 
-            `${RYFX_CHART_CONFIG.candleEndpoint}?${params}`,
+            `${apiBase}${RYFX_CHART_CONFIG.candleEndpoint}?${params}`,
 
             {
                 method: "GET",
