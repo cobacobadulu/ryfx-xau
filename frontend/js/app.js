@@ -266,20 +266,6 @@ function renderApplicationShell() {
 
                 </main>
 
-                <!-- FOOTER -->
-
-                <footer class="app-footer">
-
-                    <span>
-                        © 2026 ryFX XAU
-                    </span>
-
-                    <span>
-                        AI-Powered Gold Trading Intelligence
-                    </span>
-
-                </footer>
-
             </div>
 
         </div>
