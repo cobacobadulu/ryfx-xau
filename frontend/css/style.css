@@ -434,7 +434,7 @@ textarea:focus {
 
     .sidebar {
         transform: translateX(-100%);
-        z-index: 2000;
+        z-index: 9999; /* Dinaikkan drastis agar pasti di atas topbar */
     }
 
     .sidebar.open {
@@ -444,7 +444,7 @@ textarea:focus {
     .sidebar-overlay {
         position: fixed;
         inset: 0;
-        z-index: 1900;
+        z-index: 9998; /* Di bawah sidebar, di atas topbar */
         background: rgba(0, 0, 0, 0.6);
         opacity: 0;
         visibility: hidden;
@@ -463,7 +463,7 @@ textarea:focus {
 
     .topbar {
         left: 0;
-        z-index: 100;
+        z-index: 100; /* Di bawah sidebar-overlay */
         padding: 0 18px;
     }
 
