@@ -53,7 +53,6 @@ async function requestAIAnalysis(options = {}) {
     const button =
 
         document.getElementById("runAIAnalysis") ||
-
         document.getElementById("analyzeButton");
 
 
@@ -79,9 +78,12 @@ async function requestAIAnalysis(options = {}) {
 
     try {
 
+        const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+
+
         const response = await fetch(
 
-            RYFX_AI_CONFIG.endpoint,
+            apiBase + RYFX_AI_CONFIG.endpoint,
 
             {
 
@@ -128,9 +130,7 @@ async function requestAIAnalysis(options = {}) {
         const analysis =
 
             result.data ||
-
             result.analysis ||
-
             result;
 
 
@@ -172,7 +172,6 @@ async function requestAIAnalysis(options = {}) {
                 {
                     detail: analysis
                 }
-
             )
 
         );
@@ -731,6 +730,24 @@ function renderAIAnalysis(data) {
     );
 
 
+    /* TP1/TP2/TP3 untuk halaman ai-analysis.html */
+
+    const tpArray = takeProfits.slice(0, 3);
+
+    const tpIds = ["analysisTP1", "analysisTP2", "analysisTP3"];
+
+    tpIds.forEach((id, index) => {
+
+        setAnalysisText(
+            id,
+            direction === "WAIT"
+                ? "--"
+                : formatAnalysisPrice(tpArray[index])
+        );
+
+    });
+
+
     /* TIMESTAMP */
 
     setAnalysisText(
@@ -1005,14 +1022,12 @@ document.addEventListener("click", event => {
     const timeframe =
 
         document.getElementById("analysisTimeframe")?.value ||
-
         "M15";
 
 
     const analysisType =
 
         document.getElementById("analysisType")?.value ||
-
         "technical";
 
 
