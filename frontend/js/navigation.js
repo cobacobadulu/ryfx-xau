@@ -344,6 +344,8 @@ function toggleMobileMenu() {
     const sidebar = document.querySelector(".sidebar");
 
     const overlay = document.querySelector(".sidebar-overlay");
+    
+    const topbar = document.querySelector(".topbar");
 
     if (!sidebar) return;
 
@@ -351,6 +353,15 @@ function toggleMobileMenu() {
 
     if (overlay) {
         overlay.classList.toggle("active", isOpen);
+    }
+    
+    /* Sembunyikan topbar saat menu dibuka di mobile */
+    if (topbar) {
+        if (isOpen && window.innerWidth <= 900) {
+            topbar.style.display = "none";
+        } else {
+            topbar.style.display = "";
+        }
     }
 
 }
@@ -363,10 +374,17 @@ function closeMobileMenu() {
     const sidebar = document.querySelector(".sidebar");
 
     const overlay = document.querySelector(".sidebar-overlay");
+    
+    const topbar = document.querySelector(".topbar");
 
     sidebar?.classList.remove("open");
 
     overlay?.classList.remove("active");
+    
+    /* Tampilkan kembali topbar */
+    if (topbar) {
+        topbar.style.display = "";
+    }
 
 }
 
