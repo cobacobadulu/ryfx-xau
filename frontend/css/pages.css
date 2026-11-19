@@ -53,19 +53,17 @@
 
 .welcome-section {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    padding: 24px;
+    flex-direction: column; /* Ubah ke vertikal agar rapi di HP */
+    gap: 16px;
+    padding: 20px;
     background: linear-gradient(135deg, rgba(75, 157, 255, 0.08), rgba(216, 179, 107, 0.05));
     border: 1px solid var(--border);
     border-radius: 16px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
+    margin-bottom: 24px;
 }
 
 .welcome-content h1 {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.5px;
     margin: 4px 0 8px;
@@ -78,31 +76,33 @@
 
 .welcome-content p {
     color: var(--muted);
-    font-size: 13px;
-    max-width: 500px;
+    font-size: 12px;
+    max-width: 100%;
     line-height: 1.6;
+    margin-bottom: 12px;
 }
 
 .market-status {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 6px 12px;
     background: rgba(240, 91, 104, 0.1);
     border: 1px solid rgba(240, 91, 104, 0.2);
     border-radius: 30px;
     color: var(--red);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.5px;
+    width: fit-content;
 }
 
 .market-status .status-indicator {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: currentColor;
-    box-shadow: 0 0 8px currentColor;
+    box-shadow: 0 0 6px currentColor;
 }
 
 /* =========================================
@@ -111,27 +111,21 @@
 
 .market-overview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Grid lebih rapat */
+    gap: 12px;
 }
 
 .market-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 20px;
+    padding: 16px;
     transition: 0.25s ease;
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-}
-
-.market-card:hover {
-    border-color: rgba(216, 179, 107, 0.3);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
 }
 
 .main-price-card {
@@ -143,55 +137,55 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .card-label {
     color: var(--muted);
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: 1.2px;
+    letter-spacing: 1px;
 }
 
 .card-icon {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     background: rgba(255,255,255,0.03);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
     color: var(--gold);
 }
 
 .market-card h2 {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: -0.5px;
     color: var(--text);
     line-height: 1.1;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .market-card h3 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
     color: var(--text);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .card-description {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .price-change {
     display: flex;
     gap: 8px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 /* =========================================
@@ -202,131 +196,121 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 22px;
+    padding: 16px;
 }
 
 .intelligence-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--border);
 }
 
 .intelligence-icon {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     background: linear-gradient(135deg, rgba(75, 157, 255, 0.15), rgba(216, 179, 107, 0.15));
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     color: var(--gold);
 }
 
 .intelligence-header h3 {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 800;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 
 .intelligence-header p {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .intelligence-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 
 .intelligence-item {
-    padding: 14px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .intelligence-label {
     display: block;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: 1px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .intelligence-item strong {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text);
 }
 
 .intelligence-footer {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    padding-top: 16px;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 12px;
     border-top: 1px solid var(--border);
-    flex-wrap: wrap;
 }
 
 .intelligence-footer p {
     color: var(--muted);
-    font-size: 12px;
-    flex: 1;
-    min-width: 200px;
+    font-size: 11px;
 }
 
 /* =========================================
-   STATISTICS GRID
+   STATISTICS GRID (2 Kolom agar rapi di HP)
 ========================================= */
 
 .statistics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
 .statistics-card {
-    padding: 18px;
+    padding: 12px;
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    transition: 0.25s ease;
-}
-
-.statistics-card:hover {
-    background: var(--card-hover);
-    transform: translateY(-2px);
-    border-color: rgba(255,255,255,0.1);
+    border-radius: 10px;
 }
 
 .statistics-card span {
     display: block;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
 }
 
 .statistics-card strong {
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 800;
     color: var(--text);
     letter-spacing: -0.5px;
+    display: block;
 }
 
 .statistics-card p {
     color: var(--muted);
-    font-size: 11px;
-    margin-top: 4px;
+    font-size: 9px;
+    margin-top: 2px;
 }
 
 /* =========================================
@@ -334,7 +318,7 @@
 ========================================= */
 
 .primary-button {
-    padding: 10px 18px;
+    padding: 10px 16px;
     background: var(--blue);
     color: #08111F;
     border-radius: 8px;
@@ -345,27 +329,16 @@
     cursor: pointer;
 }
 
-.primary-button:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(75, 157, 255, 0.3);
-}
-
 .secondary-button {
-    padding: 9px 16px;
+    padding: 9px 14px;
     background: rgba(255,255,255,0.03);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 8px;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     transition: 0.2s;
-}
-
-.secondary-button:hover {
-    background: rgba(255,255,255,0.08);
-    border-color: var(--muted);
 }
 
 .text-link {
@@ -377,34 +350,61 @@
     cursor: pointer;
 }
 
-.text-link:hover {
-    text-decoration: underline;
-}
-
 .market-disclaimer {
-    margin-top: 32px;
-    padding: 20px;
+    margin-top: 24px;
+    padding: 16px;
     background: rgba(216, 179, 107, 0.05);
     border: 1px solid rgba(216, 179, 107, 0.15);
-    border-left: 4px solid var(--gold);
+    border-left: 3px solid var(--gold);
     border-radius: 10px;
 }
 
 .market-disclaimer strong {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--gold);
     margin-bottom: 6px;
 }
 
 .market-disclaimer p {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--muted);
-    line-height: 1.6;
+    line-height: 1.5;
+}
+
+/* =========================================
+   DASHBOARD FOOTER (Perbaikan Mepet)
+========================================= */
+
+.dashboard-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 0;
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+.dashboard-footer strong {
+    display: block;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 2px;
+}
+
+.dashboard-footer p {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.dashboard-footer span {
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 8px;
 }
 
 .divider {
     height: 1px;
     background: var(--border);
-    margin: 20px 0;
+    margin: 16px 0;
 }
