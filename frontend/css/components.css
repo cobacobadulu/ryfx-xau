@@ -2,8 +2,9 @@
    ryFX XAU — PREMIUM UI COMPONENTS
 ========================================= */
 
-
-/* CARDS */
+/* =========================================
+   CARDS
+========================================= */
 
 .card {
     background: var(--card);
@@ -31,7 +32,6 @@
     font-size: 18px;
 }
 
-
 /* =========================================
    SIDEBAR BRAND & NAVIGATION
 ========================================= */
@@ -39,13 +39,13 @@
 .sidebar-brand {
     display: flex;
     flex-direction: column;
-    padding: 24px 20px; /* Jarak aman dari tepi */
+    padding: 24px 20px;
     border-bottom: 1px solid var(--border);
 }
 
 .sidebar-brand .brand-logo {
     font-family: 'Outfit', sans-serif;
-    font-size: 22px; /* Ukuran normal */
+    font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.5px;
     color: #fff;
@@ -61,15 +61,16 @@
 
 .sidebar-brand .brand-description {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 9px; /* Ukuran normal */
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--muted);
     text-transform: uppercase;
 }
 
-
-/* SIDEBAR NAVIGATION */
+/* =========================================
+   SIDEBAR NAVIGATION
+========================================= */
 
 .sidebar-nav {
     flex: 1;
@@ -79,7 +80,7 @@
 .nav-section,
 .sidebar-label {
     display: block;
-    margin: 18px 20px 8px; /* Jarak dari kiri */
+    margin: 18px 20px 8px;
     color: #58677D;
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 10px;
@@ -91,7 +92,7 @@
 .nav-item,
 .menu-item {
     width: calc(100% - 24px);
-    margin: 0 12px 4px; /* Jarak kiri & kanan 12px */
+    margin: 0 12px 4px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -135,18 +136,20 @@
     opacity: 1;
 }
 
-
-/* SIDEBAR FOOTER */
+/* =========================================
+   SIDEBAR FOOTER
+========================================= */
 
 .sidebar-footer {
-    padding: 16px 20px; /* Jarak aman dari tepi */
+    padding: 16px 20px;
     border-top: 1px solid var(--border);
     color: var(--muted);
     font-size: 11px;
 }
 
-
-/* TOPBAR COMPONENTS */
+/* =========================================
+   TOPBAR COMPONENTS
+========================================= */
 
 .topbar-left,
 .topbar-right {
@@ -181,8 +184,9 @@
     letter-spacing: 0.5px;
 }
 
-
-/* MARKET STATUS */
+/* =========================================
+   MARKET STATUS
+========================================= */
 
 .market-status {
     display: inline-flex;
@@ -217,8 +221,9 @@
     box-shadow: 0 0 8px rgba(240, 91, 104, 0.5);
 }
 
-
-/* TRADING SIGNAL */
+/* =========================================
+   TRADING SIGNAL
+========================================= */
 
 .signal-card {
     background: var(--card);
@@ -264,8 +269,9 @@
     border: 1px solid rgba(216, 179, 107, 0.25);
 }
 
-
-/* SIGNAL DETAILS */
+/* =========================================
+   SIGNAL DETAILS
+========================================= */
 
 .signal-details {
     display: grid;
@@ -299,8 +305,9 @@
     overflow-wrap: anywhere;
 }
 
-
-/* TABLE */
+/* =========================================
+   TABLE
+========================================= */
 
 .table-wrapper {
     width: 100%;
@@ -345,8 +352,9 @@
     border-bottom: none;
 }
 
-
-/* PROGRESS BAR */
+/* =========================================
+   PROGRESS BAR
+========================================= */
 
 .progress {
     width: 100%;
@@ -372,8 +380,9 @@
     background: var(--green);
 }
 
-
-/* TABS */
+/* =========================================
+   TABS
+========================================= */
 
 .tabs {
     display: flex;
@@ -408,8 +417,9 @@
     border-bottom-color: var(--blue);
 }
 
-
-/* NOTIFICATION */
+/* =========================================
+   NOTIFICATION
+========================================= */
 
 .notification {
     display: flex;
@@ -444,8 +454,9 @@
     font-size: 11px;
 }
 
-
-/* EMPTY STATE */
+/* =========================================
+   EMPTY STATE
+========================================= */
 
 .empty-state {
     display: flex;
@@ -475,8 +486,9 @@
     max-width: 300px;
 }
 
-
-/* DIVIDER */
+/* =========================================
+   DIVIDER, AVATAR, TOOLTIP
+========================================= */
 
 .divider {
     width: 100%;
@@ -484,9 +496,6 @@
     background: var(--border);
     margin: 20px 0;
 }
-
-
-/* AVATAR */
 
 .avatar {
     width: 36px;
@@ -500,9 +509,6 @@
     font-size: 12px;
     font-weight: 800;
 }
-
-
-/* TOOLTIP */
 
 .tooltip {
     position: relative;
@@ -525,8 +531,9 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-
-/* RESPONSIVE */
+/* =========================================
+   RESPONSIVE
+========================================= */
 
 @media (max-width: 900px) {
     .topbar-left,
