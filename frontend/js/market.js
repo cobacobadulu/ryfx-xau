@@ -112,9 +112,11 @@ async function fetchMarketData() {
 
     try {
 
-        const response = await fetch(
-            RYFX_MARKET_CONFIG.endpoint,
-            {
+        const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+
+const response = await fetch(
+    apiBase + RYFX_MARKET_CONFIG.endpoint,
+    {
                 method: "GET",
 
                 headers: {
