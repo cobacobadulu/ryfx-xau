@@ -46,8 +46,7 @@ TIMEFRAME_MINUTES = {
     "1d": 1440,
 }
 
-HISTORY_WINDOW_MULTIPLIER = 1.6
-MAX_PER_REQUEST = 100
+HISTORY_WINDOW_MULTIPLIER = 1.1
 
 
 # ============================================
@@ -502,15 +501,12 @@ async def get_market_candles(
 
     interval = TIMEFRAME_MINUTES[timeframe]
     
-    # Kita akan meminta data secara bertahap (chunking) per 100 candle
     MAX_PER_REQUEST = 100
-    
     end_time = datetime.now(timezone.utc)
     
     all_candles = []
     remaining_limit = limit
     
-    # Loop untuk mengambil data jika limit > 100
     while remaining_limit > 0:
         fetch_limit = min(remaining_limit, MAX_PER_REQUEST)
         
@@ -524,34 +520,27 @@ async def get_market_candles(
                 "timeframe": api_timeframe,
                 "from": start_time.isoformat(timespec="seconds").replace("+00:00", "Z"),
                 "to": end_time.isoformat(timespec="seconds").replace("+00:00", "Z"),
-                "limit": fetch_limit,  # Minta maksimal 100
+                "limit": fetch_limit,
             }
         )
 
         candles = normalize_candles(response)
         
         if not candles:
-            break # Jika tidak ada data dari API, hentikan loop
+            break
             
-        # Tambahkan ke list utama
         all_candles.extend(candles)
         
-        # Kurangi limit yang tersisa
         remaining_limit -= fetch_limit
         
-        # Geser end_time ke waktu candle paling awal yang baru saja didapat
-        # agar tidak mengambil data yang sama dua kali
+        # Geser end_time mundur sesuai interval timeframe
         oldest_candle_time = candles[0]["time"]
-        end_time = datetime.fromtimestamp(oldest_candle_time, tz=timezone.utc) - timedelta(minutes=1)
+        end_time = datetime.fromtimestamp(oldest_candle_time, tz=timezone.utc) - timedelta(minutes=interval)
 
-    # Hapus duplikat berdasarkan waktu
     unique_candles = {c["time"]: c for c in all_candles}
-    
-    # Urutkan dari terlama ke terbaru
     sorted_candles = [unique_candles[t] for t in sorted(unique_candles)]
 
     if not sorted_candles:
         raise ValueError("MarketAPI returned no valid XAUUSD candles.")
 
-    # Kembalikan sesuai limit yang diminta
     return sorted_candles[-limit:]
