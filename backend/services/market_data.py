@@ -501,7 +501,8 @@ async def get_market_candles(
 
     interval = TIMEFRAME_MINUTES[timeframe]
     
-    MAX_PER_REQUEST = 100
+    # Turunkan batas untuk M5 karena MarketAPI sering menolak (502) jika terlalu banyak
+    MAX_PER_REQUEST = 50 if timeframe == "5m" else 100
     end_time = datetime.now(timezone.utc)
     
     all_candles = []
