@@ -46,7 +46,7 @@ TIMEFRAME_MINUTES = {
     "1d": 1440,
 }
 
-HISTORY_WINDOW_MULTIPLIER = 1.1
+HISTORY_WINDOW_MULTIPLIER = 1.6
 
 
 # ============================================
