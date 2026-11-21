@@ -391,8 +391,8 @@ async function initializeChart() {
 
                 },
 
-                handleScroll: false, // Dimatikan agar halaman bisa di-scroll di HP
-                handleScale: false   // Dimatikan agar halaman bisa di-scroll di HP
+                handleScroll: false,
+                handleScale: false
 
             });
 
@@ -549,6 +549,10 @@ async function loadCandles(timeframe) {
 
 
         const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.detail || "Gagal memuat data");
+        }
 
 
         if (
@@ -662,6 +666,10 @@ async function loadCandles(timeframe) {
         }
 
 
+        // Hapus dulu data lama agar benar-benar bersih
+        RYFX_CHART_STATE.candleSeries.setData([]);
+        
+        // Baru masukkan data baru
         RYFX_CHART_STATE.candleSeries.setData(
             uniqueCandles
         );
@@ -730,11 +738,26 @@ function changeChartTimeframe(timeframe) {
 
     if (!RYFX_CHART_STATE.candleSeries) return;
 
-
     RYFX_CHART_STATE.currentTimeframe = timeframe;
 
-
     updateTimeframeButtons();
+    
+    // KOSONGKAN GRAFIK DULU SEBELUM MEMUAT YANG BARU
+    RYFX_CHART_STATE.candleSeries.setData([]);
+    
+    // TAMPILKAN INDIKATOR LOADING
+    const container = RYFX_CHART_STATE.activeContainer;
+    if (container) {
+        let loadingText = container.querySelector(".chart-loading");
+        if (!loadingText) {
+            loadingText = document.createElement("div");
+            loadingText.className = "chart-loading";
+            loadingText.textContent = "Loading XAUUSD chart...";
+            container.appendChild(loadingText);
+        } else {
+            loadingText.style.display = "flex";
+        }
+    }
 
     loadCandles(timeframe);
 
