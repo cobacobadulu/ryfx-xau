@@ -284,3 +284,21 @@ async def service_information():
         }
 
     }
+
+# ============================================
+# ENTRY POINT UNTUK PRODUCTION (RAILWAY)
+# ============================================
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    # Railway memberikan port melalui variabel environment PORT
+    port = int(os.environ.get("PORT", 8000))
+    
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port
+    )
+    
