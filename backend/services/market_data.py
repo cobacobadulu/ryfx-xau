@@ -46,7 +46,7 @@ TIMEFRAME_MINUTES = {
     "1d": 1440,
 }
 
-DEFAULT_WINDOW = 1.1
+HISTORY_WINDOW_MULTIPLIER = 1.1
 
 
 # ============================================
@@ -510,9 +510,7 @@ async def get_market_candles(
     while remaining_limit > 0:
         fetch_limit = min(remaining_limit, MAX_PER_REQUEST)
         
-        # Gunakan window yang lebih lebar khusus untuk timeframe M5
-        window_multiplier = 1.6 if timeframe == "5m" else DEFAULT_WINDOW
-        history_minutes = int(interval * (fetch_limit + 5) * window_multiplier)
+        history_minutes = int(interval * (fetch_limit + 5) * HISTORY_WINDOW_MULTIPLIER)
         start_time = end_time - timedelta(minutes=history_minutes)
 
         response = await fetch_market_api(
@@ -535,7 +533,6 @@ async def get_market_candles(
         
         remaining_limit -= fetch_limit
         
-        # Geser end_time mundur sesuai interval timeframe
         oldest_candle_time = candles[0]["time"]
         end_time = datetime.fromtimestamp(oldest_candle_time, tz=timezone.utc) - timedelta(minutes=interval)
 
