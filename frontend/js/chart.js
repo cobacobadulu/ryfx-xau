@@ -853,9 +853,25 @@ async function toggleChartFullscreen() {
 
             await container.requestFullscreen();
 
+            // Saat masuk fullscreen, AKTIFKAN zoom dan scroll chart
+            if (RYFX_CHART_STATE.chart) {
+                RYFX_CHART_STATE.chart.applyOptions({
+                    handleScroll: true,
+                    handleScale: true
+                });
+            }
+
         } else {
 
             await document.exitFullscreen();
+
+            // Saat keluar fullscreen, MATIKAN zoom agar halaman bisa di-scroll
+            if (RYFX_CHART_STATE.chart) {
+                RYFX_CHART_STATE.chart.applyOptions({
+                    handleScroll: false,
+                    handleScale: false
+                });
+            }
 
         }
 
