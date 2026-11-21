@@ -391,9 +391,8 @@ async function initializeChart() {
 
                 },
 
-                handleScroll: true,
-
-                handleScale: true
+                handleScroll: false, // Dimatikan agar halaman bisa di-scroll di HP
+                handleScale: false   // Dimatikan agar halaman bisa di-scroll di HP
 
             });
 
