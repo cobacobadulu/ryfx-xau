@@ -667,6 +667,11 @@ async function loadCandles(timeframe) {
         );
 
 
+        // TAMBAHKAN BARIS INI UNTUK MENGHAPUS TULISAN LOADING
+        const loadingText = RYFX_CHART_STATE.activeContainer?.querySelector(".chart-loading");
+        if (loadingText) loadingText.remove();
+
+
         RYFX_CHART_STATE.chart
             .timeScale()
             .fitContent();
