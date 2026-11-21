@@ -196,6 +196,24 @@
     height: 380px;
 }
 
+/* =========================================
+   LIVE CHART CONTAINER (Perbaikan bug scroll)
+========================================= */
+
+.live-chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px; /* Kunci tinggi agar tidak memanjang */
+    background: #0B1422;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .live-chart-container {
+        height: 350px; /* Tinggi di HP */
+    }
+}
+
 /* CHART PLACEHOLDER */
 
 .chart-placeholder {
