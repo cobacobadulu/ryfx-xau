@@ -262,15 +262,36 @@ def normalize_market_data(
 # ============================================
 
 async def get_market_data() -> dict[str, Any]:
-
+    # Ambil data harga saat ini
     response = await fetch_market_api(
         "prices/latest",
-        params={
-            "symbols": MARKET_SYMBOL
-        }
+        params={"symbols": MARKET_SYMBOL}
     )
+    
+    market_data = normalize_market_data(response)
 
-    return normalize_market_data(response)
+    # Ambil data candle (1 Hari) untuk mendapat High/Low/Open
+    try:
+        candles = await get_market_candles(timeframe="1d", limit=1)
+        
+        if candles and len(candles) > 0:
+            latest_candle = candles[-1]
+            market_data["open"] = latest_candle.get("open")
+            market_data["high"] = latest_candle.get("high")
+            market_data["low"] = latest_candle.get("low")
+            
+            # Hitung perubahan harian
+            if market_data.get("price") and market_data.get("open"):
+                change = market_data["price"] - market_data["open"]
+                change_percent = (change / market_data["open"]) * 100
+                market_data["change"] = change
+                market_data["change_percent"] = change_percent
+                
+    except Exception as e:
+        # Jika gagal ambil candle, biarkan data high/low tetap None
+        print(f"Gagal mengambil data candle harian: {e}")
+
+    return market_data
 
 
 # ============================================
