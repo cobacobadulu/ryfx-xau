@@ -47,6 +47,7 @@ TIMEFRAME_MINUTES = {
 }
 
 HISTORY_WINDOW_MULTIPLIER = 1.6
+MAX_PER_REQUEST = 100
 
 
 # ============================================
@@ -492,74 +493,65 @@ async def get_market_candles(
     limit: int = 200
 ) -> list[dict[str, Any]]:
 
-    api_timeframe = TIMEFRAME_MAP.get(
-        timeframe
-    )
-
+    api_timeframe = TIMEFRAME_MAP.get(timeframe)
     if api_timeframe is None:
-        raise ValueError(
-            f"Unsupported timeframe: {timeframe}"
-        )
+        raise ValueError(f"Unsupported timeframe: {timeframe}")
 
-    if (
-        isinstance(limit, bool)
-        or not isinstance(limit, int)
-        or not 1 <= limit <= 1000
-    ):
-        raise ValueError(
-            "Candle limit must be between 1 and 1000."
-        )
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
+        raise ValueError("Candle limit must be between 1 and 1000.")
 
     interval = TIMEFRAME_MINUTES[timeframe]
+    
+    # Kita akan meminta data secara bertahap (chunking) per 100 candle
+    MAX_PER_REQUEST = 100
+    
+    end_time = datetime.now(timezone.utc)
+    
+    all_candles = []
+    remaining_limit = limit
+    
+    # Loop untuk mengambil data jika limit > 100
+    while remaining_limit > 0:
+        fetch_limit = min(remaining_limit, MAX_PER_REQUEST)
+        
+        history_minutes = int(interval * (fetch_limit + 5) * HISTORY_WINDOW_MULTIPLIER)
+        start_time = end_time - timedelta(minutes=history_minutes)
 
-    end_time = datetime.now(
-        timezone.utc
-    )
-
-    history_minutes = int(
-        interval
-        * (limit + 5)
-        * HISTORY_WINDOW_MULTIPLIER
-    )
-
-    start_time = end_time - timedelta(
-        minutes=history_minutes
-    )
-
-    response = await fetch_market_api(
-        "bars",
-        params={
-            "symbol": MARKET_SYMBOL,
-            "timeframe": api_timeframe,
-            "from": start_time.isoformat(
-                timespec="seconds"
-            ).replace("+00:00", "Z"),
-            "to": end_time.isoformat(
-                timespec="seconds"
-            ).replace("+00:00", "Z"),
-            "limit": limit,
-        }
-    )
-
-    candles = normalize_candles(response)
-
-    if not candles:
-        raise ValueError(
-            "MarketAPI returned no valid XAUUSD candles."
+        response = await fetch_market_api(
+            "bars",
+            params={
+                "symbol": MARKET_SYMBOL,
+                "timeframe": api_timeframe,
+                "from": start_time.isoformat(timespec="seconds").replace("+00:00", "Z"),
+                "to": end_time.isoformat(timespec="seconds").replace("+00:00", "Z"),
+                "limit": fetch_limit,  # Minta maksimal 100
+            }
         )
 
-    current_timestamp = int(
-        end_time.timestamp()
-    )
+        candles = normalize_candles(response)
+        
+        if not candles:
+            break # Jika tidak ada data dari API, hentikan loop
+            
+        # Tambahkan ke list utama
+        all_candles.extend(candles)
+        
+        # Kurangi limit yang tersisa
+        remaining_limit -= fetch_limit
+        
+        # Geser end_time ke waktu candle paling awal yang baru saja didapat
+        # agar tidak mengambil data yang sama dua kali
+        oldest_candle_time = candles[0]["time"]
+        end_time = datetime.fromtimestamp(oldest_candle_time, tz=timezone.utc) - timedelta(minutes=1)
 
-    candles = [
-        candle for candle in candles
-        if candle["time"] <= current_timestamp
-    ]
+    # Hapus duplikat berdasarkan waktu
+    unique_candles = {c["time"]: c for c in all_candles}
+    
+    # Urutkan dari terlama ke terbaru
+    sorted_candles = [unique_candles[t] for t in sorted(unique_candles)]
 
-    if not candles:
-        raise ValueError(
-            "No valid historical XAUUSD candles found."
-        )
+    if not sorted_candles:
+        raise ValueError("MarketAPI returned no valid XAUUSD candles.")
 
-    return candles[-limit:]
+    # Kembalikan sesuai limit yang diminta
+    return sorted_candles[-limit:]
