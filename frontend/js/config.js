@@ -18,7 +18,7 @@
      */
 
     const LOCAL_BACKEND = "http://127.0.0.1:8000";
-    const PRODUCTION_BACKEND = "https://ryfx-xau-api.up.railway.app"; // ganti nanti
+    const PRODUCTION_BACKEND = "https://ryfx-xau-production.up.railway.app";
 
     const isLocal =
         location.hostname === "localhost" ||
