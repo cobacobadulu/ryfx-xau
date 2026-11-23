@@ -305,7 +305,7 @@ async def run_chart_scanner(timeframe: str = "15m"):
 
 
 # ============================================
-# FULL AI ANALYSIS (SINGLE TIMEFRAME)
+# FULL AI ANALYSIS (SINGLE TIMEFRAME + TRADE LEVELS)
 # ============================================
 
 @router.get("/full-analysis")
@@ -321,18 +321,41 @@ async def run_full_analysis(timeframe: str = "15m"):
         analysis = analyze_market(candles)
         trend = analysis["trend"]
         structure = analysis["market_structure"]["structure"]
-        
+        entry_price = analysis["current_price"]
+
         direction = "WAIT"
         confidence = 50
         summary = "Market is ranging. No clear setup."
+        
+        sl_price = None
+        tp1_price = None
+        tp2_price = None
+        tp3_price = None
+        rr_ratio = "--"
+
         if trend == "BULLISH":
             direction = "BUY"
             confidence = 80
             summary = "Bullish trend detected with strong momentum."
+            
+            # Hitung level berdasarkan jarak poin
+            sl_price = round(entry_price - 5.0, 2)
+            tp1_price = round(entry_price + 5.0, 2)
+            tp2_price = round(entry_price + 10.0, 2)
+            tp3_price = round(entry_price + 20.0, 2)
+            rr_ratio = "1:1 / 1:2 / 1:4"
+
         elif trend == "BEARISH":
             direction = "SELL"
             confidence = 80
             summary = "Bearish trend detected with strong momentum."
+            
+            # Hitung level berdasarkan jarak poin
+            sl_price = round(entry_price + 5.0, 2)
+            tp1_price = round(entry_price - 5.0, 2)
+            tp2_price = round(entry_price - 10.0, 2)
+            tp3_price = round(entry_price - 20.0, 2)
+            rr_ratio = "1:1 / 1:2 / 1:4"
 
         return {
             "success": True,
@@ -345,9 +368,10 @@ async def run_full_analysis(timeframe: str = "15m"):
                 "bos": "Detected" if structure in ["BULLISH", "BEARISH"] else "None",
                 "liquidity": "Normal",
                 "volatility": "High" if analysis["indicators"]["atr"]["value"] > 5 else "Normal",
-                "entry": analysis["current_price"],
-                "stop_loss": None,
-                "take_profits": [],
+                "entry": entry_price,
+                "stop_loss": sl_price,
+                "take_profits": [tp1_price, tp2_price, tp3_price],
+                "risk_reward": rr_ratio,
                 "timeframe_analysis": {
                     timeframe: trend
                 },
