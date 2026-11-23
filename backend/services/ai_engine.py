@@ -93,40 +93,6 @@ STRICT RULES:
 
 
 # ============================================
-# RESPONSE SCHEMA (Dihapus dari payload, 
-# tapi tetap disimpan untuk referensi prompt)
-# ============================================
-
-RESPONSE_SCHEMA = {
-    "type": "OBJECT",
-    "properties": {
-        "direction": {"type": "STRING", "enum": ["BUY", "SELL", "WAIT"]},
-        "confidence": {"type": "NUMBER"},
-        "summary": {"type": "STRING"},
-        "reasoning": {"type": "STRING"},
-        "structure": {"type": "STRING"},
-        "bos": {"type": "STRING"},
-        "liquidity": {"type": "STRING"},
-        "volatility": {"type": "STRING"},
-        "entry": {"type": "NUMBER", "nullable": True},
-        "stop_loss": {"type": "NUMBER", "nullable": True},
-        "take_profits": {"type": "ARRAY", "items": {"type": "NUMBER"}},
-        "risk_reward": {"type": "STRING", "nullable": True}
-    },
-    "required": [
-        "direction", "confidence", "summary", "reasoning",
-        "structure", "bos", "liquidity", "volatility",
-        "entry", "stop_loss", "take_profits", "risk_reward"
-    ],
-    "propertyOrdering": [
-        "direction", "confidence", "summary", "reasoning",
-        "structure", "bos", "liquidity", "volatility",
-        "entry", "stop_loss", "take_profits", "risk_reward"
-    ]
-}
-
-
-# ============================================
 # NUMBER VALIDATION
 # ============================================
 
@@ -204,7 +170,7 @@ def build_analysis_prompt(
 
 async def call_gemini(prompt: str) -> dict[str, Any]:
 
-    api_key = settings.AI_API_KEY
+    api_key = settings.AI_API_KEY.strip() # Hapus spasi jika ada
     model = settings.AI_MODEL
 
     if not api_key:
@@ -214,11 +180,11 @@ async def call_gemini(prompt: str) -> dict[str, Any]:
     if not re.fullmatch(r"[a-zA-Z0-9._-]+", model):
         raise RuntimeError("Invalid Gemini model configuration.")
 
-    url = GEMINI_API_URL + model + ":generateContent"
+    # PERBAIKAN: Kirim API Key lewat URL parameter, bukan headers
+    url = f"{GEMINI_API_URL}{model}:generateContent?key={api_key}"
 
     headers = {
-        "Content-Type": "application/json",
-        "x-goog-api-key": api_key
+        "Content-Type": "application/json"
     }
 
     payload = {
@@ -235,7 +201,6 @@ async def call_gemini(prompt: str) -> dict[str, Any]:
             "temperature": 0.2,
             "maxOutputTokens": MAX_OUTPUT_TOKENS,
             "responseMimeType": "application/json"
-            # "responseSchema" DIHAPUS DARI SINI
         }
     }
 
@@ -245,11 +210,14 @@ async def call_gemini(prompt: str) -> dict[str, Any]:
 
             if response.is_error:
                 status_code = response.status_code
+                # Tampilkan pesan error asli dari Google ke log Railway
+                error_detail = response.text
+                logger.error(f"Gemini HTTP error: {status_code} - {error_detail}")
+                
                 if status_code in (401, 403):
                     raise RuntimeError("Gemini authentication failed. Check AI_API_KEY.")
                 if status_code == 429:
-                    raise RuntimeError("Gemini API rate limit reached. Please try again later.")
-                logger.error("Gemini HTTP error: %s", status_code)
+                    raise RuntimeError("Gemini API rate limit reached.")
                 raise RuntimeError(f"Gemini API returned HTTP {status_code}.")
 
             result = response.json()
