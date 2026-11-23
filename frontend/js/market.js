@@ -854,6 +854,49 @@ function stopMarketUpdates() {
 }
 
 
+/* =========================================
+   FETCH TECHNICAL METRICS (TREND, STRUCTURE, VOLATILITY)
+========================================= */
+
+async function fetchTechnicalMetrics() {
+
+    try {
+
+        const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+
+        const res = await fetch(
+            `${apiBase}/api/analysis/xauusd/technical?timeframe=15m`,
+            { cache: "no-store" }
+        );
+
+        if (!res.ok) return;
+
+        const result = await res.json();
+
+        if (result.success && result.data) {
+
+            const data = result.data;
+
+            const trendEl = document.getElementById("liveMarketTrend");
+            if (trendEl) trendEl.textContent = data.trend;
+
+            const structEl = document.getElementById("liveMarketStructure");
+            if (structEl) structEl.textContent = data.structure;
+
+            const volEl = document.getElementById("liveMarketVolatility");
+            if (volEl) volEl.textContent = data.volatility;
+
+        }
+
+    } catch (err) {
+
+        console.warn("[ryFX Technical]", err.message);
+
+    }
+
+}
+
+
 /* APPLICATION INITIALIZATION */
 
 document.addEventListener(
@@ -920,6 +963,10 @@ document.addEventListener(
             RYFX_MARKET_STATE.connected
         );
 
+        // Ambil data teknikal tiap halaman dimuat
+        setTimeout(fetchTechnicalMetrics, 2000);
+        setInterval(fetchTechnicalMetrics, 60000);
+
     }
 );
 
@@ -945,6 +992,8 @@ window.RYFX_MARKET = {
     startMarketUpdates,
 
     stopMarketUpdates,
+
+    fetchTechnicalMetrics,
 
     getState() {
 
