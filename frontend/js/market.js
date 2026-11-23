@@ -14,7 +14,7 @@ const RYFX_MARKET_CONFIG = {
 
     endpoint: "/api/market/xauusd",
 
-    refreshInterval: 300000,
+    refreshInterval: 60000,
 
     decimals: 2
 
