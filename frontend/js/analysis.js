@@ -99,19 +99,26 @@ async function requestAIAnalysis(options = {}) {
             }
         });
 
-        // 4. Update kotak teknikal
+        // 4. Update kotak teknikal lama
         setAnalysisText("analysisStructure", data.structure);
         setAnalysisText("analysisBOS", data.bos);
         setAnalysisText("analysisLiquidity", data.liquidity);
         setAnalysisText("analysisVolatility", data.volatility);
         
-        // Supply & Demand (dari support/resistance backend)
+        // 5. Update kotak teknikal BARU (SMC, Support, Sentiment, dll)
+        setAnalysisText("analysisSMC", data.smc || "Awaiting analysis");
+        setAnalysisText("analysisSupportResistance", data.support_resistance || "Awaiting analysis");
+        setAnalysisText("analysisSupplyDemand", data.supply_demand || "Awaiting analysis");
+        setAnalysisText("analysisSentiment", data.sentiment || "Neutral");
+        setAnalysisText("analysisBias", data.bias || "NEUTRAL");
+
+        // Supply & Demand (Price Zones)
         if (data.structure && data.entry) {
             setAnalysisText("analysisSupplyZone", `$${(data.entry + 10).toFixed(2)}`);
             setAnalysisText("analysisDemandZone", `$${(data.entry - 10).toFixed(2)}`);
         }
 
-        // 5. Update Trade Plan (Entry, SL, TP, RR)
+        // 6. Update Trade Plan (Entry, SL, TP, RR)
         if (data.entry) setAnalysisText("analysisEntry", `$${data.entry.toFixed(2)}`);
         if (data.stop_loss) setAnalysisText("analysisStopLoss", `$${data.stop_loss.toFixed(2)}`);
         
@@ -122,7 +129,7 @@ async function requestAIAnalysis(options = {}) {
         
         setAnalysisText("analysisRiskReward", data.risk_reward || "--");
 
-        // 6. Update status akhir
+        // 7. Update status akhir
         setAnalysisText("analysisStatus", "Analysis completed successfully");
         setAnalysisText("analysisTimestamp", new Date().toLocaleString("en-GB"));
         
