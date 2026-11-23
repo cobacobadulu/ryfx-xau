@@ -1,6 +1,6 @@
 # ============================================
 # RYFX XAU — MARKET DATA SERVICE
-# TWELVEDATA INTEGRATION
+# XAUS.COM INTEGRATION
 # ============================================
 
 import math
@@ -9,25 +9,24 @@ import httpx
 from datetime import datetime, timezone
 from typing import Any
 
-from config import settings
-
 # ============================================
 # CONFIGURATION
 # ============================================
 
 MARKET_API_TIMEOUT = 15.0
-MARKET_API_BASE_URL = "https://api.twelvedata.com"
+MARKET_API_BASE_URL = "https://xaus.com"
 
-MARKET_SYMBOL = "XAU/USD" # Twelve Data pakai format XAU/USD
+# xaus.com menggunakan simbol "xau" untuk Gold
+MARKET_SYMBOL = "xau"
 
 TIMEFRAME_MAP = {
-    "1m": "1min",
-    "5m": "5min",
-    "15m": "15min",
-    "30m": "30min",
+    "1m": "1m",
+    "5m": "5m",
+    "15m": "15m",
+    "30m": "30m",
     "1h": "1h",
     "4h": "4h",
-    "1d": "1day",
+    "1d": "1d",
 }
 
 # ============================================
@@ -39,16 +38,12 @@ async def fetch_market_api(
     params: dict | None = None
 ) -> dict[str, Any]:
 
-    if not settings.MARKET_API_KEY:
-        raise RuntimeError("MARKET_API_KEY has not been configured.")
-
     headers = {
         "Accept": "application/json"
     }
     
-    # Twelve Data menggunakan API Key di URL parameter
+    # xaus.com tidak butuh apikey
     params = params or {}
-    params["apikey"] = settings.MARKET_API_KEY
 
     url = f"{MARKET_API_BASE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
 
@@ -57,10 +52,6 @@ async def fetch_market_api(
             response = await client.get(url, headers=headers, params=params)
             response.raise_for_status()
             data = response.json()
-
-            # Twelve Data mengembalikan status error di dalam JSON (walau HTTP 200)
-            if isinstance(data, dict) and data.get("status") == "error":
-                raise RuntimeError(data.get("message", "Unknown API error"))
 
     except httpx.TimeoutException as error:
         raise RuntimeError("MarketAPI request timed out.") from error
@@ -93,14 +84,22 @@ def safe_float(value: Any) -> float | None:
 # ============================================
 
 async def get_market_data() -> dict[str, Any]:
-    # 1. Ambil harga spot terbaru
-    response = await fetch_market_api("price", params={"symbol": MARKET_SYMBOL})
     
-    price = safe_float(response.get("price"))
-    if price is None:
-        raise ValueError("Invalid price format from Twelve Data")
+    # Ambil spot terbaru dari xaus.com
+    response = await fetch_market_api("api/v1/spot")
+    
+    # Struktur respons xaus.com biasanya: {"xau": {"price": 1234.5, ...}}
+    price = None
+    if isinstance(response, dict):
+        if "xau" in response and isinstance(response["xau"], dict):
+            price = safe_float(response["xau"].get("price"))
+        elif "price" in response:
+            price = safe_float(response.get("price"))
 
-    # 2. Ambil data harian untuk High/Low/Open
+    if price is None:
+        raise ValueError("Invalid price format from xaus.com")
+
+    # Ambil 1 candle daily untuk High/Low/Open
     try:
         candles = await get_market_candles(timeframe="1d", limit=1)
         latest_candle = candles[-1] if candles else {}
@@ -120,7 +119,7 @@ async def get_market_data() -> dict[str, Any]:
     return {
         "symbol": "XAUUSD",
         "price": price,
-        "bid": price, # Twelve Data spot tidak selalu sediakan bid/ask, gunakan price
+        "bid": price, 
         "ask": price,
         "spread": 0.0,
         "open": open_price,
@@ -135,23 +134,6 @@ async def get_market_data() -> dict[str, Any]:
     }
 
 # ============================================
-# NORMALIZE TIMESTAMP
-# ============================================
-
-def normalize_timestamp(value: Any) -> int | None:
-    if value is None:
-        return None
-    try:
-        # Twelve Data menggunakan format string: "YYYY-MM-DD HH:MM:SS"
-        if isinstance(value, str):
-            parsed = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-            parsed = parsed.replace(tzinfo=timezone.utc)
-            return int(parsed.timestamp())
-        return None
-    except Exception:
-        return None
-
-# ============================================
 # GET XAUUSD CANDLES
 # ============================================
 
@@ -164,41 +146,41 @@ async def get_market_candles(
     if not api_timeframe:
         raise ValueError(f"Unsupported timeframe: {timeframe}")
 
-    # Twelve Data free tier maksimal 5000 candle per request, tapi kita batasi limit
+    # Tentukan range berdasarkan limit (kasar)
+    # xaus.com API: range=1d, 5d, 1mo, dll.
+    # Kita pakai '1mo' agar dapat banyak data untuk limit=200
+    api_range = "1mo" if limit > 100 else "5d"
+
     params = {
         "symbol": MARKET_SYMBOL,
-        "interval": api_timeframe,
-        "outputsize": limit,
-        "timezone": "UTC"
+        "range": api_range,
+        "interval": api_timeframe
     }
 
-    response = await fetch_market_api("time_series", params=params)
+    response = await fetch_market_api("api/v1/chart", params=params)
 
-    values = response.get("values", [])
-    if not values:
+    points = response.get("points", [])
+    if not points:
         raise ValueError("MarketAPI returned no valid candles.")
 
     normalized = []
-    for candle in values:
-        timestamp = normalize_timestamp(candle.get("datetime"))
-        open_p = safe_float(candle.get("open"))
-        high_p = safe_float(candle.get("high"))
-        low_p = safe_float(candle.get("low"))
-        close_p = safe_float(candle.get("close"))
-        vol = safe_float(candle.get("volume"))
+    for p in points:
+        t = p.get("t")
+        o = safe_float(p.get("o"))
+        h = safe_float(p.get("h"))
+        l = safe_float(p.get("l"))
+        c = safe_float(p.get("c"))
+        v = safe_float(p.get("v"))
 
-        if timestamp and open_p and high_p and low_p and close_p:
+        if t and o and h and l and c:
             normalized.append({
-                "time": timestamp,
-                "open": open_p,
-                "high": high_p,
-                "low": low_p,
-                "close": close_p,
-                "volume": vol
+                "time": int(t),
+                "open": o,
+                "high": h,
+                "low": l,
+                "close": c,
+                "volume": v
             })
-
-    # Twelve Data mengembalikan data dari yang terbaru ke terlama. Kita balik.
-    normalized.reverse()
 
     if not normalized:
         raise ValueError("MarketAPI returned no valid XAUUSD candles.")
