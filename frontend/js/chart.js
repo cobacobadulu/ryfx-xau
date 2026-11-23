@@ -15,6 +15,8 @@ const RYFX_CHART_CONFIG = {
 
     candleEndpoint: "/api/market/candles",
 
+    liveEndpoint: "/api/market/live",      // <-- TAMBAHAN
+
     symbol: "XAUUSD",
 
     defaultTimeframe: "15",
@@ -56,7 +58,9 @@ const RYFX_CHART_STATE = {
 
     activeContainer: null,
 
-    errorElement: null
+    errorElement: null,
+
+    liveInterval: null                     // <-- TAMBAHAN
 
 };
 
@@ -252,9 +256,141 @@ function hideChartError() {
 }
 
 
+/* LIVE FEED — TAMBAHAN */
+
+function stopLiveFeed() {
+
+    if (RYFX_CHART_STATE.liveInterval) {
+
+        clearInterval(RYFX_CHART_STATE.liveInterval);
+
+        RYFX_CHART_STATE.liveInterval = null;
+
+    }
+
+}
+
+
+function updateLiveCandle(candle) {
+
+    if (!RYFX_CHART_STATE.candleSeries) return;
+
+    const normalized = {
+
+        time: normalizeCandleTime(candle.time),
+
+        open: Number(candle.open),
+
+        high: Number(candle.high),
+
+        low: Number(candle.low),
+
+        close: Number(candle.close)
+
+    };
+
+
+    if (
+
+        !Number.isFinite(normalized.time) ||
+
+        !Number.isFinite(normalized.open) ||
+
+        !Number.isFinite(normalized.high) ||
+
+        !Number.isFinite(normalized.low) ||
+
+        !Number.isFinite(normalized.close)
+
+    ) return;
+
+
+    try {
+
+        RYFX_CHART_STATE.candleSeries.update(normalized);
+
+    } catch (err) {
+
+        console.warn("[ryFX Live] update failed:", err.message);
+
+    }
+
+}
+
+
+function startLiveFeed() {
+
+    stopLiveFeed();
+
+
+    RYFX_CHART_STATE.liveInterval = setInterval(async () => {
+
+        if (!RYFX_CHART_STATE.candleSeries) return;
+
+
+        try {
+
+            const apiBase =
+                (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+
+            const params = new URLSearchParams({
+
+                symbol: RYFX_CHART_CONFIG.symbol,
+
+                timeframe:
+                    RYFX_CHART_CONFIG.timeframes[
+                        RYFX_CHART_STATE.currentTimeframe
+                    ]
+
+            });
+
+
+            const res = await fetch(
+
+                `${apiBase}${RYFX_CHART_CONFIG.liveEndpoint}?${params}`,
+
+                {
+
+                    headers: { "Accept": "application/json" },
+
+                    cache: "no-store"
+
+                }
+
+            );
+
+
+            if (!res.ok) return;
+
+
+            const result = await res.json();
+
+            const candle =
+                result.data || result.candle || result;
+
+
+            if (candle && candle.time) {
+
+                updateLiveCandle(candle);
+
+            }
+
+        } catch (err) {
+
+            console.warn("[ryFX Live]", err.message);
+
+        }
+
+    }, 1000);
+
+}
+
+
 /* CLEANUP CHART */
 
 function destroyChart() {
+
+    stopLiveFeed();                         // <-- TAMBAHAN
 
     RYFX_CHART_STATE.requestId++;
 
@@ -428,6 +564,9 @@ async function initializeChart() {
         await loadCandles(
             RYFX_CHART_STATE.currentTimeframe
         );
+
+
+        startLiveFeed();                    // <-- TAMBAHAN
 
 
         console.log("[ryFX Chart] Initialized");
