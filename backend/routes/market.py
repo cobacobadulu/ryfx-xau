@@ -253,6 +253,110 @@ async def get_xauusd_candles(
 
 
 # ============================================
+# XAUUSD LIVE CANDLE
+# ============================================
+
+@router.get("/live")
+async def get_xauusd_live_candle(
+
+    timeframe: str = Query(
+        default="15m"
+    )
+
+):
+
+    if timeframe not in ALLOWED_TIMEFRAMES:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported timeframe."
+        )
+
+    try:
+
+        candles = await get_market_candles(
+            timeframe=timeframe,
+            limit=2
+        )
+
+        if not isinstance(candles, list) or not candles:
+
+            raise HTTPException(
+                status_code=503,
+                detail="XAUUSD live candle is unavailable."
+            )
+
+        last_candle = candles[-1]
+
+        required_fields = ("time", "open", "high", "low", "close")
+
+        if not all(
+            field in last_candle
+            for field in required_fields
+        ):
+
+            raise HTTPException(
+                status_code=502,
+                detail="Malformed candle data."
+            )
+
+        return {
+
+            "success": True,
+
+            "symbol": "XAUUSD",
+
+            "timeframe": timeframe,
+
+            "data": {
+
+                "time": last_candle["time"],
+
+                "open": last_candle["open"],
+
+                "high": last_candle["high"],
+
+                "low": last_candle["low"],
+
+                "close": last_candle["close"]
+
+            },
+
+            "timestamp": current_timestamp()
+
+        }
+
+    except HTTPException:
+
+        raise
+
+    except RuntimeError as error:
+
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        ) from error
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=502,
+            detail=str(error)
+        ) from error
+
+    except Exception as error:
+
+        print(
+            f"RYFX XAU Live Candle Error: {error}"
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to retrieve XAUUSD live candle."
+        ) from error
+
+
+# ============================================
 # MARKET STATUS
 # ============================================
 
@@ -278,9 +382,6 @@ async def get_market_status():
             "success": True,
 
             "symbol": "XAUUSD",
-
-            # API connection and market session
-            # are separate states.
 
             "connected": connected,
 
