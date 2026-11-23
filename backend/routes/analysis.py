@@ -305,6 +305,74 @@ async def run_chart_scanner(timeframe: str = "15m"):
 
 
 # ============================================
+# FULL AI ANALYSIS (MULTI-TIMEFRAME TECHNICAL)
+# ============================================
+
+@router.get("/full-analysis")
+async def run_full_analysis(timeframe: str = "15m"):
+    if timeframe not in SUPPORTED_TIMEFRAMES:
+        raise HTTPException(status_code=422, detail="Unsupported timeframe.")
+
+    try:
+        candles = await get_market_candles(timeframe=timeframe, limit=REQUEST_CANDLES)
+        if not candles or len(candles) < 10:
+            raise HTTPException(status_code=503, detail="Insufficient candle data.")
+
+        analysis = analyze_market(candles)
+        trend = analysis["trend"]
+        structure = analysis["market_structure"]["structure"]
+        
+        direction = "WAIT"
+        confidence = 50
+        summary = "Market is ranging. No clear setup."
+        if trend == "BULLISH":
+            direction = "BUY"
+            confidence = 80
+            summary = "Bullish trend detected with strong momentum."
+        elif trend == "BEARISH":
+            direction = "SELL"
+            confidence = 80
+            summary = "Bearish trend detected with strong momentum."
+
+        # Hitung Multi-Timeframe (M5, M15, M30, H1, H4, D1)
+        timeframes_to_scan = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        tf_results = {}
+        
+        for tf in timeframes_to_scan:
+            try:
+                tf_candles = await get_market_candles(timeframe=tf, limit=100)
+                if tf_candles:
+                    tf_analysis = analyze_market(tf_candles)
+                    tf_results[tf] = tf_analysis["trend"]
+            except Exception:
+                tf_results[tf] = "UNKNOWN"
+
+        return {
+            "success": True,
+            "data": {
+                "direction": direction,
+                "confidence": confidence,
+                "summary": summary,
+                "reasoning": summary + f" Market structure is currently {structure}.",
+                "structure": structure,
+                "bos": "Detected" if structure in ["BULLISH", "BEARISH"] else "None",
+                "liquidity": "Normal",
+                "volatility": "High" if analysis["indicators"]["atr"]["value"] > 5 else "Normal",
+                "entry": analysis["current_price"],
+                "stop_loss": None,
+                "take_profits": [],
+                "timeframe_analysis": tf_results,
+                "timestamp": current_timestamp()
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.error(f"Full analysis error: {error}")
+        raise HTTPException(status_code=502, detail="Unable to analyze market.") from error
+
+
+# ============================================
 # ANALYSIS SERVICE STATUS
 # ============================================
 
