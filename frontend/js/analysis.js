@@ -14,7 +14,7 @@ const RYFX_AI_CONFIG = {
 
     symbol: "XAUUSD",
 
-    timeout: 60000
+    timeout: 120000 // Dinaikkan jadi 2 menit agar tidak timeout
 
 };
 
@@ -32,6 +32,28 @@ const RYFX_AI_STATE = {
     requestId: 0
 
 };
+
+
+/* =========================================
+   NORMALIZE TIMEFRAME
+   Mengubah "M15" / "H1" menjadi "15m" / "1h"
+========================================= */
+function normalizeTimeframe(tf) {
+    if (!tf) return "15m";
+    
+    const upper = String(tf).toUpperCase();
+    const map = {
+        "M1": "1m",
+        "M5": "5m",
+        "M15": "15m",
+        "M30": "30m",
+        "H1": "1h",
+        "H4": "4h",
+        "D1": "1d"
+    };
+    
+    return map[upper] || upper.toLowerCase();
+}
 
 
 /* REQUEST AI ANALYSIS */
@@ -79,7 +101,9 @@ async function requestAIAnalysis(options = {}) {
     try {
 
         const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
-
+        
+        // Pastikan timeframe yang dikirim sesuai format backend
+        const safeTimeframe = normalizeTimeframe(options.timeframe);
 
         const response = await fetch(
 
@@ -101,7 +125,7 @@ async function requestAIAnalysis(options = {}) {
 
                     symbol: RYFX_AI_CONFIG.symbol,
 
-                    timeframe: options.timeframe || "M15",
+                    timeframe: safeTimeframe,
 
                     analysis_type:
                         options.analysisType || "technical"
@@ -633,7 +657,7 @@ function renderAIAnalysis(data) {
     );
 
 
-    const timeframe = data.timeframe || "M15";
+    const timeframe = data.timeframe || "15m";
 
 
     const timestamp = formatAnalysisTimestamp(
@@ -1019,10 +1043,12 @@ document.addEventListener("click", event => {
     if (!button) return;
 
 
-    const timeframe =
+    const rawTimeframe =
 
         document.getElementById("analysisTimeframe")?.value ||
         "M15";
+
+    const timeframe = normalizeTimeframe(rawTimeframe);
 
 
     const analysisType =
