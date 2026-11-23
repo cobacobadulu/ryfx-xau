@@ -10,7 +10,7 @@
 
 const RYFX_AI_CONFIG = {
 
-    endpoint: "/api/analysis/xauusd",
+    endpoint: "/api/analyze",
 
     symbol: "XAUUSD",
 
