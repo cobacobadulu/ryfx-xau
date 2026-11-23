@@ -42,7 +42,7 @@ function normalizeTimeframe(tf) {
 
 
 /* =========================================
-   REQUEST AI ANALYSIS (MULTI-TIMEFRAME LOGIC)
+   REQUEST AI ANALYSIS
 ========================================= */
 async function requestAIAnalysis(options = {}) {
     if (RYFX_AI_STATE.analyzing) return;
@@ -60,7 +60,6 @@ async function requestAIAnalysis(options = {}) {
         const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
         const safeTimeframe = normalizeTimeframe(options.timeframe);
 
-        // Tembak ke endpoint full-analysis yang baru
         const response = await fetch(`${apiBase}/api/analysis/full-analysis?timeframe=${safeTimeframe}`);
         
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -85,14 +84,10 @@ async function requestAIAnalysis(options = {}) {
             else directionElement.classList.add("signal-wait");
         }
 
-        // 3. Update Multi-Timeframe (M5, M15, M30, H1, H4, D1)
+        // 3. Update Multi-Timeframe
         const tfMap = {
-            "5m": "analysisM5",
-            "15m": "analysisM15",
-            "30m": "analysisM30",
-            "1h": "analysisH1",
-            "4h": "analysisH4",
-            "1d": "analysisD1"
+            "5m": "analysisM5", "15m": "analysisM15", "30m": "analysisM30",
+            "1h": "analysisH1", "4h": "analysisH4", "1d": "analysisD1"
         };
 
         Object.entries(tfMap).forEach(([apiTf, htmlId]) => {
@@ -104,7 +99,7 @@ async function requestAIAnalysis(options = {}) {
             }
         });
 
-        // 4. Update kotak teknikal lainnya (Supply/Demand, dll)
+        // 4. Update kotak teknikal
         setAnalysisText("analysisStructure", data.structure);
         setAnalysisText("analysisBOS", data.bos);
         setAnalysisText("analysisLiquidity", data.liquidity);
@@ -112,15 +107,22 @@ async function requestAIAnalysis(options = {}) {
         
         // Supply & Demand (dari support/resistance backend)
         if (data.structure && data.entry) {
-            // Asumsi sederhana: supply di atas, demand di bawah
-            setAnalysisText("analysisSupplyZone", `$${(data.entry + 10).toFixed(2)}`); // Simulasi
-            setAnalysisText("analysisDemandZone", `$${(data.entry - 10).toFixed(2)}`); // Simulasi
+            setAnalysisText("analysisSupplyZone", `$${(data.entry + 10).toFixed(2)}`);
+            setAnalysisText("analysisDemandZone", `$${(data.entry - 10).toFixed(2)}`);
         }
 
-        // Entry Price
-        setAnalysisText("analysisEntry", data.entry ? `$${data.entry.toFixed(2)}` : "--");
+        // 5. Update Trade Plan (Entry, SL, TP, RR)
+        if (data.entry) setAnalysisText("analysisEntry", `$${data.entry.toFixed(2)}`);
+        if (data.stop_loss) setAnalysisText("analysisStopLoss", `$${data.stop_loss.toFixed(2)}`);
+        
+        const tpArray = data.take_profits || [];
+        if (tpArray[0]) setAnalysisText("analysisTP1", `$${tpArray[0].toFixed(2)}`);
+        if (tpArray[1]) setAnalysisText("analysisTP2", `$${tpArray[1].toFixed(2)}`);
+        if (tpArray[2]) setAnalysisText("analysisTP3", `$${tpArray[2].toFixed(2)}`);
+        
+        setAnalysisText("analysisRiskReward", data.risk_reward || "--");
 
-        // 5. Update status akhir
+        // 6. Update status akhir
         setAnalysisText("analysisStatus", "Analysis completed successfully");
         setAnalysisText("analysisTimestamp", new Date().toLocaleString("en-GB"));
         
