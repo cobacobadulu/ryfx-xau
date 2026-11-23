@@ -6,8 +6,8 @@
             <span class="section-label">VISION INTELLIGENCE</span>
             <h1>ryAI Chart Scanner</h1>
             <p>
-                Upload your XAUUSD chart and let artificial intelligence
-                analyze market structure and trading opportunities.
+                Analyze XAUUSD market structure and trading opportunities
+                directly from live market data.
             </p>
         </div>
 
@@ -15,90 +15,18 @@
     </section>
 
 
-    <!-- UPLOAD SECTION -->
+    <!-- ANALYSIS SETTINGS SECTION -->
     <section class="dashboard-section">
 
         <div class="section-heading">
             <div>
                 <span class="section-label">CHART INPUT</span>
-                <h2>Upload Trading Chart</h2>
+                <h2>Configure Scanner</h2>
             </div>
         </div>
 
 
         <div class="scanner-upload-card">
-
-            <input
-                type="file"
-                id="chartImageInput"
-                accept="image/png,image/jpeg,image/webp"
-                hidden
-            >
-
-            <div
-                class="upload-dropzone"
-                id="chartUploadZone"
-                role="button"
-                tabindex="0"
-                aria-label="Upload XAUUSD chart image"
-            >
-
-                <div class="upload-icon">⇧</div>
-
-                <h3>Upload Your Chart Screenshot</h3>
-
-                <p>
-                    Drag and drop your image here or
-                    <span>browse files</span>
-                </p>
-
-                <small>
-                    PNG, JPG or WEBP · Maximum 10 MB
-                </small>
-
-            </div>
-
-
-            <!-- IMAGE PREVIEW -->
-            <div
-                class="chart-preview-container"
-                id="chartPreviewContainer"
-                hidden
-            >
-
-                <div class="preview-header">
-
-                    <div>
-                        <span class="card-label">UPLOADED CHART</span>
-                        <h3>Chart Preview</h3>
-                    </div>
-
-                    <button
-                        type="button"
-                        id="removeChartImage"
-                        class="secondary-button"
-                    >
-                        Remove Image ×
-                    </button>
-
-                </div>
-
-
-                <div class="chart-image-wrapper">
-                    <img
-                        id="chartImagePreview"
-                        src=""
-                        alt="Uploaded XAUUSD chart preview"
-                    >
-                </div>
-
-                <div class="preview-file-info">
-                    <span id="chartFileName">No file selected</span>
-                    <span id="chartFileSize">--</span>
-                </div>
-
-            </div>
-
 
             <!-- ANALYSIS SETTINGS -->
             <div class="scanner-settings">
@@ -157,15 +85,9 @@
                 type="button"
                 id="analyzeChartButton"
                 class="primary-button scanner-analyze-button"
-                disabled
             >
                 ✦ Analyze Chart with ryAI
             </button>
-
-            <p class="upload-notice">
-                Upload an XAUUSD chart screenshot before starting
-                the ryAI vision analysis.
-            </p>
 
         </div>
 
@@ -188,10 +110,10 @@
             <div class="scanner-status-icon">✦</div>
 
             <div>
-                <h3 id="scannerStatus">Waiting for chart upload</h3>
+                <h3 id="scannerStatus">Ready to scan</h3>
 
                 <p id="scannerStatusDescription">
-                    Upload a chart screenshot to begin.
+                    Click the Analyze button to begin.
                 </p>
             </div>
 
@@ -338,7 +260,7 @@
 
                 <p id="scannerInsight">
                     ryAI chart interpretation will appear here
-                    after the uploaded image has been analyzed.
+                    after the analysis is complete.
                 </p>
             </div>
 
