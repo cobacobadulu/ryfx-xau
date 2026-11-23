@@ -1068,6 +1068,67 @@ document.addEventListener("click", event => {
 });
 
 
+/* =========================================
+   CHART SCANNER LOGIC
+========================================= */
+async function runChartScanner() {
+    // Tampilkan loading
+    const statusText = document.getElementById("scanStatus"); 
+    const btn = document.getElementById("analyzeChartBtn") || document.querySelector("button:has-text('Analyze Chart')");
+    
+    if (statusText) statusText.textContent = "Scanning XAUUSD market data...";
+    if (btn) { btn.disabled = true; btn.textContent = "Scanning..."; }
+
+    try {
+        const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+        
+        // Ambil timeframe aktif dari tombol yang dipilih
+        let activeTf = "15m";
+        const activeBtn = document.querySelector(".timeframe-btn.active") || document.querySelector(".active[data-timeframe]");
+        if (activeBtn) {
+            activeTf = normalizeTimeframe(activeBtn.dataset.timeframe || activeBtn.textContent);
+        }
+
+        const res = await fetch(`${apiBase}/api/analysis/scanner?timeframe=${activeTf}`);
+        const result = await res.json();
+
+        if (!result.success) throw new Error(result.detail || "Gagal scan chart");
+
+        const data = result.data;
+
+        // Update UI
+        const el = (id) => document.getElementById(id);
+        
+        if (el("scanDirection")) el("scanDirection").textContent = data.direction;
+        if (el("scanConfidence")) el("scanConfidence").textContent = `Confidence: ${data.confidence}%`;
+        if (el("scanSummary")) el("scanSummary").textContent = data.summary;
+        if (el("scanStructure")) el("scanStructure").textContent = data.structure;
+        if (el("scanLiquidity")) el("scanLiquidity").textContent = data.liquidity;
+        if (el("scanBos")) el("scanBos").textContent = data.bos;
+        if (el("scanSupply")) el("scanSupply").textContent = data.supply_zone;
+        if (el("scanDemand")) el("scanDemand").textContent = data.demand_zone;
+        if (el("scanInsight")) el("scanInsight").textContent = data.insight;
+
+        if (statusText) statusText.textContent = "Analysis completed successfully";
+
+    } catch (err) {
+        console.error("[Scanner]", err);
+        if (statusText) statusText.textContent = "Error: " + err.message;
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "✦ Analyze Chart with ryAI"; }
+    }
+}
+
+// Event listener untuk tombol scanner (mendeteksi teks "Analyze Chart")
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (btn && btn.textContent.includes("Analyze Chart")) {
+        e.preventDefault();
+        runChartScanner();
+    }
+});
+
+
 /* EXPORT */
 
 window.RYFX_AI = {
