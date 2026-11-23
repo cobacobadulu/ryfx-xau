@@ -305,7 +305,7 @@ async def run_chart_scanner(timeframe: str = "15m"):
 
 
 # ============================================
-# FULL AI ANALYSIS (MULTI-TIMEFRAME TECHNICAL)
+# FULL AI ANALYSIS (SINGLE TIMEFRAME)
 # ============================================
 
 @router.get("/full-analysis")
@@ -334,20 +334,6 @@ async def run_full_analysis(timeframe: str = "15m"):
             confidence = 80
             summary = "Bearish trend detected with strong momentum."
 
-        # Hitung Multi-Timeframe (M5, M15, M30, H1, H4, D1)
-        timeframes_to_scan = ["5m", "15m", "30m", "1h", "4h", "1d"]
-        tf_results = {}
-        
-        for tf in timeframes_to_scan:
-            try:
-                # PERBAIKAN: Ubah limit dari 100 menjadi REQUEST_CANDLES (250)
-                tf_candles = await get_market_candles(timeframe=tf, limit=REQUEST_CANDLES)
-                if tf_candles:
-                    tf_analysis = analyze_market(tf_candles)
-                    tf_results[tf] = tf_analysis["trend"]
-            except Exception:
-                tf_results[tf] = "UNKNOWN"
-
         return {
             "success": True,
             "data": {
@@ -362,7 +348,9 @@ async def run_full_analysis(timeframe: str = "15m"):
                 "entry": analysis["current_price"],
                 "stop_loss": None,
                 "take_profits": [],
-                "timeframe_analysis": tf_results,
+                "timeframe_analysis": {
+                    timeframe: trend
+                },
                 "timestamp": current_timestamp()
             }
         }
