@@ -1,6 +1,6 @@
 # ============================================
 # RYFX XAU — MARKET DATA SERVICE
-# XAUS.COM INTEGRATION
+# XAUS.COM INTEGRATION (FIXED)
 # ============================================
 
 import math
@@ -42,7 +42,6 @@ async def fetch_market_api(
         "Accept": "application/json"
     }
     
-    # xaus.com tidak butuh apikey
     params = params or {}
 
     url = f"{MARKET_API_BASE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
@@ -85,14 +84,15 @@ def safe_float(value: Any) -> float | None:
 
 async def get_market_data() -> dict[str, Any]:
     
-    # Ambil spot terbaru dari xaus.com
     response = await fetch_market_api("api/v1/spot")
     
-    # Struktur respons xaus.com biasanya: {"xau": {"price": 1234.5, ...}}
     price = None
+    # FIX: Ambil dari objek "xau" -> "price" (3622.05)
     if isinstance(response, dict):
         if "xau" in response and isinstance(response["xau"], dict):
             price = safe_float(response["xau"].get("price"))
+        elif "spot_usd_oz" in response:
+            price = safe_float(response.get("spot_usd_oz"))
         elif "price" in response:
             price = safe_float(response.get("price"))
 
@@ -146,9 +146,6 @@ async def get_market_candles(
     if not api_timeframe:
         raise ValueError(f"Unsupported timeframe: {timeframe}")
 
-    # Tentukan range berdasarkan limit (kasar)
-    # xaus.com API: range=1d, 5d, 1mo, dll.
-    # Kita pakai '1mo' agar dapat banyak data untuk limit=200
     api_range = "1mo" if limit > 100 else "5d"
 
     params = {
