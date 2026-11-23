@@ -460,6 +460,56 @@ async def analyze_xauusd_market(
 
 
 # ============================================
+# TECHNICAL ANALYSIS METRICS (TREND, STRUCTURE, VOLATILITY)
+# ============================================
+
+@router.get("/xauusd/technical")
+async def get_technical_metrics(
+    timeframe: str = "15m"
+):
+    if timeframe not in SUPPORTED_TIMEFRAMES:
+        raise HTTPException(
+            status_code=422,
+            detail="Unsupported timeframe."
+        )
+
+    try:
+        candles = await get_market_candles(
+            timeframe=timeframe,
+            limit=REQUEST_CANDLES
+        )
+
+        if not candles or len(candles) < 10:
+            raise HTTPException(
+                status_code=503,
+                detail="Insufficient candle data."
+            )
+
+        analysis = analyze_market(candles)
+        
+        atr_value = analysis["indicators"]["atr"]["value"]
+        volatility = "HIGH" if (atr_value and atr_value > 5) else "NORMAL"
+
+        return {
+            "success": True,
+            "data": {
+                "trend": analysis["trend"],
+                "structure": analysis["market_structure"]["structure"],
+                "volatility": volatility
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.error("Technical metrics error: %s", error)
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to calculate technical metrics."
+        ) from error
+
+
+# ============================================
 # ANALYSIS SERVICE STATUS
 # ============================================
 
