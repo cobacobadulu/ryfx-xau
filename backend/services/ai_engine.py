@@ -170,18 +170,24 @@ def build_analysis_prompt(
 
 async def call_gemini(prompt: str) -> dict[str, Any]:
 
-    api_key = settings.AI_API_KEY.strip() # Hapus spasi jika ada
+    api_key = settings.AI_API_KEY.strip()
     model = settings.AI_MODEL
 
     if not api_key:
         raise RuntimeError("AI_API_KEY has not been configured.")
     if not model:
         raise RuntimeError("AI_MODEL has not been configured.")
-    if not re.fullmatch(r"[a-zA-Z0-9._-]+", model):
-        raise RuntimeError("Invalid Gemini model configuration.")
 
-    # PERBAIKAN: Kirim API Key lewat URL parameter, bukan headers
-    url = f"{GEMINI_API_URL}{model}:generateContent?key={api_key}"
+    # PERBAIKAN: Deteksi otomatis nama model agar sesuai standar URL Google
+    if "2.5" in model:
+        safe_model = "gemini-2.5-flash-preview-04-17"
+    elif "1.5" in model:
+        safe_model = "gemini-1.5-flash"
+    else:
+        safe_model = model
+
+    # Kirim API Key lewat URL parameter
+    url = f"{GEMINI_API_URL}{safe_model}:generateContent?key={api_key}"
 
     headers = {
         "Content-Type": "application/json"
@@ -210,7 +216,6 @@ async def call_gemini(prompt: str) -> dict[str, Any]:
 
             if response.is_error:
                 status_code = response.status_code
-                # Tampilkan pesan error asli dari Google ke log Railway
                 error_detail = response.text
                 logger.error(f"Gemini HTTP error: {status_code} - {error_detail}")
                 
@@ -218,6 +223,9 @@ async def call_gemini(prompt: str) -> dict[str, Any]:
                     raise RuntimeError("Gemini authentication failed. Check AI_API_KEY.")
                 if status_code == 429:
                     raise RuntimeError("Gemini API rate limit reached.")
+                if status_code == 404:
+                    raise RuntimeError(f"Model '{safe_model}' not found.")
+                
                 raise RuntimeError(f"Gemini API returned HTTP {status_code}.")
 
             result = response.json()
@@ -294,7 +302,6 @@ def parse_ai_response(response_text: str) -> dict[str, Any]:
     if not required_fields.issubset(result):
         raise ValueError("Gemini response is missing required fields.")
 
-    # DIRECTION
     direction = result.get("direction")
     if not isinstance(direction, str):
         raise ValueError("Invalid AI trading direction.")
@@ -302,12 +309,10 @@ def parse_ai_response(response_text: str) -> dict[str, Any]:
     if direction not in {"BUY", "SELL", "WAIT"}:
         raise ValueError("Invalid AI trading direction.")
 
-    # CONFIDENCE
     confidence = validate_number(result.get("confidence"), "confidence")
     if not 0 <= confidence <= 100:
         raise ValueError("AI confidence must be between 0 and 100.")
 
-    # TEXT FIELDS
     summary = validate_text(result.get("summary"), "summary", required=True)
     reasoning = validate_text(result.get("reasoning"), "reasoning", required=True)
     structure = validate_text(result.get("structure"), "structure")
@@ -315,7 +320,6 @@ def parse_ai_response(response_text: str) -> dict[str, Any]:
     liquidity = validate_text(result.get("liquidity"), "liquidity")
     volatility = validate_text(result.get("volatility"), "volatility")
 
-    # TRADE LEVELS
     entry = validate_price(result.get("entry"), "entry")
     stop_loss = validate_price(result.get("stop_loss"), "stop_loss")
     
@@ -327,13 +331,11 @@ def parse_ai_response(response_text: str) -> dict[str, Any]:
     
     take_profits = [validate_price(v, "take_profit") for v in take_profits]
 
-    # WAIT VALIDATION
     if direction == "WAIT":
         if (entry is not None or stop_loss is not None or take_profits or result.get("risk_reward") is not None):
             raise ValueError("WAIT must not contain trade levels.")
         risk_reward = None
     else:
-        # BUY / SELL LEVEL VALIDATION
         if entry is None or stop_loss is None or not take_profits:
             raise ValueError("BUY/SELL requires complete trade levels.")
 
@@ -353,7 +355,6 @@ def parse_ai_response(response_text: str) -> dict[str, Any]:
             if take_profits != sorted(take_profits, reverse=True):
                 raise ValueError("SELL take profits must be descending.")
 
-        # RISK / REWARD CALCULATION
         risk = abs(entry - stop_loss)
         reward = abs(take_profits[-1] - entry)
 
@@ -363,7 +364,6 @@ def parse_ai_response(response_text: str) -> dict[str, Any]:
         ratio = reward / risk
         risk_reward = f"1:{ratio:.2f}"
 
-    # FINAL NORMALIZED RESPONSE
     return {
         "direction": direction,
         "confidence": confidence,
