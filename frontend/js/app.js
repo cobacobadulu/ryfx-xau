@@ -5,6 +5,14 @@
 
 "use strict";
 
+/* =========================================
+   BACKEND URL (RAILWAY)
+========================================= */
+window.RYFX_API = {
+    BASE_URL: "https://ryfx-xau-production.up.railway.app"
+};
+
+
 /* APPLICATION CONFIGURATION */
 
 const RYFX_CONFIG = {
