@@ -29,7 +29,7 @@ GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
 )
 
-AI_TIMEOUT = 60.0
+AI_TIMEOUT = 120.0
 MAX_OUTPUT_TOKENS = 3000
 MAX_TAKE_PROFITS = 5
 
