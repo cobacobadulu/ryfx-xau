@@ -1,6 +1,6 @@
 # ============================================
 # RYFX XAU — MARKET ROUTES
-# MARKETAPI INTEGRATION
+# TWELVEDATA INTEGRATION
 # ============================================
 
 import math
@@ -84,27 +84,10 @@ def validate_market_data(market):
     if not isinstance(market, dict):
         return False
 
-    if not valid_price(
-        market.get("price")
-    ):
+    if not valid_price(market.get("price")):
         return False
 
-    bid = market.get("bid")
-    ask = market.get("ask")
-
-    if bid is not None and not valid_price(bid):
-        return False
-
-    if ask is not None and not valid_price(ask):
-        return False
-
-    if (
-        bid is not None
-        and ask is not None
-        and float(ask) < float(bid)
-    ):
-        return False
-
+    # Twelve Data tidak menyediakan bid/ask, jadi kita longgarkan validasinya
     return True
 
 
