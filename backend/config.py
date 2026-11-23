@@ -37,13 +37,11 @@ class Settings(BaseSettings):
     # AI CONFIGURATION
     AI_PROVIDER: str = "gemini"
     AI_API_KEY: str = ""
-    AI_MODEL: str = "gemini-2.5-flash"
+    AI_MODEL: str = "gemini-1.5-flash"
 
     # MARKET API CONFIGURATION
     MARKET_API_KEY: str = ""
-    MARKET_API_URL: str = (
-        "https://api.marketapi.app/v1"
-    )
+    MARKET_API_URL: str = "https://xaus.com"
 
     MARKET_SYMBOL: str = "XAUUSD"
 
@@ -61,7 +59,8 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: str = (
         "http://localhost:3000,"
-        "http://127.0.0.1:5500"
+        "http://127.0.0.1:5500,"
+        "https://ryfxxau.vercel.app"
     )
 
     ENVIRONMENT: str = "development"
