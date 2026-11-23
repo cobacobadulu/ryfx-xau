@@ -340,7 +340,8 @@ async def run_full_analysis(timeframe: str = "15m"):
         
         for tf in timeframes_to_scan:
             try:
-                tf_candles = await get_market_candles(timeframe=tf, limit=100)
+                # PERBAIKAN: Ubah limit dari 100 menjadi REQUEST_CANDLES (250)
+                tf_candles = await get_market_candles(timeframe=tf, limit=REQUEST_CANDLES)
                 if tf_candles:
                     tf_analysis = analyze_market(tf_candles)
                     tf_results[tf] = tf_analysis["trend"]
