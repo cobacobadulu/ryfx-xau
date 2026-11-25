@@ -1,0 +1,36 @@
+<!-- frontend/pages/ai-news.html -->
+
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>AI News</h1>
+        <p>Real-time macroeconomic analysis and trading signals based on news releases.</p>
+    </div>
+</div>
+
+<main data-page-content class="page-container">
+    
+    <!-- Area untuk menampilkan hasil analisis nanti -->
+    <div class="card" id="newsAnalysisCard">
+        <div class="card-header">
+            <h2>Market Intelligence</h2>
+        </div>
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">⌬</div>
+                <h3>Waiting for News Data</h3>
+                <p>AI is currently monitoring economic calendars. Analysis will appear here.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Area untuk daftar berita terkait nanti -->
+    <div class="card" id="relatedNewsCard" style="margin-top: 1.5rem;">
+        <div class="card-header">
+            <h2>Latest Headlines</h2>
+        </div>
+        <div class="card-body" id="newsList">
+            <p class="text-muted">Loading related news...</p>
+        </div>
+    </div>
+
+</main>
