@@ -249,13 +249,16 @@ async def get_technical_metrics(timeframe: str = "15m"):
 
 
 # ============================================
-# CHART SCANNER ANALYSIS
+# CHART SCANNER ANALYSIS (AI STRATEGY)
 # ============================================
 
 @router.get("/scanner")
-async def run_chart_scanner(timeframe: str = "15m"):
+async def run_chart_scanner(timeframe: str = "15m", strategy: str = "technical"):
     if timeframe not in SUPPORTED_TIMEFRAMES:
         raise HTTPException(status_code=422, detail="Unsupported timeframe.")
+
+    if strategy not in SUPPORTED_ANALYSIS_TYPES:
+        raise HTTPException(status_code=422, detail="Unsupported strategy type.")
 
     try:
         candles = await get_market_candles(timeframe=timeframe, limit=REQUEST_CANDLES)
@@ -269,11 +272,12 @@ async def run_chart_scanner(timeframe: str = "15m"):
         support = analysis["support_resistance"]["support"]
         resistance = analysis["support_resistance"]["resistance"]
         atr = analysis["indicators"]["atr"]["value"]
+        rsi = analysis["indicators"]["rsi"]["value"]
 
         direction = "WAIT"
         confidence = 50
         summary = "Market is ranging."
-
+        
         if trend == "BULLISH":
             direction = "BUY"
             confidence = 75
@@ -282,6 +286,32 @@ async def run_chart_scanner(timeframe: str = "15m"):
             direction = "SELL"
             confidence = 75
             summary = "Bearish trend detected. Price is below major EMAs."
+
+        # Logika Spesifik per Strategi
+        if strategy == "scalping":
+            if trend == "BULLISH" and rsi and rsi < 70:
+                confidence = 85
+                summary = "Scalping Setup: Bullish momentum with room to grow (RSI < 70)."
+            elif trend == "BEARISH" and rsi and rsi > 30:
+                confidence = 85
+                summary = "Scalping Setup: Bearish momentum with room to drop (RSI > 30)."
+            else:
+                confidence = 60
+                summary = "Scalping Setup: Waiting for better momentum confirmation."
+
+        elif strategy == "intraday":
+            if structure in ["BULLISH", "BEARISH"]:
+                confidence = 80
+                summary = f"Intraday Setup: Clear {structure} market structure on this timeframe."
+            else:
+                summary = "Intraday Setup: Market is consolidating. Wait for a breakout."
+
+        elif strategy == "swing":
+            if atr and atr > 5:
+                confidence = 80
+                summary = "Swing Setup: High volatility detected, suitable for swing entries."
+            else:
+                summary = "Swing Setup: Low volatility. Better to wait for a larger move."
 
         return {
             "success": True,
@@ -355,7 +385,6 @@ async def run_full_analysis(timeframe: str = "15m"):
             tp3_price = round(entry_price - 20.0, 2)
             rr_ratio = "1:1 / 1:2 / 1:4"
 
-        # Data Tambahan untuk Kotak Baru
         smc_data = "Order Block & FVG Detected" if structure != "RANGING" else "No clear SMC setup"
         support_data = f"Sup: {analysis['support_resistance']['support']} | Res: {analysis['support_resistance']['resistance']}"
         supply_demand_data = f"Supply: {analysis['support_resistance']['resistance']} | Demand: {analysis['support_resistance']['support']}"
