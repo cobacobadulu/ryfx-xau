@@ -112,7 +112,7 @@ function renderApplicationShell() {
 
                         <button
                             class="nav-item"
-                            data-page="ai-scanner"
+                            data-page="ai-strategy"
                         >
                             <span class="nav-icon">⌕</span>
                             <span>AI Strategy</span>
