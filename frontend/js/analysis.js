@@ -42,7 +42,7 @@ function normalizeTimeframe(tf) {
 
 
 /* =========================================
-   REQUEST AI ANALYSIS
+   REQUEST AI ANALYSIS (Halaman AI Analysis)
 ========================================= */
 async function requestAIAnalysis(options = {}) {
     if (RYFX_AI_STATE.analyzing) return;
@@ -184,27 +184,34 @@ document.addEventListener("click", event => {
 
 
 /* =========================================
-   CHART SCANNER LOGIC (Halaman AI Scanner)
+   CHART SCANNER LOGIC (Halaman AI Strategy)
 ========================================= */
 async function runChartScanner() {
     const statusText = document.getElementById("scannerStatus");
     const btn = document.getElementById("analyzeChartButton");
     
-    if (statusText) statusText.textContent = "Scanning XAUUSD market data...";
-    if (btn) { btn.disabled = true; btn.textContent = "Scanning..."; }
+    if (statusText) statusText.textContent = "Generating strategy...";
+    if (btn) { btn.disabled = true; btn.textContent = "Generating..."; }
 
     try {
         const apiBase = (window.RYFX_API && window.RYFX_API.BASE_URL) || "";
+        
+        // Ambil Timeframe dan Strategy dari dropdown
         const tfSelect = document.getElementById("scannerTimeframe");
         const rawTf = tfSelect ? tfSelect.value : "M15";
         const safeTf = normalizeTimeframe(rawTf);
 
-        const res = await fetch(`${apiBase}/api/analysis/scanner?timeframe=${safeTf}`);
+        const strategySelect = document.getElementById("scannerAnalysisType");
+        const strategy = strategySelect ? strategySelect.value : "technical";
+
+        // Tembak ke endpoint scanner dengan parameter strategy
+        const res = await fetch(`${apiBase}/api/analysis/scanner?timeframe=${safeTf}&strategy=${strategy}`);
         const result = await res.json();
 
-        if (!result.success) throw new Error(result.detail || "Gagal scan chart");
+        if (!result.success) throw new Error(result.detail || "Gagal generate strategy");
         const data = result.data;
 
+        // Update UI berdasarkan ID di HTML AI Strategy
         if (document.getElementById("scannerDirection")) document.getElementById("scannerDirection").textContent = data.direction;
         if (document.getElementById("scannerConfidence")) document.getElementById("scannerConfidence").textContent = `Confidence: ${data.confidence}%`;
         if (document.getElementById("scannerStructure")) document.getElementById("scannerStructure").textContent = data.structure;
@@ -214,12 +221,12 @@ async function runChartScanner() {
         if (document.getElementById("scannerDemandZone")) document.getElementById("scannerDemandZone").textContent = data.demand_zone ? `$${data.demand_zone}` : "--";
         if (document.getElementById("scannerInsight")) document.getElementById("scannerInsight").textContent = data.insight;
 
-        if (statusText) statusText.textContent = "Analysis completed successfully";
+        if (statusText) statusText.textContent = "Strategy generated successfully";
     } catch (err) {
         console.error("[Scanner]", err);
         if (statusText) statusText.textContent = "Error: " + err.message;
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = "✦ Analyze Chart with ryAI"; }
+        if (btn) { btn.disabled = false; btn.textContent = "✦ Generate Strategy with ryAI"; }
     }
 }
 
@@ -236,7 +243,7 @@ document.addEventListener("ryfx:page-loaded", (event) => {
         const btn = document.getElementById("analyzeChartButton");
         if (btn) {
             btn.disabled = false;
-            btn.textContent = "✦ Analyze Chart with ryAI";
+            btn.textContent = "✦ Generate Strategy with ryAI";
         }
     }
 });
