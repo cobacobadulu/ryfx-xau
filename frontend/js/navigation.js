@@ -19,6 +19,8 @@ const RYFX_PAGES = {
 
     "ai-strategy": "pages/ai-scanner.html",
 
+    "ai-news": "pages/ai-news.html",
+
     signals: "pages/signals.html",
 
     "track-record": "pages/track-record.html",
