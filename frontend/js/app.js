@@ -115,7 +115,7 @@ function renderApplicationShell() {
                             data-page="ai-scanner"
                         >
                             <span class="nav-icon">⌕</span>
-                            <span>AI Chart Scanner</span>
+                            <span>AI Strategy</span>
                         </button>
 
                         <button
