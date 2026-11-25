@@ -271,6 +271,11 @@ async function loadPage(page) {
             })
         );
 
+        /* TAMBAHAN BARU: Jalankan fungsi AI News jika halaman yang dimuat adalah ai-news */
+        if (page === "ai-news" && typeof fetchNewsAnalysis === "function") {
+            fetchNewsAnalysis();
+        }
+
 
         /* CLOSE MOBILE MENU */
 
