@@ -239,7 +239,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("ryfx:page-loaded", (event) => {
-    if (event.detail?.page === "ai-scanner") {
+    if (event.detail?.page === "ai-strategy") {
         const btn = document.getElementById("analyzeChartButton");
         if (btn) {
             btn.disabled = false;
