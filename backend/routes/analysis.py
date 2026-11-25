@@ -20,7 +20,11 @@ from models.analysis import (
 
 from services.market_data import get_market_candles
 from services.technical_analysis import analyze_market
-from services.ai_engine import analyze_xauusd
+from services.ai_engine import analyze_xauusd, analyze_news_event
+
+# --- IMPORT BARU UNTUK NEWS ---
+from services.econ_calendar import fetch_upcoming_events, get_event_for_analysis
+from services.news_fetcher import build_news_context
 
 from routes.history import save_analysis
 
@@ -422,6 +426,62 @@ async def run_full_analysis(timeframe: str = "15m"):
     except Exception as error:
         logger.error(f"Full analysis error: {error}")
         raise HTTPException(status_code=502, detail="Unable to analyze market.") from error
+
+
+# ============================================
+# NEWS ANALYSIS ENDPOINTS (NEW)
+# ============================================
+
+@router.get("/news/upcoming")
+async def get_upcoming_news(limit: int = 10):
+    """
+    Mengambil daftar berita ekonomi high-impact yang akan datang (belum rilis).
+    Digunakan Frontend untuk menampilkan daftar jadwal.
+    """
+    try:
+        events = await fetch_upcoming_events(limit=limit)
+        return {
+            "success": True,
+            "count": len(events),
+            "events": events,
+            "timestamp": current_timestamp()
+        }
+    except Exception as e:
+        logger.error(f"Upcoming news error: {e}")
+        raise HTTPException(status_code=502, detail="Unable to fetch upcoming news.")
+
+
+@router.post("/news/analyze")
+async def analyze_upcoming_news(event_name: str):
+    """
+    Menganalisis berita spesifik (misal 'PCE') berdasarkan Forecast dan berita terkini.
+    Menghasilkan sinyal Pre-News (BUY/SELL) beserta alasannya.
+    """
+    try:
+        # 1. Cari event berdasarkan nama
+        event = await get_event_for_analysis(event_name)
+        if not event:
+            raise HTTPException(status_code=404, detail=f"Event '{event_name}' not found in calendar.")
+
+        # 2. Ambil berita terkini sebagai konteks (sentimen pasar)
+        news_context = await build_news_context(event_name=event.get("name"), limit=5)
+
+        # 3. Minta AI menganalisis
+        ai_result = await analyze_news_event(event_data=event, news_context=news_context)
+
+        return {
+            "success": True,
+            "data": ai_result,
+            "timestamp": current_timestamp()
+        }
+    except HTTPException:
+        raise
+    except RuntimeError as e:
+        logger.error(f"AI News error: {e}")
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"News analysis error: {e}")
+        raise HTTPException(status_code=502, detail="Unable to analyze news.")
 
 
 # ============================================
