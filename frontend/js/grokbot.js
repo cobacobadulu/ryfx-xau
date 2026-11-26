@@ -26,14 +26,37 @@ function startGrokbotIntro() {
     if (topbar) topbar.style.display = "none";
     if (overlay) overlay.style.display = "none";
 
-    // Teks bahasa Inggris yang baru
+    // Teks bahasa Inggris (Total waktu teks: 13.5 detik)
     const steps = [
-        { text: "> Initializing ryFX Engine...", delay: 800 },
-        { text: "> Connecting to server...", delay: 1000 },
-        { text: "> Access granted. Welcome, Trader.", delay: 1500, color: "#3b82f6" }
+        { text: "> Initializing ryFX Engine...", delay: 4500 }, 
+        { text: "> Connecting to server...", delay: 4500 },     
+        { text: "> Access granted. Welcome, Trader.", delay: 4500, color: "#3b82f6" } 
     ];
 
     let currentStep = 0;
+    
+    // --- LOGIKA PROGRESS BAR 15 DETIK ---
+    let progressTime = 0;
+    const totalDuration = 15000; // 15.000 milidetik = 15 detik
+    const intervalTime = 100; // Update setiap 0.1 detik
+    
+    const progressInterval = setInterval(() => {
+        progressTime += intervalTime;
+        
+        // Hitung persentase (0 - 100)
+        let percent = Math.round((progressTime / totalDuration) * 100);
+        
+        // Pastikan tidak lebih dari 100%
+        if (percent > 100) percent = 100;
+        
+        updateProgress(percent);
+
+        // Jika sudah 15 detik, hentikan timer
+        if (progressTime >= totalDuration) {
+            clearInterval(progressInterval);
+        }
+    }, intervalTime);
+    // ------------------------------------
 
     // Fungsi untuk menambah teks log (Warna default BIRU)
     function addLog(message, color = "#3b82f6") {
@@ -52,13 +75,13 @@ function startGrokbotIntro() {
     // Fungsi untuk mengupdate progress bar
     function updateProgress(targetPercent) {
         progressBar.style.width = `${targetPercent}%`;
-        progressText.textContent = `${targetPercent}%`;
+        progressText.textContent = `INITIALIZING ${targetPercent}%`; 
     }
 
-    // Fungsi utama untuk menjalankan urutan
+    // Fungsi utama untuk menjalankan urutan teks
     function runSequence() {
         if (currentStep >= steps.length) {
-            // Jika semua langkah selesai, pindah ke dashboard
+            // Jika semua teks selesai (13.5 detik), tunggu sisa waktu hingga 15 detik
             setTimeout(() => {
                 // Munculkan kembali sidebar, topbar, dan overlay sebelum pindah halaman
                 if (sidebar) sidebar.style.display = "";
@@ -68,7 +91,7 @@ function startGrokbotIntro() {
                 if (window.RYFX_NAVIGATION && typeof window.RYFX_NAVIGATION.navigateTo === "function") {
                     window.RYFX_NAVIGATION.navigateTo("dashboard");
                 }
-            }, 1500); // Jeda 1.5 detik sebelum pindah
+            }, 1500); // Jeda 1.5 detik terakhir (total jadi 15 detik)
             return;
         }
 
@@ -76,10 +99,6 @@ function startGrokbotIntro() {
         
         // Tampilkan teks
         addLog(step.text, step.color);
-        
-        // Hitung persentase progress
-        const percent = Math.round(((currentStep + 1) / steps.length) * 100);
-        updateProgress(percent);
 
         // Lanjut ke step berikutnya
         currentStep++;
