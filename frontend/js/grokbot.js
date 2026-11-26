@@ -30,7 +30,8 @@ function startGrokbotIntro() {
     const steps = [
     { text: "> Initializing ryFX Engine...", delay: 4500, color: "#eab308" }, 
     { text: "> Connecting to server...", delay: 4500, color: "#eab308" },     
-    { text: "> Access granted. Welcome", delay: 4500, color: "#eab308" } 
+    { text: "> Access granted...", delay: 4500, color: "#eab308" },
+    { text: "> Welcome", delay: 4500, color: "#eab308" } 
   ];
     let currentStep = 0;
     
