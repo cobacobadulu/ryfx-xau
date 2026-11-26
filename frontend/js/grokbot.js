@@ -28,11 +28,10 @@ function startGrokbotIntro() {
 
     // Teks bahasa Inggris (Total waktu teks: 13.5 detik)
     const steps = [
-        { text: "> Initializing ryFX Engine...", delay: 4500 }, 
-        { text: "> Connecting to server...", delay: 4500 },     
-        { text: "> Access granted. Welcome, Trader.", delay: 4500, color: "#3b82f6" } 
-    ];
-
+    { text: "> Initializing ryFX Engine...", delay: 4500, color: "#eab308" }, 
+    { text: "> Connecting to server...", delay: 4500, color: "#eab308" },     
+    { text: "> Access granted. Welcome", delay: 4500, color: "#eab308" } 
+  ];
     let currentStep = 0;
     
     // --- LOGIKA PROGRESS BAR 15 DETIK ---
@@ -59,7 +58,7 @@ function startGrokbotIntro() {
     // ------------------------------------
 
     // Fungsi untuk menambah teks log (Warna default BIRU)
-    function addLog(message, color = "#3b82f6") {
+    function addLog(message, color = "#eab308") {
         const p = document.createElement("div");
         p.innerHTML = message;
         p.style.color = color;
