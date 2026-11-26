@@ -31,25 +31,54 @@ async function loadSignals() {
     const container = document.getElementById("signalsList");
     if (!container) return;
 
-    // --- DATA TIRUAN UNTUK TES UI ---
-    const dummySignals = [
-        {
-            id: "12345",
-            symbol: "XAUUSD",
-            direction: "BUY",
-            entry: 2050.50,
-            stop_loss: 2045.00,
-            take_profits: [2055.00, 2060.00, 2070.00],
-            risk_reward: "1:2",
-            status: "ACTIVE",
-            summary: "Bullish momentum terdeteksi."
-        }
-    ];
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">◌</div>
+            <p>Loading active signals...</p>
+        </div>
+    `;
 
-    // Render data tiruan ini
-    renderSignalsList(container, dummySignals);
-    updateOverviewCounts(1, 1, 0, 0);
-    displaySignalDetails(dummySignals[0]);
+    try {
+        const response = await fetch(`${SIGNALS_API}/api/signals/`);
+        const data = await response.json();
+
+        // Sesuaikan dengan format response backend Anda
+        // Asumsi backend mengembalikan: { success: true, signals: [...] }
+        const signals = data.signals || data.data || [];
+
+        if (signals.length === 0) {
+            renderEmptySignals(container);
+            updateOverviewCounts(0, 0, 0, 0);
+            return;
+        }
+
+        renderSignalsList(container, signals);
+        
+        // Hitung untuk Overview
+        let buyCount = 0, sellCount = 0, waitCount = 0;
+        signals.forEach(s => {
+            if (s.direction === "BUY") buyCount++;
+            else if (s.direction === "SELL") sellCount++;
+            else if (s.direction === "WAIT") waitCount++;
+        });
+        
+        updateOverviewCounts(signals.length, buyCount, sellCount, waitCount);
+
+        // Pilih sinyal pertama secara otomatis
+        if (signals.length > 0) {
+            displaySignalDetails(signals[0]);
+        }
+
+    } catch (error) {
+        console.error("[Signals] Error loading signals:", error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚠</div>
+                <h3>Connection Error</h3>
+                <p>Gagal mengambil data sinyal dari server.</p>
+            </div>
+        `;
+    }
 }
 
 // ==========================================
