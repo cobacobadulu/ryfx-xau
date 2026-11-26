@@ -8,39 +8,31 @@
             <span style="font-size: 0.8rem; color: #94a3b8;">INITIALIZING...</span>
         </div>
 
-        <!-- AREA ANIMASI LABA-LABA 3D -->
+        <!-- AREA ANIMASI AI SWARM (LINGKARAN ORBIT) -->
         <div style="position: relative; height: 220px; display: flex; justify-content: center; align-items: center; margin-bottom: 30px;">
             
-            <!-- Jaring Laba-laba -->
-            <div class="web-line-vertical"></div>
-            <div class="web-line-horizontal"></div>
-
-            <!-- Container Laba-laba -->
-            <div class="spider-wrapper">
-                <div class="spider">
-                    <!-- Kaki Kiri -->
-                    <div class="leg left-leg-1"></div>
-                    <div class="leg left-leg-2"></div>
-                    <div class="leg left-leg-3"></div>
-                    <div class="leg left-leg-4"></div>
-                    
-                    <!-- Kaki Kanan -->
-                    <div class="leg right-leg-1"></div>
-                    <div class="leg right-leg-2"></div>
-                    <div class="leg right-leg-3"></div>
-                    <div class="leg right-leg-4"></div>
-
-                    <!-- Badan Laba-laba -->
-                    <div class="spider-body">
-                        <div class="spider-head"></div>
-                        <div class="spider-abdomen"></div>
-                        <!-- Mata -->
-                        <div class="eye eye-left"></div>
-                        <div class="eye eye-right"></div>
-                    </div>
-                </div>
+            <!-- Garis Orbit -->
+            <div class="orbit"></div>
+            
+            <!-- Inti Grokbot (Tengah) -->
+            <div class="core-logo">
+                <span style="color: #ffffff; font-weight: bold; font-size: 1.5rem;">G</span>
             </div>
 
+            <!-- Logo AI 1 (OpenAI) -->
+            <div class="ai-node" style="animation-delay: 0s;">
+                <svg viewBox="0 0 24 24" fill="#10a37f" width="20" height="20"><path d="M22.28 11.2c-.16-1.3-1.6-2.2-2.9-1.8-.1-1.1-1.1-2-2.2-1.9-.5-1-1.6-1.5-2.7-1.3-.8-.8-2-.9-2.9-.2-.7-.9-1.9-1.1-2.8-.5-.4-.6-1.2-.9-1.9-.7-.7.2-1.2.8-1.2 1.5-1 .2-1.7 1.1-1.7 2.1 0 .3.1.6.2.9-.8.4-1.3 1.2-1.3 2.1 0 .5.2 1 .5 1.4-.6.5-1 1.3-.9 2.2.1.8.6 1.5 1.4 1.8.1 1 1 1.8 2 1.9.4.9 1.4 1.4 2.4 1.2.7.8 1.9 1 2.8.4.4.6 1.2.9 1.9.7.7-.2 1.2-.8 1.2-1.5 1-.2 1.7-1.1 1.7-2.1 0-.3-.1-.6-.2-.9.8-.4 1.3-1.2 1.3-2.1 0-.5-.2-1-.5-1.4.6-.5 1-1.3.9-2.2zM12 17.5c-3 0-5.5-2.5-5.5-5.5s2.5-5.5 5.5-5.5 5.5 2.5 5.5 5.5-2.5 5.5-5.5 5.5z"/></svg>
+            </div>
+            
+            <!-- Logo AI 2 (Gemini/Google) -->
+            <div class="ai-node" style="animation-delay: -2s;">
+                <svg viewBox="0 0 24 24" fill="#4285F4" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+            </div>
+            
+            <!-- Logo AI 3 (Grok/X) -->
+            <div class="ai-node" style="animation-delay: -4s;">
+                <svg viewBox="0 0 24 24" fill="#ec4899" width="20" height="20"><path d="M12 2L2 22h20L12 2zm0 3.8L18.5 19h-13L12 5.8z"/></svg>
+            </div>
         </div>
 
         <!-- Log Animasi -->
@@ -59,128 +51,53 @@
     </div>
     
     <style>
-        /* Latar Jaring */
-        .web-line-vertical {
+        /* CSS Animasi AI Swarm */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .orbit {
             position: absolute;
-            width: 1px;
-            height: 100%;
-            background: linear-gradient(to bottom, transparent, #3b82f6, transparent);
-            opacity: 0.2;
+            width: 180px;
+            height: 180px;
+            border: 1px dashed #334155;
+            border-radius: 50%;
         }
-        .web-line-horizontal {
+
+        .core-logo {
             position: absolute;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #3b82f6, transparent);
-            opacity: 0.2;
-        }
-
-        /* Animasi Laba-laba Turun Naik */
-        .spider-wrapper {
-            animation: bounce 3s ease-in-out infinite alternate;
-            position: relative;
-            z-index: 2;
-        }
-
-        @keyframes bounce {
-            0% { transform: translateY(-20px); }
-            100% { transform: translateY(20px); }
-        }
-
-        .spider {
-            position: relative;
-            width: 60px;
-            height: 60px;
+            z-index: 5;
+            background: #080D18;
+            border: 2px solid #3b82f6;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: pulse 2s infinite;
         }
 
-        /* Badan Laba-laba */
-        .spider-body {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            animation: bodyPulse 1.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes bodyPulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.05); }
-        }
-
-        /* Kepala (Bola 3D) */
-        .spider-head {
-            width: 24px;
-            height: 24px;
-            background: radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8);
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+        .ai-node {
             position: absolute;
-            top: 5px;
-        }
-
-        /* Perut (Bola 3D lebih besar) */
-        .spider-abdomen {
             width: 40px;
             height: 40px;
-            background: radial-gradient(circle at 30% 30%, #3b82f6, #1e3a8a);
+            background: #0f172a;
+            border: 1px solid #3b82f6;
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-            position: absolute;
-            bottom: 0;
-            z-index: -1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            animation: orbit 6s linear infinite; 
         }
 
-        /* Mata */
-        .eye {
-            width: 5px;
-            height: 5px;
-            background: #ffffff;
-            border-radius: 50%;
-            position: absolute;
-            top: 12px;
-            box-shadow: 0 0 5px #ffffff;
-        }
-        .eye-left { left: 18px; }
-        .eye-right { right: 18px; }
-
-        /* Kaki */
-        .leg {
-            position: absolute;
-            width: 35px;
-            height: 3px;
-            background: linear-gradient(90deg, #60a5fa, transparent);
-            border-radius: 3px;
-            top: 50%;
-            transform-origin: left center;
-            box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-        }
-
-        /* Kaki Kiri */
-        .left-leg-1 { left: -25px; transform: rotate(30deg); animation: walkLeft 0.6s ease-in-out infinite alternate; }
-        .left-leg-2 { left: -25px; transform: rotate(10deg); animation: walkLeft 0.6s ease-in-out infinite alternate-reverse; }
-        .left-leg-3 { left: -25px; transform: rotate(-10deg); animation: walkLeft 0.6s ease-in-out infinite alternate; }
-        .left-leg-4 { left: -25px; transform: rotate(-30deg); animation: walkLeft 0.6s ease-in-out infinite alternate-reverse; }
-
-        /* Kaki Kanan */
-        .right-leg-1 { right: -25px; transform: rotate(-30deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate; }
-        .right-leg-2 { right: -25px; transform: rotate(-10deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate-reverse; }
-        .right-leg-3 { right: -25px; transform: rotate(10deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate; }
-        .right-leg-4 { right: -25px; transform: rotate(30deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate-reverse; }
-
-        /* Animasi Kaki Berjalan */
-        @keyframes walkLeft {
-            0% { transform: rotate(20deg); }
-            100% { transform: rotate(40deg); }
-        }
-        @keyframes walkRight {
-            0% { transform: rotate(-20deg) scaleX(-1); }
-            100% { transform: rotate(-40deg) scaleX(-1); }
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(90px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(90px) rotate(-360deg); }
         }
     </style>
 </main>
