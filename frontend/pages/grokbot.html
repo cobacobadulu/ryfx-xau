@@ -1,22 +1,24 @@
 <main class="page-content" data-page-content style="height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #080D18;">
 
-    <div id="grokbot-intro" style="width: 100%; max-width: 600px; padding: 2rem; font-family: monospace; color: #22c55e;">
+    <div id="grokbot-intro" style="width: 100%; max-width: 600px; padding: 2rem; font-family: monospace;">
         
         <!-- Header Terminal -->
         <div style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: #ec4899; font-weight: bold;">GROKBOT OS v1.0</span>
+            <!-- Nama GROKBOT jadi KUNING -->
+            <span style="color: #eab308; font-weight: bold; font-size: 1.1rem;">GROKBOT OS v1.0</span>
             <span style="font-size: 0.8rem; color: #94a3b8;">INITIALIZING...</span>
         </div>
 
         <!-- Log Animasi -->
-        <div id="terminal-logs" style="display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+        <div id="terminal-logs" style="display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem;">
             <!-- Teks akan dimunculkan lewat JavaScript -->
         </div>
 
         <!-- Progress Bar -->
         <div style="margin-top: 30px;">
             <div style="width: 100%; height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden;">
-                <div id="progress-bar" style="width: 0%; height: 100%; background: #22c55e; transition: width 0.3s ease;"></div>
+                <!-- Loading Bar jadi PUTIH -->
+                <div id="progress-bar" style="width: 0%; height: 100%; background: #ffffff; transition: width 0.3s ease;"></div>
             </div>
             <div style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-top: 5px;" id="progress-text">0%</div>
         </div>
