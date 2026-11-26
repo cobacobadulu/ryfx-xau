@@ -4,36 +4,42 @@
         
         <!-- Header Terminal -->
         <div style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 10; position: relative;">
-            <!-- Nama GROKBOT jadi KUNING -->
             <span style="color: #eab308; font-weight: bold; font-size: 1.1rem;">GROKBOT OS v1.0</span>
             <span style="font-size: 0.8rem; color: #94a3b8;">INITIALIZING...</span>
         </div>
 
-        <!-- AREA ANIMASI AI SWARM (LOGO BERPUTAR) -->
+        <!-- AREA ANIMASI LABA-LABA -->
         <div style="position: relative; height: 220px; display: flex; justify-content: center; align-items: center; margin-bottom: 30px;">
             
-            <!-- Garis Orbit -->
-            <div class="orbit"></div>
-            
-            <!-- Inti Grokbot (Tengah) -->
-            <div style="position: absolute; z-index: 5; background: #080D18; border: 2px solid #3b82f6; width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite;">
-                <span style="color: #ffffff; font-weight: bold; font-size: 1.5rem;">G</span>
+            <!-- Jaring Laba-laba (Garis Halus) -->
+            <svg style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; opacity: 0.1;">
+                <line x1="50%" y1="0" x2="50%" y2="100%" stroke="#3b82f6" stroke-width="1"/>
+                <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#3b82f6" stroke-width="1"/>
+            </svg>
+
+            <!-- Container Laba-laba (Animasi Turun) -->
+            <div class="spider-container">
+                <svg viewBox="0 0 100 100" width="80" height="80" class="spider-svg">
+                    <!-- Kaki Kiri (Atas, Tengah, Bawah) -->
+                    <path d="M 50 50 Q 30 30 10 40" class="leg leg-left-1" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                    <path d="M 50 50 Q 30 50 10 60" class="leg leg-left-2" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                    <path d="M 50 50 Q 30 70 10 80" class="leg leg-left-3" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                    
+                    <!-- Kaki Kanan (Atas, Tengah, Bawah) -->
+                    <path d="M 50 50 Q 70 30 90 40" class="leg leg-right-1" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                    <path d="M 50 50 Q 70 50 90 60" class="leg leg-right-2" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                    <path d="M 50 50 Q 70 70 90 80" class="leg leg-right-3" stroke="#3b82f6" stroke-width="3" fill="none"/>
+
+                    <!-- Badan Laba-laba -->
+                    <circle cx="50" cy="45" r="10" fill="#080D18" stroke="#3b82f6" stroke-width="3"/>
+                    <circle cx="50" cy="60" r="14" fill="#080D18" stroke="#3b82f6" stroke-width="3"/>
+                    
+                    <!-- Mata -->
+                    <circle cx="46" cy="42" r="2" fill="#ffffff" />
+                    <circle cx="54" cy="42" r="2" fill="#ffffff" />
+                </svg>
             </div>
 
-            <!-- Logo AI 1 (OpenAI) -->
-            <div class="ai-node" style="animation-delay: 0s;">
-                <svg viewBox="0 0 24 24" fill="#10a37f" width="20" height="20"><path d="M22.28 11.2c-.16-1.3-1.6-2.2-2.9-1.8-.1-1.1-1.1-2-2.2-1.9-.5-1-1.6-1.5-2.7-1.3-.8-.8-2-.9-2.9-.2-.7-.9-1.9-1.1-2.8-.5-.4-.6-1.2-.9-1.9-.7-.7.2-1.2.8-1.2 1.5-1 .2-1.7 1.1-1.7 2.1 0 .3.1.6.2.9-.8.4-1.3 1.2-1.3 2.1 0 .5.2 1 .5 1.4-.6.5-1 1.3-.9 2.2.1.8.6 1.5 1.4 1.8.1 1 1 1.8 2 1.9.4.9 1.4 1.4 2.4 1.2.7.8 1.9 1 2.8.4.4.6 1.2.9 1.9.7.7-.2 1.2-.8 1.2-1.5 1-.2 1.7-1.1 1.7-2.1 0-.3-.1-.6-.2-.9.8-.4 1.3-1.2 1.3-2.1 0-.5-.2-1-.5-1.4.6-.5 1-1.3.9-2.2zM12 17.5c-3 0-5.5-2.5-5.5-5.5s2.5-5.5 5.5-5.5 5.5 2.5 5.5 5.5-2.5 5.5-5.5 5.5z"/></svg>
-            </div>
-            
-            <!-- Logo AI 2 (Gemini/Google) -->
-            <div class="ai-node" style="animation-delay: -2s;">
-                <svg viewBox="0 0 24 24" fill="#4285F4" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-            </div>
-            
-            <!-- Logo AI 3 (Grok/X) -->
-            <div class="ai-node" style="animation-delay: -4s;">
-                <svg viewBox="0 0 24 24" fill="#ec4899" width="20" height="20"><path d="M12 2L2 22h20L12 2zm0 3.8L18.5 19h-13L12 5.8z"/></svg>
-            </div>
         </div>
 
         <!-- Log Animasi -->
@@ -44,7 +50,6 @@
         <!-- Progress Bar -->
         <div style="margin-top: 30px; z-index: 10; position: relative;">
             <div style="width: 100%; height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden;">
-                <!-- Loading Bar jadi PUTIH -->
                 <div id="progress-bar" style="width: 0%; height: 100%; background: #ffffff; transition: width 0.3s ease;"></div>
             </div>
             <div style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-top: 5px;" id="progress-text">0%</div>
@@ -53,38 +58,30 @@
     </div>
     
     <style>
-        /* CSS Animasi AI Swarm */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        /* Animasi Laba-laba Turun Naik */
+        .spider-container {
+            animation: slideDown 4s ease-in-out infinite alternate;
         }
 
-        .orbit {
-            position: absolute;
-            width: 180px;
-            height: 180px;
-            border: 1px dashed #334155;
-            border-radius: 50%;
+        @keyframes slideDown {
+            0% { transform: translateY(-30px); }
+            100% { transform: translateY(30px); }
         }
 
-        .ai-node {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: #0f172a;
-            border: 1px solid #3b82f6;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
-            animation: orbit 6s linear infinite; 
+        /* Animasi Kaki Merayap */
+        .leg {
+            transform-origin: 50px 50px;
+            animation: crawl 0.5s ease-in-out infinite alternate;
         }
 
-        @keyframes orbit {
-            0% { transform: rotate(0deg) translateX(90px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(90px) rotate(-360deg); }
+        /* Kaki kiri dan kanan bergantian agar terlihat merayap */
+        .leg-left-1, .leg-right-2, .leg-left-3 {
+            animation-direction: alternate-reverse;
+        }
+
+        @keyframes crawl {
+            0% { transform: rotate(-10deg); }
+            100% { transform: rotate(10deg); }
         }
     </style>
 </main>
