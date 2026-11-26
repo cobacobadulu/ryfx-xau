@@ -1,0 +1,71 @@
+<main class="page-content" data-page-content>
+
+    <!-- Header Halaman -->
+    <section class="hero-card" style="border-left: 4px solid #ec4899; margin-bottom: 2rem;">
+        <div class="hero-content">
+            <div class="hero-badge" style="color: #ec4899;">GROKBOT TERMINAL</div>
+            <h1 style="margin-top: 10px;">Automated Market Scanner</h1>
+            <p style="color: #94a3b8; max-width: 600px; margin-top: 10px;">
+                Pantau status sistem, log scanner, dan pergerakan pasar secara terpusat.
+            </p>
+        </div>
+    </section>
+
+    <!-- Baris 1: Panel Status Kecil -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="card" style="border: 1px solid #ec4899; background: #0f172a;">
+            <h3 style="color: #ec4899; margin-bottom: 10px; font-size: 0.9rem;">CHIEF</h3>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Last pick: HIGGS</p>
+        </div>
+        <div class="card" style="border: 1px solid #3b82f6; background: #0f172a;">
+            <h3 style="color: #3b82f6; margin-bottom: 10px; font-size: 0.9rem;">SCAN</h3>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Scanning market...</p>
+        </div>
+        <div class="card" style="border: 1px solid #22c55e; background: #0f172a;">
+            <h3 style="color: #22c55e; margin-bottom: 10px; font-size: 0.9rem;">VET</h3>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Waiting for setup.</p>
+        </div>
+        <div class="card" style="border: 1px solid #ef4444; background: #0f172a;">
+            <h3 style="color: #ef4444; margin-bottom: 10px; font-size: 0.9rem;">SOCIAL</h3>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Mentions: 0.19</p>
+        </div>
+    </div>
+
+    <!-- Baris 2: Panel Utama (Visual Terminal) -->
+    <div class="card" style="border: 1px solid #ec4899; background: #0f172a; min-height: 400px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 1.5rem; box-shadow: 0 0 15px rgba(236, 72, 153, 0.1);">
+        <div style="font-size: 4rem; color: #ec4899; margin-bottom: 1rem; animation: pulse 2s infinite;">⚡</div>
+        <h2 style="color: #f8fafc; margin-bottom: 10px;">Grokbot Engine Ready</h2>
+        <p style="color: #94a3b8; text-align: center; max-width: 400px;">
+            Area visual 3D, node scanner, dan grafik pergerakan pasar akan dirender di sini.
+        </p>
+    </div>
+
+    <!-- Baris 3: Panel Grafik & Log -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+        
+        <!-- Grafik Pergerakan -->
+        <div class="card" style="background: #0f172a; min-height: 200px;">
+            <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">BALANCE / PNL GRAPH</h3>
+            <div style="height: 150px; border-bottom: 1px solid #334155; display: flex; align-items: flex-end; padding-bottom: 10px;">
+                <!-- Placeholder grafik dummy -->
+                <svg viewBox="0 0 100 40" style="width: 100%; height: 100%;">
+                    <path d="M0,40 L10,30 L20,35 L30,20 L40,25 L50,10 L60,15 L70,5 L80,10 L90,2 L100,5" fill="none" stroke="#22c55e" stroke-width="2"/>
+                </svg>
+            </div>
+            <p style="color: #22c55e; font-weight: bold; margin-top: 10px;">+ $12,160.02</p>
+        </div>
+
+        <!-- Log Scanner -->
+        <div class="card" style="background: #0f172a;">
+            <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">LIVE LOGS</h3>
+            <div style="font-family: monospace; font-size: 0.75rem; color: #22c55e;">
+                <p>> Init scanner...</p>
+                <p>> Fetching XAUUSD data...</p>
+                <p>> Calculating node weights...</p>
+                <p style="color: #eab308;">> Waiting for threshold...</p>
+            </div>
+        </div>
+
+    </div>
+
+</main>
