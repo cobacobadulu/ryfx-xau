@@ -28,7 +28,6 @@ function startGrokbotIntro() {
     ];
 
     let currentStep = 0;
-    let progress = 0;
 
     // Fungsi untuk menambah teks log
     function addLog(message, color = "#22c55e") {
@@ -39,7 +38,6 @@ function startGrokbotIntro() {
         p.style.transition = "opacity 0.5s ease";
         logsContainer.appendChild(p);
         
-        // Trigger animasi fade-in
         setTimeout(() => {
             p.style.opacity = "1";
         }, 50);
@@ -51,29 +49,32 @@ function startGrokbotIntro() {
         progressText.textContent = `${targetPercent}%`;
     }
 
-    // Jalankan animasi berurutan
+    // Fungsi utama untuk menjalankan urutan
     function runSequence() {
         if (currentStep >= steps.length) {
-            // Selesai, beri jeda lalu pindah ke dashboard
+            // Jika semua langkah selesai, pindah ke dashboard
             setTimeout(() => {
                 if (window.RYFX_NAVIGATION && typeof window.RYFX_NAVIGATION.navigateTo === "function") {
                     window.RYFX_NAVIGATION.navigateTo("dashboard");
                 }
-            }, 1500);
+            }, 1500); // Jeda 1.5 detik sebelum pindah
             return;
         }
 
         const step = steps[currentStep];
+        
+        // Tampilkan teks
         addLog(step.text, step.color || "#22c55e");
         
-        // Update progress (naik perlahan)
-        progress += Math.floor(100 / steps.length);
-        updateProgress(Math.min(progress, 100));
+        // Hitung persentase progress
+        const percent = Math.round(((currentStep + 1) / steps.length) * 100);
+        updateProgress(percent);
 
+        // Lanjut ke step berikutnya
         currentStep++;
-        setTimeout(runSteps, step.delay);
+        setTimeout(runSequence, step.delay);
     }
 
-    // Mulai jalankan
+    // Mulai animasi setelah 0.5 detik halaman dimuat
     setTimeout(runSequence, 500);
 }
