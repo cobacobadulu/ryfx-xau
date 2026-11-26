@@ -8,36 +8,37 @@
             <span style="font-size: 0.8rem; color: #94a3b8;">INITIALIZING...</span>
         </div>
 
-        <!-- AREA ANIMASI LABA-LABA -->
+        <!-- AREA ANIMASI LABA-LABA 3D -->
         <div style="position: relative; height: 220px; display: flex; justify-content: center; align-items: center; margin-bottom: 30px;">
             
-            <!-- Jaring Laba-laba (Garis Halus) -->
-            <svg style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; opacity: 0.1;">
-                <line x1="50%" y1="0" x2="50%" y2="100%" stroke="#3b82f6" stroke-width="1"/>
-                <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#3b82f6" stroke-width="1"/>
-            </svg>
+            <!-- Jaring Laba-laba -->
+            <div class="web-line-vertical"></div>
+            <div class="web-line-horizontal"></div>
 
-            <!-- Container Laba-laba (Animasi Turun) -->
-            <div class="spider-container">
-                <svg viewBox="0 0 100 100" width="80" height="80" class="spider-svg">
-                    <!-- Kaki Kiri (Atas, Tengah, Bawah) -->
-                    <path d="M 50 50 Q 30 30 10 40" class="leg leg-left-1" stroke="#3b82f6" stroke-width="3" fill="none"/>
-                    <path d="M 50 50 Q 30 50 10 60" class="leg leg-left-2" stroke="#3b82f6" stroke-width="3" fill="none"/>
-                    <path d="M 50 50 Q 30 70 10 80" class="leg leg-left-3" stroke="#3b82f6" stroke-width="3" fill="none"/>
+            <!-- Container Laba-laba -->
+            <div class="spider-wrapper">
+                <div class="spider">
+                    <!-- Kaki Kiri -->
+                    <div class="leg left-leg-1"></div>
+                    <div class="leg left-leg-2"></div>
+                    <div class="leg left-leg-3"></div>
+                    <div class="leg left-leg-4"></div>
                     
-                    <!-- Kaki Kanan (Atas, Tengah, Bawah) -->
-                    <path d="M 50 50 Q 70 30 90 40" class="leg leg-right-1" stroke="#3b82f6" stroke-width="3" fill="none"/>
-                    <path d="M 50 50 Q 70 50 90 60" class="leg leg-right-2" stroke="#3b82f6" stroke-width="3" fill="none"/>
-                    <path d="M 50 50 Q 70 70 90 80" class="leg leg-right-3" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                    <!-- Kaki Kanan -->
+                    <div class="leg right-leg-1"></div>
+                    <div class="leg right-leg-2"></div>
+                    <div class="leg right-leg-3"></div>
+                    <div class="leg right-leg-4"></div>
 
                     <!-- Badan Laba-laba -->
-                    <circle cx="50" cy="45" r="10" fill="#080D18" stroke="#3b82f6" stroke-width="3"/>
-                    <circle cx="50" cy="60" r="14" fill="#080D18" stroke="#3b82f6" stroke-width="3"/>
-                    
-                    <!-- Mata -->
-                    <circle cx="46" cy="42" r="2" fill="#ffffff" />
-                    <circle cx="54" cy="42" r="2" fill="#ffffff" />
-                </svg>
+                    <div class="spider-body">
+                        <div class="spider-head"></div>
+                        <div class="spider-abdomen"></div>
+                        <!-- Mata -->
+                        <div class="eye eye-left"></div>
+                        <div class="eye eye-right"></div>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -58,30 +59,128 @@
     </div>
     
     <style>
+        /* Latar Jaring */
+        .web-line-vertical {
+            position: absolute;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #3b82f6, transparent);
+            opacity: 0.2;
+        }
+        .web-line-horizontal {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #3b82f6, transparent);
+            opacity: 0.2;
+        }
+
         /* Animasi Laba-laba Turun Naik */
-        .spider-container {
-            animation: slideDown 4s ease-in-out infinite alternate;
+        .spider-wrapper {
+            animation: bounce 3s ease-in-out infinite alternate;
+            position: relative;
+            z-index: 2;
         }
 
-        @keyframes slideDown {
-            0% { transform: translateY(-30px); }
-            100% { transform: translateY(30px); }
+        @keyframes bounce {
+            0% { transform: translateY(-20px); }
+            100% { transform: translateY(20px); }
         }
 
-        /* Animasi Kaki Merayap */
+        .spider {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Badan Laba-laba */
+        .spider-body {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: bodyPulse 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes bodyPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        /* Kepala (Bola 3D) */
+        .spider-head {
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+            position: absolute;
+            top: 5px;
+        }
+
+        /* Perut (Bola 3D lebih besar) */
+        .spider-abdomen {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #3b82f6, #1e3a8a);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+            position: absolute;
+            bottom: 0;
+            z-index: -1;
+        }
+
+        /* Mata */
+        .eye {
+            width: 5px;
+            height: 5px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 12px;
+            box-shadow: 0 0 5px #ffffff;
+        }
+        .eye-left { left: 18px; }
+        .eye-right { right: 18px; }
+
+        /* Kaki */
         .leg {
-            transform-origin: 50px 50px;
-            animation: crawl 0.5s ease-in-out infinite alternate;
+            position: absolute;
+            width: 35px;
+            height: 3px;
+            background: linear-gradient(90deg, #60a5fa, transparent);
+            border-radius: 3px;
+            top: 50%;
+            transform-origin: left center;
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
         }
 
-        /* Kaki kiri dan kanan bergantian agar terlihat merayap */
-        .leg-left-1, .leg-right-2, .leg-left-3 {
-            animation-direction: alternate-reverse;
-        }
+        /* Kaki Kiri */
+        .left-leg-1 { left: -25px; transform: rotate(30deg); animation: walkLeft 0.6s ease-in-out infinite alternate; }
+        .left-leg-2 { left: -25px; transform: rotate(10deg); animation: walkLeft 0.6s ease-in-out infinite alternate-reverse; }
+        .left-leg-3 { left: -25px; transform: rotate(-10deg); animation: walkLeft 0.6s ease-in-out infinite alternate; }
+        .left-leg-4 { left: -25px; transform: rotate(-30deg); animation: walkLeft 0.6s ease-in-out infinite alternate-reverse; }
 
-        @keyframes crawl {
-            0% { transform: rotate(-10deg); }
-            100% { transform: rotate(10deg); }
+        /* Kaki Kanan */
+        .right-leg-1 { right: -25px; transform: rotate(-30deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate; }
+        .right-leg-2 { right: -25px; transform: rotate(-10deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate-reverse; }
+        .right-leg-3 { right: -25px; transform: rotate(10deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate; }
+        .right-leg-4 { right: -25px; transform: rotate(30deg) scaleX(-1); transform-origin: right center; animation: walkRight 0.6s ease-in-out infinite alternate-reverse; }
+
+        /* Animasi Kaki Berjalan */
+        @keyframes walkLeft {
+            0% { transform: rotate(20deg); }
+            100% { transform: rotate(40deg); }
+        }
+        @keyframes walkRight {
+            0% { transform: rotate(-20deg) scaleX(-1); }
+            100% { transform: rotate(-40deg) scaleX(-1); }
         }
     </style>
 </main>
