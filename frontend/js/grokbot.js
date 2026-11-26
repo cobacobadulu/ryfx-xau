@@ -17,16 +17,17 @@ function startGrokbotIntro() {
     
     if (!logsContainer) return;
 
+    // Teks bahasa Inggris yang baru
     const steps = [
-    { text: "> Initializing ryFX Engine...", delay: 800 },
-    { text: "> Connecting to server...", delay: 1000 },
-    { text: "> Access granted. Welcome, Trader.", delay: 1500, color: "#ec4899" }
-];
+        { text: "> Initializing ryFX Engine...", delay: 800 },
+        { text: "> Connecting to server...", delay: 1000 },
+        { text: "> Access granted. Welcome, Trader.", delay: 1500, color: "#3b82f6" }
+    ];
 
     let currentStep = 0;
 
-    // Fungsi untuk menambah teks log
-    function addLog(message, color = "#22c55e") {
+    // Fungsi untuk menambah teks log (Warna default BIRU)
+    function addLog(message, color = "#3b82f6") {
         const p = document.createElement("div");
         p.innerHTML = message;
         p.style.color = color;
@@ -60,7 +61,7 @@ function startGrokbotIntro() {
         const step = steps[currentStep];
         
         // Tampilkan teks
-        addLog(step.text, step.color || "#22c55e");
+        addLog(step.text, step.color);
         
         // Hitung persentase progress
         const percent = Math.round(((currentStep + 1) / steps.length) * 100);
