@@ -75,7 +75,7 @@ function startGrokbotIntro() {
     // Fungsi untuk mengupdate progress bar
     function updateProgress(targetPercent) {
         progressBar.style.width = `${targetPercent}%`;
-        progressText.textContent = `INITIALIZING ${targetPercent}%`; 
+        progressText.textContent = `Loading ${targetPercent}%`; 
     }
 
     // Fungsi utama untuk menjalankan urutan teks
