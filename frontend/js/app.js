@@ -90,7 +90,7 @@ function renderApplicationShell() {
                             class="nav-item active"
                             data-page="dashboard"
                         >
-                            <span class="nav-icon">▦</span>
+                            <span class="nav-icon">❑</span>
                             <span>Dashboard</span>
                         </button>
 
@@ -98,7 +98,7 @@ function renderApplicationShell() {
                             class="nav-item"
                             data-page="live-market"
                         >
-                            <span class="nav-icon">◷</span>
+                            <span class="nav-icon">❑</span>
                             <span>Live Market</span>
                         </button>
 
@@ -106,7 +106,7 @@ function renderApplicationShell() {
                             class="nav-item"
                             data-page="ai-analysis"
                         >
-                            <span class="nav-icon">⌁</span>
+                            <span class="nav-icon">❑</span>
                             <span>AI Analysis</span>
                         </button>
 
@@ -114,7 +114,7 @@ function renderApplicationShell() {
                             class="nav-item"
                             data-page="ai-strategy"
                         >
-                            <span class="nav-icon">⌕</span>
+                            <span class="nav-icon">❑</span>
                             <span>AI Strategy</span>
                          </button>
 
@@ -122,15 +122,23 @@ function renderApplicationShell() {
                            class="nav-item"
                            data-page="ai-news"
                         >
-                           <span class="nav-icon">⌬</span>
+                           <span class="nav-icon">❑</span>
                            <span>AI News</span>
+                        </button>
+
+                        <button
+                            class="nav-item"
+                            data-page="grokbot"
+                        >
+                            <span class="nav-icon">❑</span>
+                            <span>Grokbot</span>
                         </button>
 
                         <button
                             class="nav-item"
                             data-page="signals"
                         >
-                            <span class="nav-icon">↗</span>
+                            <span class="nav-icon">❑</span>
                             <span>Trading Signals</span>
                         </button>
 
@@ -138,7 +146,7 @@ function renderApplicationShell() {
                             class="nav-item"
                             data-page="track-record"
                         >
-                            <span class="nav-icon">▤</span>
+                            <span class="nav-icon">❑</span>
                             <span>Track Record</span>
                         </button>
 
@@ -146,7 +154,7 @@ function renderApplicationShell() {
                             class="nav-item"
                             data-page="journal"
                         >
-                            <span class="nav-icon">▧</span>
+                            <span class="nav-icon">❑</span>
                             <span>Trading Journal</span>
                         </button>
 
@@ -154,7 +162,7 @@ function renderApplicationShell() {
                             class="nav-item"
                             data-page="calculator"
                         >
-                            <span class="nav-icon">⌗</span>
+                            <span class="nav-icon">❑</span>
                             <span>Risk Calculator</span>
                         </button>
 
