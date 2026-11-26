@@ -1,31 +1,23 @@
-<main class="page-content" data-page-content style="height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #050B14; overflow: hidden;">
+<main class="page-content" data-page-content style="min-height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #050B14; overflow-y: auto; padding: 20px 0;">
 
     <div id="grokbot-intro" style="width: 100%; max-width: 1000px; padding: 1rem; font-family: monospace; position: relative;">
         
         <!-- Header Terminal -->
         <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; position: relative;">
-            <span style="color: #10b981; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px;">ryFX XAU INTELLIGENCE ENGINE</span>
+            <span style="color: #10b981; font-weight: bold; font-size: 1rem; letter-spacing: 1px;">ryFX XAU INTELLIGENCE ENGINE</span>
             <span style="font-size: 0.8rem; color: #64748b;" id="progress-text">INITIALIZING 0%</span>
         </div>
 
         <!-- Area Node Architecture -->
-        <div class="node-container" style="position: relative; height: 450px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+        <div class="node-container">
             
-            <!-- SVG Lines Background -->
-            <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;">
-                <defs>
-                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.2" />
-                        <stop offset="100%" stop-color="#0ea5e9" stop-opacity="1" />
-                    </linearGradient>
-                </defs>
-                <!-- Garis Kiri ke Tengah -->
+            <!-- SVG Lines (Hanya muncul di Desktop) -->
+            <svg class="desktop-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;">
                 <path d="M 200 50 C 300 50, 350 225, 450 225" stroke="#0ea5e9" stroke-width="2" fill="none" class="flow-line" />
                 <path d="M 200 150 C 300 150, 350 225, 450 225" stroke="#0ea5e9" stroke-width="2" fill="none" class="flow-line" />
                 <path d="M 200 300 C 300 300, 350 225, 450 225" stroke="#0ea5e9" stroke-width="2" fill="none" class="flow-line" />
                 <path d="M 200 400 C 300 400, 350 225, 450 225" stroke="#0ea5e9" stroke-width="2" fill="none" class="flow-line" />
 
-                <!-- Garis Tengah ke Kanan -->
                 <path d="M 550 225 C 650 225, 700 50, 800 50" stroke="#10b981" stroke-width="2" fill="none" class="flow-line" />
                 <path d="M 550 225 C 650 225, 700 150, 800 150" stroke="#10b981" stroke-width="2" fill="none" class="flow-line" />
                 <path d="M 550 225 C 650 225, 700 300, 800 300" stroke="#10b981" stroke-width="2" fill="none" class="flow-line" />
@@ -33,7 +25,7 @@
             </svg>
 
             <!-- Kolom Kiri (Input) -->
-            <div style="display: flex; flex-direction: column; gap: 20px; z-index: 1; width: 32%;">
+            <div class="node-column">
                 <div class="node-box blue">
                     <span class="icon">⎙</span>
                     <div>
@@ -65,9 +57,8 @@
             </div>
 
             <!-- Kolom Tengah (ryAI Core) -->
-            <div style="z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 30%;">
+            <div class="center-column">
                 <div class="grok-core">
-                    <!-- Inti AI -->
                     <div class="grok-eye">
                         <span style="color: #0f172a; font-weight: bold; font-size: 2rem;">ry</span>
                     </div>
@@ -80,7 +71,7 @@
             </div>
 
             <!-- Kolom Kanan (Output) -->
-            <div style="display: flex; flex-direction: column; gap: 20px; z-index: 1; width: 32%;">
+            <div class="node-column">
                 <div class="node-box purple">
                     <span class="icon">⎙</span>
                     <div>
@@ -123,6 +114,33 @@
     </div>
     
     <style>
+        /* Container Utama */
+        .node-container {
+            position: relative;
+            height: 450px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .node-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 1;
+            width: 32%;
+        }
+
+        .center-column {
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 30%;
+        }
+
         /* Styling Node Box */
         .node-box {
             display: flex;
@@ -135,9 +153,10 @@
             transition: all 0.3s;
             opacity: 0;
             animation: fadeIn 0.5s ease forwards;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        /* Warna border dan glow */
         .node-box.blue { border-color: #0ea5e9; box-shadow: 0 0 10px rgba(14, 165, 233, 0.1); }
         .node-box.purple { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.1); }
         .node-box.green { border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); }
@@ -152,8 +171,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffffff; /* Warna ikon putih */
-            text-shadow: 0 0 5px currentColor; /* Efek glow */
+            color: #ffffff;
+            text-shadow: 0 0 5px currentColor;
+            flex-shrink: 0;
         }
 
         .node-title {
@@ -161,12 +181,14 @@
             font-size: 0.75rem;
             font-weight: bold;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .node-desc {
             color: #94a3b8;
             font-size: 0.65rem;
             margin-top: 2px;
+            white-space: nowrap;
         }
 
         /* Animasi Garis Mengalir */
@@ -220,22 +242,37 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Stagger animasi kemunculan node */
         .node-box:nth-child(1) { animation-delay: 0.2s; }
         .node-box:nth-child(2) { animation-delay: 0.4s; }
         .node-box:nth-child(3) { animation-delay: 0.6s; }
         .node-box:nth-child(4) { animation-delay: 0.8s; }
 
-        /* Responsive */
+        /* --- RESPONSIVE UNTUK HP --- */
         @media (max-width: 768px) {
             .node-container {
                 flex-direction: column;
-                height: 650px;
-                gap: 10px;
+                height: auto;
+                gap: 30px;
+                padding: 0;
             }
-            svg { display: none; } /* Sembunyikan garis di HP agar tidak berantakan */
-            .node-box { width: 100%; }
-            .grok-core { margin: 20px 0; }
+            .desktop-svg {
+                display: none; /* Sembunyikan garis SVG di HP */
+            }
+            .node-column {
+                width: 100%;
+                gap: 15px;
+            }
+            .center-column {
+                width: 100%;
+                margin: 20px 0;
+                order: -1; /* Pindahkan logo ryAI ke paling atas di HP */
+            }
+            .node-title {
+                white-space: normal; /* Biarkan teks turun ke bawah jika panjang */
+            }
+            .node-desc {
+                white-space: normal;
+            }
         }
     </style>
 </main>
