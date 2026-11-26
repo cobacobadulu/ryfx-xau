@@ -75,5 +75,5 @@ function startGrokbotIntro() {
     }
 
     // Mulai jalankan
-    setTimeout(runSteps, 500);
+    setTimeout(runSequence, 500);
 }
