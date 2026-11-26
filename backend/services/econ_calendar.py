@@ -13,12 +13,22 @@ logger = logging.getLogger("ryfx.calendar")
 # CONFIGURATION
 # ============================================
 
-# Filter negara: US adalah penggerak utama XAU
-# Bisa tambah "EU,GB" jika ingin mencakup berita Eropa/Inggris
 DEFAULT_COUNTRIES = "US"
-
-# Hanya ambil berita high impact
 DEFAULT_IMPORTANCE = "high"
+
+# DAFTAR KATA KUNCI BERITA YANG DIIZINKAN (WHITELIST)
+# Hanya berita yang mengandung kata kunci ini yang akan diproses
+ALLOWED_KEYWORDS = [
+    "nfp", 
+    "non-farm", 
+    "cpi", 
+    "ppi", 
+    "pce", 
+    "fomc", 
+    "retail sales", 
+    "unemployment", 
+    "jobless"
+]
 
 # ============================================
 # CLIENT INITIALIZATION
@@ -26,14 +36,26 @@ DEFAULT_IMPORTANCE = "high"
 
 _biquote_client: Optional[Biquote] = None
 
-
 def get_client() -> Biquote:
-    """Lazy initialization untuk client biquote."""
     global _biquote_client
     if _biquote_client is None:
         _biquote_client = Biquote()
     return _biquote_client
 
+# ============================================
+# HELPER: VALIDASI BERITA
+# ============================================
+
+def is_relevant_event(event_name: str) -> bool:
+    """Cek apakah nama berita mengandung kata kunci yang diizinkan."""
+    if not event_name:
+        return False
+    name_lower = event_name.lower()
+    return any(keyword in name_lower for keyword in ALLOWED_KEYWORDS)
+
+def has_valid_data(event: dict) -> bool:
+    """Cek apakah berita memiliki angka Forecast dan Previous."""
+    return event.get("forecast") is not None and event.get("previous") is not None
 
 # ============================================
 # FETCH HIGH-IMPACT EVENTS
@@ -45,19 +67,11 @@ async def fetch_high_impact_events(
 ) -> list[dict[str, Any]]:
     """
     Mengambil daftar berita ekonomi high impact dari biquote.
-    
-    Args:
-        countries: Kode negara ISO alpha-2, dipisah koma (misal: "US,EU,GB")
-        importance: Level minimum importance ("low", "medium", "high")
-    
-    Returns:
-        List event dengan field: eventId, time, countryCode, currency,
-        name, importance, actual, forecast, previous, unit, multiplier.
+    Hanya mengembalikan berita yang ada di whitelist dan punya data lengkap.
     """
     try:
         client = get_client()
         
-        # biquote.calendar() mengembalikan events dalam format list of dict
         events = client.calendar(
             importance=importance,
             countries=countries
@@ -67,25 +81,34 @@ async def fetch_high_impact_events(
             logger.info(f"[Calendar] Tidak ada event {importance} untuk {countries}")
             return []
         
-        # Normalisasi dan filter field yang diperlukan AI
         normalized = []
         for event in events:
+            name = event.get("name", "")
+            
+            # Filter 1: Harus berita penting
+            if not is_relevant_event(name):
+                continue
+                
+            # Filter 2: Harus ada angka Forecast & Previous
+            if not has_valid_data(event):
+                continue
+
             normalized.append({
                 "eventId": event.get("eventId"),
                 "time": event.get("time"),
                 "country": event.get("countryCode"),
                 "currency": event.get("currency"),
-                "name": event.get("name"),
+                "name": name,
                 "importance": event.get("importance"),
-                "actual": event.get("actual"),      # None jika belum rilis
-                "forecast": event.get("forecast"),  # Angka konsensus (kunci utama)
+                "actual": event.get("actual"),
+                "forecast": event.get("forecast"),
                 "previous": event.get("previous"),
                 "unit": event.get("unit"),
                 "multiplier": event.get("multiplier"),
                 "timeMode": event.get("timeMode"),
             })
         
-        logger.info(f"[Calendar] Ditemukan {len(normalized)} event high impact")
+        logger.info(f"[Calendar] Ditemukan {len(normalized)} event relevan")
         return normalized
         
     except Exception as e:
@@ -109,8 +132,6 @@ async def fetch_upcoming_events(
     try:
         client = get_client()
         
-        # Menggunakan endpoint /api/calendar/upcoming via client jika tersedia
-        # Jika tidak, fallback ke calendar() dan filter manual
         events = client.calendar(
             importance=importance,
             countries=countries
@@ -119,9 +140,21 @@ async def fetch_upcoming_events(
         if not events:
             return []
         
-        # Filter: hanya event yang actual-nya masih None (belum rilis)
-        upcoming = [
-            {
+        upcoming = []
+        for e in events:
+            # Harus berita penting
+            if not is_relevant_event(e.get("name", "")):
+                continue
+            
+            # Harus belum rilis (Actual kosong)
+            if e.get("actual") is not None:
+                continue
+                
+            # Harus ada forecast dan previous untuk dianalisis
+            if not has_valid_data(e):
+                continue
+
+            upcoming.append({
                 "eventId": e.get("eventId"),
                 "time": e.get("time"),
                 "country": e.get("countryCode"),
@@ -132,10 +165,7 @@ async def fetch_upcoming_events(
                 "previous": e.get("previous"),
                 "unit": e.get("unit"),
                 "multiplier": e.get("multiplier"),
-            }
-            for e in events
-            if e.get("actual") is None
-        ]
+            })
         
         # Urutkan berdasarkan waktu terdekat
         upcoming.sort(key=lambda x: x.get("time") or "")
@@ -157,7 +187,6 @@ async def get_event_for_analysis(
 ) -> Optional[dict[str, Any]]:
     """
     Mencari event spesifik berdasarkan nama (misal: "Core PCE", "Non-Farm").
-    Mengembalikan event terbaru yang cocok untuk dianalisis AI.
     """
     try:
         client = get_client()
@@ -169,18 +198,17 @@ async def get_event_for_analysis(
         if not events:
             return None
         
-        # Pencarian case-insensitive
         search_term = event_name.lower()
         matches = [
             e for e in events
             if search_term in (e.get("name") or "").lower()
+            and is_relevant_event(e.get("name"))
+            and has_valid_data(e)
         ]
         
         if not matches:
             return None
         
-        # Ambil yang paling relevan (actual None = upcoming, atau terbaru)
-        # Prioritaskan yang belum rilis
         upcoming = [m for m in matches if m.get("actual") is None]
         if upcoming:
             return upcoming[0]
