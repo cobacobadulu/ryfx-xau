@@ -213,19 +213,126 @@ async def analyze_xauusd(technical_data: dict[str, Any], timeframe: str = "15m",
 
     return {"success": True, "symbol": "XAUUSD", "timeframe": timeframe, "analysis_type": analysis_type, "analysis": analysis}
 
-# --- FUNGSI BARU: ANALYZE NEWS EVENT ---
+
+# ============================================
+# RULE-BASED NEWS ANALYSIS (TANPA API KEY)
+# ============================================
+
 async def analyze_news_event(event_data: dict[str, Any], news_context: str) -> dict[str, Any]:
     """
-    Menganalisis berita ekonomi (Pre-News) berdasarkan Forecast dan sentimen berita.
+    Menganalisis berita ekonomi menggunakan Logika Aturan (Rule-Based).
+    Tidak memerlukan AI API Key.
     """
     if not event_data or not event_data.get("name"):
         raise ValueError("Event data is empty or invalid.")
 
-    prompt = build_news_prompt(event_data, news_context)
-    analysis = await call_ai(prompt, system_prompt=SYSTEM_INSTRUCTION_NEWS)
+    event_name = str(event_data.get("name", "")).lower()
+    forecast = event_data.get("forecast")
+    previous = event_data.get("previous")
+    
+    # Konversi ke float jika memungkinkan
+    try:
+        f_val = float(forecast) if forecast is not None else None
+        p_val = float(previous) if previous is not None else None
+    except (ValueError, TypeError):
+        f_val = None
+        p_val = None
+
+    direction = "WAIT"
+    confidence = 50
+    summary = "Data tidak cukup untuk analisis."
+    reasoning = "Forecast atau Previous tidak tersedia."
+    impact = "MEDIUM"
+
+    # ==========================================
+    # LOGIKA ATURAN (RULE-BASED)
+    # ==========================================
+    
+    # 1. Berita Inflasi (CPI, PCE, PPI)
+    if any(k in event_name for k in ["cpi", "pce", "ppi", "inflation"]):
+        impact = "HIGH"
+        if f_val is not None and p_val is not None:
+            if f_val < p_val:
+                direction = "BUY"
+                confidence = 75
+                summary = f"Ekspektasi inflasi turun ({f_val}% vs {p_val}%)."
+                reasoning = f"Forecast {event_name.upper()} lebih rendah dari sebelumnya. Ini mengindikasikan tekanan inflasi mereda (Dovish). The Fed berpotensi menurunkan suku bunga, yang akan melemahkan USD dan menguntungkan Emas (XAU)."
+            elif f_val > p_val:
+                direction = "SELL"
+                confidence = 75
+                summary = f"Ekspektasi inflasi naik ({f_val}% vs {p_val}%)."
+                reasoning = f"Forecast {event_name.upper()} lebih tinggi dari sebelumnya. Ini mengindikasikan inflasi membandel (Hawkish). The Fed berpotensi mempertahankan suku bunga tinggi, yang akan memperkuat USD dan menekan Emas (XAU)."
+            else:
+                direction = "WAIT"
+                confidence = 60
+                summary = "Ekspektasi inflasi stabil."
+                reasoning = f"Forecast {event_name.upper()} sama dengan sebelumnya. Pasar cenderung menunggu data aktual."
+
+    # 2. Berita Tenaga Kerja (NFP, Unemployment, Jobless Claims)
+    elif any(k in event_name for k in ["nfp", "non-farm", "employment", "unemployment", "jobless"]):
+        impact = "HIGH"
+        # Logika NFP: NFP tinggi = Ekonomi kuat = Hawkish = SELL Gold
+        if f_val is not None and p_val is not None:
+            if "unemployment" in event_name or "jobless" in event_name:
+                # Untuk pengangguran: angka tinggi = ekonomi lemah = Dovish = BUY Gold
+                if f_val > p_val:
+                    direction = "BUY"
+                    confidence = 70
+                    summary = f"Ekspektasi pengangguran naik ({f_val}% vs {p_val}%)."
+                    reasoning = f"Forecast {event_name.upper()} menunjukkan pelemahan pasar tenaga kerja. Ini akan membuat The Fed melunak (Dovish), melemahkan USD, dan mendorong Emas (XAU) naik."
+                elif f_val < p_val:
+                    direction = "SELL"
+                    confidence = 70
+                    summary = f"Ekspektasi pengangguran turun ({f_val}% vs {p_val}%)."
+                    reasoning = f"Forecast {event_name.upper()} menunjukkan penguatan pasar tenaga kerja. Ini akan membuat The Fed hawkish, memperkuat USD, dan menekan Emas (XAU)."
+            else:
+                # Untuk NFP/Employment: angka tinggi = ekonomi kuat = SELL Gold
+                if f_val > p_val:
+                    direction = "SELL"
+                    confidence = 75
+                    summary = f"Ekspektasi tenaga kerja kuat ({f_val} vs {p_val})."
+                    reasoning = f"Forecast {event_name.upper()} lebih tinggi dari sebelumnya. Pasar tenaga kerja yang solid akan mendorong The Fed mempertahankan suku bunga tinggi (Hawkish), menguatkan USD, dan menekan Emas (XAU)."
+                elif f_val < p_val:
+                    direction = "BUY"
+                    confidence = 75
+                    summary = f"Ekspektasi tenaga kerja melemah ({f_val} vs {p_val})."
+                    reasoning = f"Forecast {event_name.upper()} lebih rendah dari sebelumnya. Pelemahan pasar tenaga kerja akan membuat The Fed melunak (Dovish), melemahkan USD, dan menguntungkan Emas (XAU)."
+
+    # 3. Berita Suku Bunga (FOMC, Fed, Interest Rate)
+    elif any(k in event_name for k in ["fomc", "fed", "interest rate", "rate decision"]):
+        impact = "HIGH"
+        direction = "WAIT"
+        confidence = 50
+        summary = "Berita Suku Bunga The Fed."
+        reasoning = f"Event {event_name.upper()} sangat bergantung pada pernyataan (Statement) dan konferensi pers. Untuk pre-news, sinyal teknikal atau sentimen berita lebih dominan."
+
+    # 4. Berita Lainnya
+    else:
+        impact = "MEDIUM"
+        if f_val is not None and p_val is not None:
+            if f_val > p_val:
+                direction = "SELL"
+                confidence = 60
+                summary = f"Data ekonomi diperkirakan menguat."
+                reasoning = f"Forecast {event_name.upper()} lebih tinggi dari sebelumnya, mengindikasikan ekonomi yang kuat dan cenderung menguntungkan USD (SELL Gold)."
+            elif f_val < p_val:
+                direction = "BUY"
+                confidence = 60
+                summary = f"Data ekonomi diperkirakan melemah."
+                reasoning = f"Forecast {event_name.upper()} lebih rendah dari sebelumnya, mengindikasikan ekonomi yang lemah dan cenderung melemahkan USD (BUY Gold)."
+
+    # Tambahkan konteks berita jika ada
+    if news_context and news_context != "No recent news available.":
+        reasoning += f"\n\nBerita Terkait:\n{news_context[:300]}..."
 
     return {
         "success": True,
         "event": event_data,
-        "analysis": analysis
+        "analysis": {
+            "direction": direction,
+            "confidence": confidence,
+            "summary": summary,
+            "reasoning": reasoning,
+            "impact": impact
+        }
     }
