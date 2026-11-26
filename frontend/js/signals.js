@@ -39,12 +39,12 @@ async function loadSignals() {
     `;
 
     try {
-        const response = await fetch(`${SIGNALS_API}/api/signals/`);
+        // Tambahkan ?status=ACTIVE agar backend hanya mengirim sinyal aktif
+        const response = await fetch(`${SIGNALS_API}/api/signals/?status=ACTIVE`);
         const data = await response.json();
 
-        // Sesuaikan dengan format response backend Anda
-        // Asumsi backend mengembalikan: { success: true, signals: [...] }
-        const signals = data.signals || data.data || [];
+        // Filter ganda: pastikan hanya status ACTIVE yang lolos (sebagai pengaman)
+        const signals = (data.signals || data.data || []).filter(s => s.status === "ACTIVE");
 
         if (signals.length === 0) {
             renderEmptySignals(container);
