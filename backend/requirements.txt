@@ -4,4 +4,5 @@ python-dotenv==1.0.1
 httpx==0.28.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
-biquote
+biquote==0.3.0
+supabase==2.10.0
