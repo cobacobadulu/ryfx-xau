@@ -128,14 +128,6 @@ function renderApplicationShell() {
 
                         <button
                             class="nav-item"
-                            data-page="grokbot"
-                        >
-                            <span class="nav-icon">❑</span>
-                            <span>Grokbot</span>
-                        </button>
-
-                        <button
-                            class="nav-item"
                             data-page="signals"
                         >
                             <span class="nav-icon">❑</span>
