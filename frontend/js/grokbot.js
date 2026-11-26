@@ -18,14 +18,10 @@ function startGrokbotIntro() {
     if (!logsContainer) return;
 
     const steps = [
-        { text: "> Booting ryFX Engine...", delay: 500 },
-        { text: "> Connecting to XAUUSD Market Stream...", delay: 1000 },
-        { text: "> Fetching AI Analysis parameters...", delay: 800 },
-        { text: "> Syncing Database (Supabase)...", delay: 1200 },
-        { text: "> Structuring Workspace Sidebar...", delay: 600 },
-        { text: "> Loading Modules: [Dashboard, Live Market, AI News, Signals]...", delay: 900 },
-        { text: "> System Online. Welcome.", delay: 1000, color: "#ec4899" }
-    ];
+    { text: "> Initializing ryFX Engine...", delay: 800 },
+    { text: "> Connecting to server...", delay: 1000 },
+    { text: "> Access granted. Welcome, Trader.", delay: 1500, color: "#ec4899" }
+];
 
     let currentStep = 0;
 
