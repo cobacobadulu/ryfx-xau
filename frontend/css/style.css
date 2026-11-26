@@ -79,3 +79,138 @@ img { max-width: 100%; display: block; }
     .topbar { left: 0; z-index: 100; padding: 0 18px; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: #0C1424 !important; }
     .page-content { padding: 22px 18px; }
 }
+
+
+.trading-background {
+    position:fixed;
+    inset:0;
+    z-index:0;
+    overflow:hidden;
+    pointer-events:none;
+    background:
+        radial-gradient(ellipse at 50% 45%,#10253a 0%,#080D18 75%);
+}
+
+.chart-grid {
+    position:absolute;
+    inset:0;
+    opacity:.13;
+    background-image:
+        linear-gradient(#64748b 1px,transparent 1px),
+        linear-gradient(90deg,#64748b 1px,transparent 1px);
+    background-size:45px 45px;
+}
+
+.candles {
+    position:absolute;
+    inset:0;
+    opacity:.22;
+}
+
+.candles i {
+    position:absolute;
+    left:var(--x);
+    bottom:12%;
+    height:var(--h);
+    width:9px;
+    background:var(--c);
+    border-radius:2px;
+    box-shadow:0 0 12px var(--c);
+    animation:candleGlow 3s ease-in-out infinite alternate;
+}
+
+.candles i::before {
+    content:"";
+    position:absolute;
+    left:4px;
+    top:-15px;
+    height:calc(var(--h) + 30px);
+    width:1px;
+    background:var(--c);
+}
+
+.candles i::after {
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:var(--b);
+    width:9px;
+    height:22px;
+    background:var(--c);
+}
+
+@keyframes candleGlow {
+    from {opacity:.5;}
+    to {opacity:1;}
+}
+
+/* Pastikan konten berada di depan background */
+#grokbot-intro {
+    z-index:2;
+}
+
+
+/* GERAKAN KURA-KURA KE KANAN DAN KIRI */
+.turtle {
+    animation:turtleWalk 5s ease-in-out infinite;
+    transform-style:preserve-3d;
+    will-change:transform;
+}
+
+@keyframes turtleWalk {
+    0% {
+        transform:translate(-42px,0) rotateY(0deg);
+    }
+    20% {
+        transform:translate(-20px,-12px) rotateY(0deg);
+    }
+    45% {
+        transform:translate(42px,0) rotateY(0deg);
+    }
+    50% {
+        transform:translate(42px,0) rotateY(180deg);
+    }
+    70% {
+        transform:translate(20px,-12px) rotateY(180deg);
+    }
+    95% {
+        transform:translate(-42px,0) rotateY(180deg);
+    }
+    100% {
+        transform:translate(-42px,0) rotateY(360deg);
+    }
+}
+
+/* KAKI BERJALAN */
+.leg-one,.leg-three {
+    animation:legStep .35s ease-in-out infinite alternate;
+}
+
+.leg-two,.leg-four {
+    animation:legStep .35s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes legStep {
+    from {transform:translateY(-3px) rotate(-12deg);}
+    to {transform:translateY(5px) rotate(12deg);}
+}
+
+/* GERAKAN KEPALA */
+.turtle-head {
+    animation:headBounce 1s ease-in-out infinite;
+}
+
+@keyframes headBounce {
+    0%,100% {translate:0 0;}
+    50% {translate:0 -3px;}
+}
+
+/* BAYANGAN */
+.turtle-shadow {
+    animation:shadowMove 5s ease-in-out infinite;
+}
+
+@keyframes shadowMove {
+    0%,100% {transform:translateX(-35px) scale(.85);}
+    50% {transform:translateX(35px) scale(1);}
+}
