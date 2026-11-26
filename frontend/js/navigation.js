@@ -21,6 +21,8 @@ const RYFX_PAGES = {
 
     "ai-news": "pages/ai-news.html",
 
+    grokbot: "pages/grokbot.html",
+
     signals: "pages/signals.html",
 
     "track-record": "pages/track-record.html",
