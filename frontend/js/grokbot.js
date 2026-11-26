@@ -17,6 +17,15 @@ function startGrokbotIntro() {
     
     if (!logsContainer) return;
 
+    // Sembunyikan sidebar, topbar, dan overlay saat animasi berjalan
+    const sidebar = document.querySelector(".sidebar");
+    const topbar = document.querySelector(".topbar");
+    const overlay = document.querySelector(".sidebar-overlay");
+    
+    if (sidebar) sidebar.style.display = "none";
+    if (topbar) topbar.style.display = "none";
+    if (overlay) overlay.style.display = "none";
+
     // Teks bahasa Inggris yang baru
     const steps = [
         { text: "> Initializing ryFX Engine...", delay: 800 },
@@ -51,6 +60,11 @@ function startGrokbotIntro() {
         if (currentStep >= steps.length) {
             // Jika semua langkah selesai, pindah ke dashboard
             setTimeout(() => {
+                // Munculkan kembali sidebar, topbar, dan overlay sebelum pindah halaman
+                if (sidebar) sidebar.style.display = "";
+                if (topbar) topbar.style.display = "";
+                if (overlay) overlay.style.display = "";
+
                 if (window.RYFX_NAVIGATION && typeof window.RYFX_NAVIGATION.navigateTo === "function") {
                     window.RYFX_NAVIGATION.navigateTo("dashboard");
                 }
