@@ -4,12 +4,13 @@
 # ============================================
 
 import math
-import json
 import os
 
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
+
+from supabase import create_client
 
 
 # ============================================
@@ -41,32 +42,43 @@ VALID_TIMEFRAMES = [
 
 MAX_TAKE_PROFITS = 5
 
-# File untuk menyimpan data secara permanen
-STORAGE_FILE = "signals_data.json"
+
+# ============================================
+# SUPABASE CLIENT
+# ============================================
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+    raise RuntimeError("SUPABASE_URL dan SUPABASE_SERVICE_KEY wajib diset.")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
 # ============================================
-# PERSISTENT STORAGE (MENGATASI RESTART)
+# PERSISTENT STORAGE (SUPABASE)
 # ============================================
 
-def load_signals_from_file() -> dict[str, dict[str, Any]]:
-    if not os.path.exists(STORAGE_FILE):
-        return {}
+def load_signals_from_supabase() -> dict[str, dict[str, Any]]:
     try:
-        with open(STORAGE_FILE, "r") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
+        response = supabase.table("signals").select("id, data").execute()
+        return {row["id"]: row["data"] for row in response.data}
+    except Exception as e:
+        print(f"[SignalManager] Gagal load dari Supabase: {e}")
         return {}
 
-def save_signals_to_file(signals: dict[str, dict[str, Any]]) -> None:
+def save_signal_to_supabase(signal: dict[str, Any]) -> None:
     try:
-        with open(STORAGE_FILE, "w") as f:
-            json.dump(signals, f, indent=4)
-    except IOError as e:
-        print(f"[SignalManager] Gagal menyimpan data: {e}")
+        supabase.table("signals").upsert({
+            "id": signal["id"],
+            "data": signal
+        }).execute()
+    except Exception as e:
+        print(f"[SignalManager] Gagal simpan ke Supabase: {e}")
 
 # Muat data saat server pertama kali menyala
-SIGNAL_STORAGE: dict[str, dict[str, Any]] = load_signals_from_file()
+SIGNAL_STORAGE: dict[str, dict[str, Any]] = load_signals_from_supabase()
 
 
 # ============================================
@@ -214,7 +226,7 @@ def create_signal(analysis: dict[str, Any], timeframe: str = "15m", source: str 
     }
 
     SIGNAL_STORAGE[signal_id] = signal
-    save_signals_to_file(SIGNAL_STORAGE) # Simpan ke file permanen
+    save_signal_to_supabase(signal)
 
     return signal.copy()
 
@@ -275,7 +287,7 @@ def update_signal_status(signal_id: str, new_status: str, result: str | None = N
     signal["closed_at"] = timestamp
     signal["result"] = result or new_status
 
-    save_signals_to_file(SIGNAL_STORAGE) # Simpan perubahan ke file
+    save_signal_to_supabase(signal)
     return signal.copy()
 
 
@@ -299,7 +311,7 @@ def get_signal_statistics() -> dict[str, Any]:
     sl_hit = sum(signal["status"] == "SL HIT" for signal in signals)
     cancelled = sum(signal["status"] == "CANCELLED" for signal in signals)
     expired = sum(signal["status"] == "EXPIRED" for signal in signals)
-    
+
     closed = tp_hit + sl_hit
     win_rate = (tp_hit / closed) * 100 if closed > 0 else 0
 
@@ -322,4 +334,7 @@ def get_signal_statistics() -> dict[str, Any]:
 
 def clear_signal_storage() -> None:
     SIGNAL_STORAGE.clear()
-    save_signals_to_file(SIGNAL_STORAGE)
+    try:
+        supabase.table("signals").delete().neq("id", "").execute()
+    except Exception as e:
+        print(f"[SignalManager] Gagal hapus data Supabase: {e}")
