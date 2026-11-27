@@ -18,7 +18,8 @@ from models.analysis import (
     AnalysisResult
 )
 
-from services.market_data import get_market_candles
+# PERUBAHAN 1: Tambahkan get_market_data di sini
+from services.market_data import get_market_candles, get_market_data
 from services.technical_analysis import analyze_market
 from services.ai_engine import analyze_xauusd, analyze_news_event
 
@@ -153,7 +154,11 @@ async def analyze_xauusd_market(request: AnalysisRequest):
         validate_candle_data(candles)
         
         latest_candle = candles[-1]
-        current_price = latest_candle.get("close")
+        
+        # PERUBAHAN 2: Ambil harga live terbaru
+        live_data = await get_market_data()
+        current_price = live_data["price"]
+        
         if not valid_price(current_price):
             raise ValueError("Invalid latest XAUUSD market price.")
 
@@ -355,7 +360,10 @@ async def run_full_analysis(timeframe: str = "15m"):
         analysis = analyze_market(candles)
         trend = analysis["trend"]
         structure = analysis["market_structure"]["structure"]
-        entry_price = analysis["current_price"]
+        
+        # PERUBAHAN 3: Ambil harga live terbaru untuk Entry
+        live_data = await get_market_data()
+        entry_price = live_data["price"]
 
         direction = "WAIT"
         confidence = 50
