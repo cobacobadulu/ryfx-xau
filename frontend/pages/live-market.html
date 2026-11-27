@@ -80,43 +80,14 @@
                 <span class="section-label">PRICE ACTION</span>
                 <h2>XAUUSD Chart</h2>
             </div>
-
-            <!-- Tombol fullscreen bawaan kita tidak diperlukan lagi karena TradingView punya tombolnya sendiri, 
-                 tapi saya biarkan untuk tampilan -->
-            <button
-                type="button"
-                id="chartFullscreen"
-                class="secondary-button"
-            >
-                ⛶ FULLSCREEN
-            </button>
         </div>
 
 
         <div class="chart-panel" id="liveChartPanel" style="padding: 0; overflow: hidden; border-radius: 14px; background: #0B1422;">
 
-            <!-- WADAH TRADINGVIEW WIDGET -->
+            <!-- WADAH TRADINGVIEW WIDGET DENGAN TINGGI PASTI -->
             <div class="tradingview-widget-container" style="height: 500px; width: 100%;">
                 <div id="tradingview_xauusd_chart" style="height: 100%; width: 100%;"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                <script type="text/javascript">
-                new TradingView.widget(
-                {
-                "autosize": true,
-                "symbol": "OANDA:XAUUSD",
-                "interval": "15",
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#f1f3f6",
-                "enable_publishing": false,
-                "hide_side_toolbar": true,
-                "allow_symbol_change": false,
-                "container_id": "tradingview_xauusd_chart"
-                }
-                );
-                </script>
             </div>
 
             <!-- CHART FOOTER -->
