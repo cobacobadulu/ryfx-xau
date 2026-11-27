@@ -72,7 +72,7 @@
     </section>
 
 
-    <!-- CHART SECTION -->
+    <!-- CHART SECTION (TRADINGVIEW WIDGET) -->
     <section class="dashboard-section">
 
         <div class="section-heading">
@@ -81,6 +81,8 @@
                 <h2>XAUUSD Chart</h2>
             </div>
 
+            <!-- Tombol fullscreen bawaan kita tidak diperlukan lagi karena TradingView punya tombolnya sendiri, 
+                 tapi saya biarkan untuk tampilan -->
             <button
                 type="button"
                 id="chartFullscreen"
@@ -91,49 +93,36 @@
         </div>
 
 
-        <div class="chart-panel" id="liveChartPanel">
+        <div class="chart-panel" id="liveChartPanel" style="padding: 0; overflow: hidden; border-radius: 14px; background: #0B1422;">
 
-            <!-- TIMEFRAME SELECTOR -->
-            <div class="chart-toolbar">
-
-       <div class="timeframe-selector">
-
-              <button class="timeframe-btn" data-timeframe="5">M5</button>
-
-              <button class="timeframe-btn active" data-timeframe="15">M15</button>
-
-              <button class="timeframe-btn" data-timeframe="30">M30</button>
-
-              <button class="timeframe-btn" data-timeframe="60">H1</button>
-
-        </div>
-
-                <span class="chart-symbol">XAUUSD · GOLD</span>
-
+            <!-- WADAH TRADINGVIEW WIDGET -->
+            <div class="tradingview-widget-container" style="height: 500px; width: 100%;">
+                <div id="tradingview_xauusd_chart" style="height: 100%; width: 100%;"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                <script type="text/javascript">
+                new TradingView.widget(
+                {
+                "autosize": true,
+                "symbol": "OANDA:XAUUSD",
+                "interval": "15",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_side_toolbar": true,
+                "allow_symbol_change": false,
+                "container_id": "tradingview_xauusd_chart"
+                }
+                );
+                </script>
             </div>
-
-
-            <!-- CHART CONTAINER -->
-            <div
-                id="xauusdChart"
-                class="live-chart-container"
-                aria-label="XAUUSD candlestick chart"
-            >
-                <div class="chart-loading">
-                    Loading XAUUSD chart...
-                </div>
-            </div>
-
 
             <!-- CHART FOOTER -->
-            <div class="chart-footer">
-
+            <div class="chart-footer" style="padding: 10px 20px;">
                 <span>CHART SOURCE</span>
-
-                <span id="chartDataStatus">
-                    Waiting for market data
-                </span>
-
+                <span>TradingView (Real-time)</span>
             </div>
 
         </div>
